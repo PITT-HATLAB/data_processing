@@ -19,7 +19,7 @@ from scipy.ndimage import gaussian_filter
 import matplotlib.colors as color
 import time
 
-from data_processing.ddh5_Plotting.TACO_multiplot_b1 import superTACO
+from data_processing.ddh5_Plotting.TACO_multiplot_b1 import superTACO_Bars
 
 def g3_from_pump_power(gains: np.ndarray, 
                        pump_powers: np.ndarray, 

@@ -6,7 +6,8 @@ Created on Thu May 13 13:43:45 2021
 """
 import numpy as np 
 import matplotlib.pyplot as plt
-# import sympy as sp
+import sympy as sp
+from data_processing.models.SNAIL_supporting_modules.Participation_and_Alpha_Fitter import slider_fit
 
 def parallel(v1, v2): 
     return 1/(1/v1+1/v2)
@@ -45,10 +46,30 @@ class SnailAmp():
         
         self.Ls0 = parallel(self.Lss, self.Lsl)
         
-    def Ic_to_Ej(self, Ic):
+    def Ic_to_Ej(self, Ic: float):
+        '''
+        Parameters
+        ----------
+        Ic : float
+            critical current in amps
+        Returns
+        -------
+        Ej in Joules
+        src: https://en.wikipedia.org/wiki/Josephson_effect
+        '''
         return Ic*self.phi0/(2*np.pi)
     
-    def Ic_to_Lj(self, Ic): 
+    def Ic_to_Lj(self, Ic: float): 
+        '''
+        Parameters
+        ----------
+        Ic : float
+            critical current in amps
+        Returns
+        -------
+        Lj in Henries
+        src: https://en.wikipedia.org/wiki/Josephson_effect
+        '''
         return self.phi0/(2*np.pi*Ic)
         
     def g3_from_pump_power(self, 
@@ -92,3 +113,39 @@ class SnailAmp():
         g3_arr = -0.5*(mode_kappas/numPumpPhotons)*np.sqrt((np.sqrt(lpg)-1)/(np.sqrt(lpg)+1))
         return numPumpPhotons, g3_arr
 
+    def slider_participation_fitter(self, stored_fits_filepath: str, fluxsweep_filepath: str): 
+        '''
+        Parameters
+        ----------
+        stored_fits_filepath : str
+            path to a pickled fit file
+        fluxsweep_filepath : str
+            path to a fluxsweep stored in plottr's datadict format'
+
+        Returns
+        -------
+        4x matplotlib.widgets.slider objects, call slider.val to get value
+
+        '''
+        self.p_arr = np.linspace(0.01, 0.3, 50)
+        self.alpha_arr = np.linspace(0.1, 0.32, 50)
+        #the below function returns the slider fit, which you then have to call .val on
+        self.p_slider, self.a_slider, self.f_slider = slider_fit(fluxsweep_filepath, 
+                                                                 stored_fits_filepath, 
+                                                                 self.quanta_offset, 
+                                                                 self.quanta_size, 
+                                                                 self.p_arr, 
+                                                                 self.alpha_arr)
+        
+        return self.p_arr, self.alpha_arr, self.p_slider, self.a_slider, self.f_slider
+    
+    def vals_from_sliders(self): 
+        '''
+        A supporting function to slider_participation_fitter for extracting
+        the alpha and p values after the sliders have been used to fit
+
+        '''
+        self.alpha_from_FS = self.alpha_arr[self.a_slider.val]
+        self.p_from_FS = self.alpha_arr[self.p_slider.val]
+        
+    def cn_coefficients()
