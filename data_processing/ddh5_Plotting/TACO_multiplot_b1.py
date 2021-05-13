@@ -12,7 +12,7 @@ from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import numpy as np
 import matplotlib.pyplot as plt
-from hat_utilities.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row, find_all_ddh5
+from measurement_modules.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row, find_all_ddh5
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.ndimage import gaussian_filter
 import matplotlib.colors as color
@@ -49,7 +49,7 @@ def get_sat_info(sat_bias_current, sat_gen_freq, sat_vna_freq, sat_vna_powers, s
     
     return (np.array(sat_gen_freq+(sat_gen_freq[1]-sat_gen_freq[0])/2)/1e6)[max_loc], sat_vna_freq[max_loc], sat_powers[max_loc]
 
-def superSat(filepaths, y_norm_val = -70, filter_window = 0, conv = False): 
+def superSat(filepaths, y_norm_val = -70, filter_window = 0, conv = False, conv_func = None): 
     '''
     assemble all of the saturation sweeps, extract the best (highest) 
     saturation power in (gen_freqs, gen_powers) space, plot vs current
@@ -102,36 +102,36 @@ def superSat(filepaths, y_norm_val = -70, filter_window = 0, conv = False):
         ax1.set_xlabel('Flux Quanta ($\Phi/\Phi_0)$')
         ax1.set_ylabel('Saturation Power (dBm)')
         plt.grid()
-        ax1.vlines(conv_func(-0.173e-3), np.min(plt_powers), np.max(plt_powers), linestyles = 'dashed', colors = ['red'])
+        # ax1.vlines(conv_func(-0.173e-3), np.min(plt_powers), np.max(plt_powers), linestyles = 'dashed', colors = ['red'])
         
-        plt.figure(2)
-        p1 = plt.plot(conv_func(np.array(plot_currents)), np.array(best_sat_gen_frequencies)/1000, 'b.', markersize = 15, label = 'Generator Frequencies')
-        plt.plot(conv_func(currents)[filt], 2*res_freqs[filt]/1e9, 'r-', markersize = 5, label = '2x SNAIL Frequency')
-        plt.xlabel('Flux Quanta ($\Phi/\Phi_0)$')
-        plt.ylabel('Generator Frequency (GHz)')
-        plt.title('Generator Frequency at Best Saturation Point vs. Flux')
-        plt.vlines(conv_func(-0.173e-3), np.min(np.array(best_sat_gen_frequencies)/1000), np.max(np.array(best_sat_gen_frequencies)/1000), linestyles = 'dashed', colors = ['red'])
-        plt.grid()
-        plt.legend()
+        # plt.figure(2)
+        # p1 = plt.plot(conv_func(np.array(plot_currents)), np.array(best_sat_gen_frequencies)/1000, 'b.', markersize = 15, label = 'Generator Frequencies')
+        # plt.plot(conv_func(currents)[filt], 2*res_freqs[filt]/1e9, 'r-', markersize = 5, label = '2x SNAIL Frequency')
+        # plt.xlabel('Flux Quanta ($\Phi/\Phi_0)$')
+        # plt.ylabel('Generator Frequency (GHz)')
+        # plt.title('Generator Frequency at Best Saturation Point vs. Flux')
+        # plt.vlines(conv_func(-0.173e-3), np.min(np.array(best_sat_gen_frequencies)/1000), np.max(np.array(best_sat_gen_frequencies)/1000), linestyles = 'dashed', colors = ['red'])
+        # plt.grid()
+        # plt.legend()
         
-        plt.figure(3)
-        p0 = plt.plot(conv_func(np.array(plot_currents)), np.array(best_sat_vna_frequencies)/1e9, 'b.', markersize = 15, label = 'Signal Frequencies')
-        p1 = plt.plot(conv_func(currents)[filt], res_freqs[filt]/1e9, 'r-', markersize = 5, label = 'SNAIL Frequency')
-        plt.xlabel('Flux Quanta ($\Phi/\Phi_0)$')
-        plt.ylabel('VNA CW Frequency (GHz)')
-        plt.title('Signal Frequency at Best Saturation Point vs. Flux')
-        plt.vlines(conv_func(-0.173e-3), np.min(np.array(best_sat_vna_frequencies)/1e9), np.max(np.array(best_sat_vna_frequencies)/1e9), linestyles = 'dashed', colors = ['red'])
-        plt.grid()
-        plt.legend()
+        # plt.figure(3)
+        # p0 = plt.plot(conv_func(np.array(plot_currents)), np.array(best_sat_vna_frequencies)/1e9, 'b.', markersize = 15, label = 'Signal Frequencies')
+        # p1 = plt.plot(conv_func(currents)[filt], res_freqs[filt]/1e9, 'r-', markersize = 5, label = 'SNAIL Frequency')
+        # plt.xlabel('Flux Quanta ($\Phi/\Phi_0)$')
+        # plt.ylabel('VNA CW Frequency (GHz)')
+        # plt.title('Signal Frequency at Best Saturation Point vs. Flux')
+        # plt.vlines(conv_func(-0.173e-3), np.min(np.array(best_sat_vna_frequencies)/1e9), np.max(np.array(best_sat_vna_frequencies)/1e9), linestyles = 'dashed', colors = ['red'])
+        # plt.grid()
+        # plt.legend()
         
-        plt.figure(4)
-        plt.plot(np.array(best_sat_vna_frequencies)/1e9, best_sat_powers, 'k.', label = 'VNA Frequencies', markersize = 15)
-        plt.plot(np.array(best_sat_gen_frequencies)/2000, best_sat_powers, 'b.', label = 'Generator Frequencies/2', markersize = 15)
-        plt.ylabel('Saturation Power (dBm)')
-        plt.xlabel('Generator/VNA Frequency (GHz)')
-        plt.title("Best Saturation Power vs. Signal Frequency")
-        plt.grid()
-        plt.legend()
+        # plt.figure(4)
+        # plt.plot(np.array(best_sat_vna_frequencies)/1e9, best_sat_powers, 'k.', label = 'VNA Frequencies', markersize = 15)
+        # plt.plot(np.array(best_sat_gen_frequencies)/2000, best_sat_powers, 'b.', label = 'Generator Frequencies/2', markersize = 15)
+        # plt.ylabel('Saturation Power (dBm)')
+        # plt.xlabel('Generator/VNA Frequency (GHz)')
+        # plt.title("Best Saturation Power vs. Signal Frequency")
+        # plt.grid()
+        # plt.legend()
     else: 
         plt.figure(1)
         plt.plot(np.array(plot_currents)*1000, best_sat_powers, 'b.', markersize = 15)
@@ -217,20 +217,17 @@ def superTACO_Lines(filepaths, angles = [45,45], quanta_size = None, quant_offse
     
     return [np.array(bias_currents), np.array(best_gen_frequencies), np.array(best_gen_powers)]
 
-def superTACO_Bars(filepaths, angles = [45,45], quanta_size = None, quanta_offset = None, bardims = [1,1], barbase = -30):
+def superTACO_Bars(filepaths, angles = [45,45], quanta_size = None, quanta_offset = None, bardims = [1,1], barbase = -30, plot = False):
     #step 1: assemble best powers into bias_currents vs. (gen_freq vs. best_powers) array
     #ie for each n bias current there is a gen_freq array
     #and for each m(n) gen_freq there is one gen_power that is best (could be NaN if garbage)
     #feed this into n mplot3d commands each with their own oclor and legend label
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection = '3d')
-    ax.invert_yaxis()
-    ax.azim = angles[0]
-    ax.elev = angles[1]
+
     
     bias_currents = []
     best_gen_frequencies = []
     best_gen_powers = []
+    gains = []
     info_dict = {}
     
     for gain_filepath in filepaths: 
@@ -254,63 +251,73 @@ def superTACO_Bars(filepaths, angles = [45,45], quanta_size = None, quanta_offse
             cgain = calc_gain[filt]
             
             best_powers = [select_closest_to_target(cpowers[cfreqs == f], cgain[cfreqs == f], 20) for f in unique_freqs]
-            
-            #convert freqs to detuning from best power
             best_power = np.min(best_powers)
             best_gen_powers.append(best_power)
+            
+            best_gains = [select_closest_to_target(cgain[cfreqs == f], cgain[cfreqs == f], 20) for f in unique_freqs]
+            best_gain = best_gains[np.argmin(np.abs(np.array(best_gains)-20))]
+            gains.append(best_gain)
 
+            #convert freqs to detuning from best power
             best_freq = np.average(unique_freqs[np.where(best_powers == best_power)])
             best_gen_frequencies.append(best_freq)
+            
             
             adjusted_freqs = unique_freqs - best_freq
             
             info_dict[current] = adjusted_freqs, best_powers
-            
-    #plotting in sorted order of bias currents for rendering reasons
-    for i, current in enumerate(sorted(info_dict)): 
-        # print(f"CURRENTS: {current}")
-        adjusted_freqs = info_dict[current][0]
-        best_powers = info_dict[current][1]
-        # print(f"FREQS: {adjusted_freqs}")
-        # print(f"POWERS: {best_powers}")
-        if quanta_size != None:
-            quant_frac = np.round((current-quanta_offset)/quanta_size, 3)
-            base_of_bars = barbase*np.ones(np.size(best_powers))
-            height_of_bars = best_powers-base_of_bars
-            # print(list(zip(base_of_bars, height_of_bars)))
-            ax.bar3d(current*np.ones(np.size(adjusted_freqs))*1000, adjusted_freqs/1e6, base_of_bars , bardims[0], bardims[1], height_of_bars, color=None, shade=True, label = f'{quant_frac} quanta', zsort = 'average')
-
-    ax.set_xlabel("Bias Current (mA)")
-    ax.set_ylabel("Generator Detuning (MHz)")
-    ax.set_zlabel("Generator Power (dBm)")
-    ax.set_title("20dB Gain Power vs. Flux Bias and Generator Detuning")
+    if plot: 
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection = '3d')
+        ax.invert_yaxis()
+        ax.azim = angles[0]
+        ax.elev = angles[1]   
+        #plotting in sorted order of bias currents for rendering reasons
+        for i, current in enumerate(sorted(info_dict)): 
+            # print(f"CURRENTS: {current}")
+            adjusted_freqs = info_dict[current][0]
+            best_powers = info_dict[current][1]
+            # print(f"FREQS: {adjusted_freqs}")
+            # print(f"POWERS: {best_powers}")
+            if quanta_size != None:
+                quant_frac = np.round((current-quanta_offset)/quanta_size, 3)
+                base_of_bars = barbase*np.ones(np.size(best_powers))
+                height_of_bars = best_powers-base_of_bars
+                # print(list(zip(base_of_bars, height_of_bars)))
+                ax.bar3d(current*np.ones(np.size(adjusted_freqs))*1000, adjusted_freqs/1e6, base_of_bars , bardims[0], bardims[1], height_of_bars, color=None, shade=True, label = f'{quant_frac} quanta', zsort = 'average')
     
-    return [info_dict, np.array(bias_currents), np.array(best_gen_frequencies), np.array(best_gen_powers)]
+        ax.set_xlabel("Bias Current (mA)")
+        ax.set_ylabel("Generator Detuning (MHz)")
+        ax.set_zlabel("Generator Power (dBm)")
+        ax.set_title("20dB Gain Power vs. Flux Bias and Generator Detuning")
+    
+    return [info_dict, np.array(bias_currents), np.array(best_gen_frequencies), np.array(best_gen_powers), np.array(gains)]
 
 #%%
-gain_cwd = r'E:\Data\Cooldown_20210104\Best TACOS\SHARC41\gain\gain'
-res = find_all_ddh5(gain_cwd)
-info_dict, bias_currents, best_gen_freqs, best_gen_powers = superTACO_Bars(res, angles = [60,20], quanta_size = 0.35e-3, quanta_offset = -0.071e-3, bardims = [0.001, 0.7], barbase = -24)
-fig2 = plt.figure(2)
-conv = True
-if conv: 
-    total_line_attenuation = 72
-    plt.plot(conv_func(bias_currents), np.array(best_gen_powers)-total_line_attenuation, 'b.', markersize = 15)
-    plt.title(r'Lowest 20dB Power (dBm) vs. Flux ($\Phi_0$)')
-    plt.xlabel('Flux Quanta ($\Phi/\Phi_0)$')
-    plt.ylabel('Generator Power @20dB Gain (dBm)')
-    plt.grid()
-    plt.vlines(conv_func(-0.173e-3), np.min(best_gen_powers-total_line_attenuation), np.max(best_gen_powers-total_line_attenuation), linestyles = 'dashed', colors = ['red'])
-else: 
-    plt.plot(bias_currents*1000, best_gen_powers, 'b.', markersize = 15)
-    plt.title('Lowest 20dB Power (dBm RT) vs. Bias Current (mA)')
-    plt.xlabel('Bias Current (mA)')
-    plt.ylabel('Generator Power @20dB Gain (dBm)')
-    plt.grid()
 
-
-#%%
-sat_cwd = r'E:\Data\Cooldown_20210104\Best TACOS\SHARC41\sat\sat'
-res = find_all_ddh5(sat_cwd)
-superSat(res, filter_window=4, conv = True)
+if __name__ == "__main__": 
+    gain_cwd = r'E:\Data\Cooldown_20210104\Best TACOS\SHARC41\gain\gain'
+    res = find_all_ddh5(gain_cwd)
+    info_dict, bias_currents, best_gen_freqs, best_gen_powers = superTACO_Bars(res, angles = [60,20], quanta_size = 0.35e-3, quanta_offset = -0.071e-3, bardims = [0.001, 0.7], barbase = -24)
+    fig2 = plt.figure(2)
+    conv = True
+    if conv: 
+        total_line_attenuation = 72
+        plt.plot(conv_func(bias_currents), np.array(best_gen_powers)-total_line_attenuation, 'b.', markersize = 15)
+        plt.title(r'Lowest 20dB Power (dBm) vs. Flux ($\Phi_0$)')
+        plt.xlabel('Flux Quanta ($\Phi/\Phi_0)$')
+        plt.ylabel('Generator Power @20dB Gain (dBm)')
+        plt.grid()
+        plt.vlines(conv_func(-0.173e-3), np.min(best_gen_powers-total_line_attenuation), np.max(best_gen_powers-total_line_attenuation), linestyles = 'dashed', colors = ['red'])
+    else: 
+        plt.plot(bias_currents*1000, best_gen_powers, 'b.', markersize = 15)
+        plt.title('Lowest 20dB Power (dBm RT) vs. Bias Current (mA)')
+        plt.xlabel('Bias Current (mA)')
+        plt.ylabel('Generator Power @20dB Gain (dBm)')
+        plt.grid()
+    
+    
+    sat_cwd = r'E:\Data\Cooldown_20210104\Best TACOS\SHARC41\sat\sat'
+    res = find_all_ddh5(sat_cwd)
+    superSat(res, filter_window=4, conv = True)
 
