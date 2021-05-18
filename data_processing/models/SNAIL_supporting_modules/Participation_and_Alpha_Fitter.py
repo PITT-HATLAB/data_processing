@@ -15,6 +15,7 @@ from matplotlib.widgets import Slider, TextBox
 import time
 import pickle
 
+
 #%% Use slider to select modulation curve
 def get_fs_data(path): 
     datadict = all_datadicts_from_hdf5(path)['data']
@@ -61,7 +62,7 @@ def slider_fit(fs_filepath, fit_filepath, quanta_start, quanta_size, p_arr, alph
     graph_x = ind_vars_trimmed[0]*scale_factor
     
     dplot = plt.imshow(graph, alpha = 0.5, extent = [0, 2*np.pi, ind_vars_trimmed[1][0], ind_vars_trimmed[1][-1]], aspect = 'auto', origin = 'lower', norm = _norm, cmap = _cmap)
-    fplot, = plt.plot(np.linspace(0,1, 51), snail_freqs_fits[0][0])
+    fplot, = plt.plot(np.linspace(0,2*np.pi, 51), snail_freqs_fits[0][0])
     ax.margins(x=0)
     
     def update(val):
@@ -70,7 +71,7 @@ def slider_fit(fs_filepath, fit_filepath, quanta_start, quanta_size, p_arr, alph
         start_freq = sfreq.val
         # x = np.where(p_arr == p)[0][0]
         # y = np.where(alpha_arr == alpha)[0][0]
-        print("p: "+str(p_arr[p])+" Alpha: "+str(alpha_arr[alpha]))
+        # print("p: "+str(p_arr[p])+" Alpha: "+str(alpha_arr[alpha]))
         scale_factor = start_freq/snail_freqs_fits[p][alpha][0]
         fplot.set_ydata(snail_freqs_fits[p][alpha]*scale_factor)
         
@@ -90,8 +91,8 @@ def slider_fit(fs_filepath, fit_filepath, quanta_start, quanta_size, p_arr, alph
     text_box = TextBox(axbox, 'Center', initial="3.1415")
     text_box.on_submit(submit)
     
-    sp = Slider(axp, 'P index',0, np.size(p_arr), valinit=0, valstep=1)
-    salpha = Slider(axalpha, 'Alpha index', 0, np.size(alpha_arr), valinit=0, valstep=1)
+    sp = Slider(axp, 'P index',0, np.size(p_arr)-1, valinit=0, valstep=1)
+    salpha = Slider(axalpha, 'Alpha index', 0, np.size(alpha_arr)-1, valinit=0, valstep=1)
     sfreq = Slider(axfreq, 'start frequency', 6e9, 6.5e9, valinit=6e9)
     
     sp.on_changed(update)

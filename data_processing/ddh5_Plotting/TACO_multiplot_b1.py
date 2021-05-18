@@ -243,7 +243,7 @@ def superTACO_Bars(filepaths, angles = [45,45], quanta_size = None, quanta_offse
         
         for current in np.unique(bias_current): #could be multiple bias currents in one single TACO datafile
             bias_currents.append(current)
-            print(f"{gain_filepath}\nCURRENT: {current*1000}mA")
+            print(f"CURRENT: {current*1000}mA")
             filt = bias_current == current
             cfreqs = gen_frequency[filt]
             cpowers = gen_power[filt]
@@ -294,7 +294,6 @@ def superTACO_Bars(filepaths, angles = [45,45], quanta_size = None, quanta_offse
     return [info_dict, np.array(bias_currents), np.array(best_gen_frequencies), np.array(best_gen_powers), np.array(gains)]
 
 #%%
-
 if __name__ == "__main__": 
     gain_cwd = r'E:\Data\Cooldown_20210104\Best TACOS\SHARC41\gain\gain'
     res = find_all_ddh5(gain_cwd)
