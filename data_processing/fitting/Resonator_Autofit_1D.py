@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jun  1 17:52:48 2021
+
+@author: Hatlab_3
+"""
+
 import easygui
 from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
@@ -10,49 +17,38 @@ from plottr.data import datadict_storage as dds, datadict as dd
 from scipy.signal import savgol_filter
 from scipy.fftpack import dct, idct
 
-class fit_fluxsweep():
-    def __init__(self, Flux_filepath, save_filepath, name):
+#%%
+class fit_res_sweep():
+    def __init__(self, datadict, writer, save_func, raw_filepath, ind_par_name):
         #setup files
         self.name = name
-        self.datadict = dd.DataDict(
-            current = dict(unit='A'),
-            
-            base_resonant_frequency = dict(axes = ['current']),
-            base_Qint = dict(axes = ['current']),
-            base_Qext = dict(axes = ['current']),
-            
-            base_resonant_frequency_error = dict(axes = ['current']),
-            base_Qint_error = dict(axes = ['current']),
-            base_Qext_error = dict(axes = ['current']),
-        )
-        self.datadir = save_filepath
-        self.writer = dds.DDH5Writer(self.datadir, self.datadict, name=self.name)
+        self.datadict = datadict
+        self.writer = writer
         self.writer.__enter__()
-        
-        #Duffing/FS Data Extraction
-        duff_dicts = all_datadicts_from_hdf5(Flux_filepath)
-        duffDict = duff_dicts['data']
-        uvphDict = duffDict.extract('phase')
-        uvpoDict = duffDict.extract('power')
+        self.save_func = save_func
+        #1D Data Extraction
+        dicts = all_datadicts_from_hdf5(raw_filepath)['data']
+        uvphDict = dicts.extract('phase')
+        uvpoDict = dicts.extract('power')
 
         
         #get the arrays back out
-        self.undriven_vna_phase = uvphDict.data_vals('phase')
-        self.undriven_vna_power = uvpoDict.data_vals('power')
+        self.vna_phase = uvphDict.data_vals('phase')
+        self.vna_power = uvpoDict.data_vals('power')
 
-        self.vna_freqs = uvphDict.data_vals('frequency')*2*np.pi
-        self.currents = uvphDict.data_vals('current')
+        self.vna_freqs = uvphDict.data_vals('VNA_frequency')*2*np.pi
+        self.ind_par = uvphDict.data_vals(ind_par_name)
         
     def default_bounds(self, QextGuess, QintGuess, f0Guess, magBackGuess):
-        return ([QextGuess / 1.5, QintGuess / 1.5, f0Guess/2, magBackGuess / 5.0, -2 * np.pi],
-                [QextGuess * 1.5, QintGuess +200, f0Guess*1.5, magBackGuess * 5.0, 2 * np.pi])
+        return ([QextGuess / 1.5, QintGuess/1.5, f0Guess*0.9, magBackGuess / 5.0, -2 * np.pi],
+                [QextGuess * 1.5, QintGuess*10, f0Guess*1.5, magBackGuess * 5.0, 2 * np.pi])
     
     def initial_fit(self, f0Guess, QextGuess = 50, QintGuess = 300, magBackGuess = 0.0001, bounds = None, smooth = False, smooth_win = 11, phaseOffGuess = 0, debug = False, adaptive_window = False, adapt_win_size = 300e6):
         f0Guess = f0Guess*2*np.pi
         if bounds == None: 
             bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
             
-        filt = (self.currents == np.unique(self.currents)[0])
+        filt = (self.ind_par == np.unique(self.ind_par)[0])
 
         if adaptive_window: 
             filt1 = self.vna_freqs < f0Guess + adapt_win_size*2*np.pi/2
@@ -60,8 +56,8 @@ class fit_fluxsweep():
             filt = filt*filt1*filt2
 
         init_vna_freqs = np.unique(self.vna_freqs[filt])
-        init_phase_trace = self.undriven_vna_phase[filt]
-        init_pow_trace = self.undriven_vna_power[filt]
+        init_phase_trace = self.vna_phase[filt]
+        init_pow_trace = self.vna_power[filt]
         
         if debug: 
             plt.figure(1)
@@ -94,30 +90,21 @@ class fit_fluxsweep():
         
         plotRes(init_vna_freqs, real, imag, init_pow_trace, init_phase_trace, popt)
         
-    def save_fit(self, current, base_popt, base_pconv): 
-        self.writer.add_data(
-            current = current, 
-            
-            base_resonant_frequency = base_popt[2]/(2*np.pi), 
-            base_Qint = base_popt[1], 
-            base_Qext = base_popt[0], 
-            
-            base_resonant_frequency_error = base_pconv[2, 2]/(2*np.pi), 
-            base_Qint_error = base_pconv[1, 1], 
-            base_Qext_error = base_pconv[0, 0], 
-            )
-    def semiauto_fit(self, bias_currents, vna_freqs, vna_mags, vna_phases, popt, debug = False, savedata = False, smooth = False, smooth_win = 11, adaptive_window = False, adapt_win_size = 300e6, fourier_filter = False, fourier_cutoff = 40, pconv_tol = 2):
-        res_freqs = np.zeros(np.size(np.unique(bias_currents)))
-        Qints = np.zeros(np.size(np.unique(bias_currents)))
-        Qexts = np.zeros(np.size(np.unique(bias_currents)))
-        magBacks = np.zeros(np.size(np.unique(bias_currents)))
+    def save_fit(self, ind_par_val, base_popt, base_pconv): 
+        self.save_func(self.writer, ind_par_val, base_popt, base_pconv)
         
-        init_f0 = popt[2]
-        init_Qint = popt[1]
-        init_Qext = popt[0]
-        init_magBack = popt[3]
-        for i, current in enumerate(np.unique(bias_currents)): 
-            first_condn = bias_currents == current
+    def semiauto_fit(self, ind_par, vna_freqs, vna_mags, vna_phases, init_popt, debug = False, savedata = False, smooth = False, smooth_win = 11, adaptive_window = False, adapt_win_size = 300e6, fourier_filter = False, fourier_cutoff = 40, pconv_tol = 2):
+        res_freqs = np.zeros(np.size(np.unique(ind_par)))
+        Qints = np.zeros(np.size(np.unique(ind_par)))
+        Qexts = np.zeros(np.size(np.unique(ind_par)))
+        magBacks = np.zeros(np.size(np.unique(ind_par)))
+        
+        init_f0 = init_popt[2]
+        init_Qint = init_popt[1]
+        init_Qext = init_popt[0]
+        init_magBack = init_popt[3]
+        for i, ind_par_val in enumerate(np.unique(ind_par)): 
+            first_condn = ind_par == ind_par_val
             [first_trace_freqs, first_trace_phase, first_trace_mag] = [vna_freqs[first_condn]*2*np.pi, vna_phases[first_condn], 10**(vna_mags[first_condn]/20)]
             if smooth: 
                 first_trace_phase = savgol_filter(first_trace_phase, smooth_win, 3)
@@ -201,6 +188,48 @@ class fit_fluxsweep():
             Qtot = popt[0] * popt[1] / (popt[0] + popt[1])
             print('Q_tot: ', round(Qtot), '\nT1 (s):', round(Qtot/popt[2]), f"Kappa: {round(popt[2]/2/np.pi/Qtot)}", )
             if savedata:
-                self.save_fit(current, popt, pconv)
+                self.save_fit(ind_par_val, popt, pconv)
             
-        return np.unique(bias_currents), res_freqs, Qints, Qexts, magBacks
+        return np.unique(ind_par), res_freqs, Qints, Qexts, magBacks
+    
+#%%Example usage
+if __name__ == '__main__':
+    %matplotlib inline
+    raw_filepath = r'Z:\Texas\Cooldown_20210525\PC_HPAl_etch_3\2021-06-01\2021-06-01_0001_vna_trace_vs_vna_power\2021-06-01_0001_vna_trace_vs_vna_power.ddh5'
+    ind_par_name = 'Gen_power'
+    name = "PC_HPAl_etched_3_Q_vs_power_fit_-83_to+30"
+    datadict = dd.DataDict(
+                vna_power = dict(unit='dBm'),
+                
+                base_resonant_frequency = dict(axes = ['vna_power']),
+                base_Qint = dict(axes = ['vna_power']),
+                base_Qext = dict(axes = ['vna_power']),
+                base_Qtot = dict(axes = ['vna_power']),
+                
+                base_resonant_frequency_error = dict(axes = ['vna_power']),
+                base_Qint_error = dict(axes = ['vna_power']),
+                base_Qext_error = dict(axes = ['vna_power']),
+            )
+    datadir = r'Z:\Texas\Cooldown_20210525\PC_HPAl_etch_3'
+    writer = dds.DDH5Writer(datadir, datadict, name=name)
+    def ext_save_fit(writer, ind_par_val, base_popt, base_pconv): 
+        writer.add_data(
+            vna_power = ind_par_val, 
+            
+            base_resonant_frequency = base_popt[2]/(2*np.pi), 
+            base_Qint = base_popt[1], 
+            base_Qext = base_popt[0], 
+            base_Qtot = 1/(1/base_popt[1]+1/base_popt[0]),
+            
+            base_resonant_frequency_error = np.sqrt(base_pconv[2, 2])/(2*np.pi), 
+            base_Qint_error = np.sqrt(base_pconv[1, 1]), 
+            base_Qext_error = np.sqrt(base_pconv[0, 0]), 
+            )
+    
+    FR = fit_res_sweep(datadict, writer, ext_save_fit, raw_filepath, ind_par_name)
+    #%%
+if __name__ == '__main__':
+    FR.initial_fit(7.4362155e9, QextGuess = 11e6, QintGuess=30e6, magBackGuess = 0.2, phaseOffGuess = 0, debug = True, smooth = False, smooth_win = 5, adaptive_window = True, adapt_win_size = 1e4)
+    #%% Automatic Fitting (be sure initial fit is good!)
+if __name__ == '__main__':
+    gen_powers, res_freqs, Qints, Qexts, magBacks = FR.semiauto_fit(FR.ind_par, FR.vna_freqs/(2*np.pi), FR.vna_power, FR.vna_phase, FR.initial_popt, debug = False, savedata = True, smooth = False, smooth_win = 5, adaptive_window = True, adapt_win_size = 10e5, fourier_filter = False, pconv_tol = 2)

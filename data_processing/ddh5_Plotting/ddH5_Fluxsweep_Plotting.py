@@ -4,8 +4,8 @@ Created on Mon Jan 18 16:59:08 2021
 
 @author: Hatlab_3
 """
-from hat_utilities.ddh5_Plotting.utility_modules.FS_utility_functions import fit_fluxsweep
-from hat_utilities.Helper_Functions import find_all_ddh5
+from data_processing.ddh5_Plotting.utility_modules.FS_utility_functions import fit_fluxsweep
+from measurement_modules.Helper_Functions import find_all_ddh5
 from plottr.apps.autoplot import autoplotDDH5, script, main
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,14 +28,14 @@ def find_quanta(currents, res_freqs, show = True, smooth_window = 11):
     return quanta_size, quanta_offset, current_to_quanta_conversion_function, quanta_to_current_function
 #adapting an old file to a new file
 #%%
-datadir = r'E:\Data\Cooldown_20210104\20210330_MariaChemPot_Processing\2021-03-30\2021-03-30_0001_CP2_FS_fine_fit\2021-03-30_0001_CP2_FS_fine_fit.ddh5'
-savedir = r'E:\Data\Cooldown_20210104\20210330_MariaChemPot_Processing'
+datadir = r'Z:\Texas\Cooldown_20210525\PC_HPAl_etch_3\2021-06-01\2021-06-01_0001_vna_trace_vs_vna_power\2021-06-01_0001_vna_trace_vs_vna_power.ddh5'
+savedir = r'Z:\Texas\Cooldown_20210525\PC_HPAl_etch_3\2021-06-01\2021-06-01_0001_vna_trace_vs_vna_power'
 # datadir = r'E:\Data\Cooldown_20210104\fluxsweep\2021-01-04_0003_Recentering_FS.ddh5'
 # savedir = r'E:\Data\Cooldown_20210104\fluxsweep'
 
-FS = fit_fluxsweep(datadir, savedir, '20210330_Chempot_FS_Fit')
+FS = fit_fluxsweep(datadir, savedir, '20210601_PC_HPAl_etched_3')
 #%%
-FS.initial_fit(8.38e9, QextGuess = 800, QintGuess=1000, magBackGuess = 0.1, phaseOffGuess = np.pi, debug = False, smooth = False, smooth_win = 15, adaptive_window = True, adapt_win_size = 100e6)
+FS.initial_fit(7.4362e9, QextGuess = 11e6, QintGuess=20e6, magBackGuess = 1, phaseOffGuess = np.pi, debug = False, smooth = False, smooth_win = 15, adaptive_window = True, adapt_win_size = 100e6)
 #%% Automatic Fitting (be sure initial fit is good!)
 currents, res_freqs, Qints, Qexts, magBacks = FS.semiauto_fit(FS.currents, FS.vna_freqs/(2*np.pi), FS.undriven_vna_power, FS.undriven_vna_phase, FS.initial_popt, debug = False, savedata = True, smooth = False, smooth_win = 5, adaptive_window = True, adapt_win_size = 100e6, fourier_filter = False, pconv_tol = 7)
 #%%reloading an old file

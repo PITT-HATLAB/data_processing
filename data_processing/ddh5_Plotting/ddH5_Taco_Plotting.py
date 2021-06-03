@@ -23,8 +23,8 @@ plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
 device_name = 'SA_C1'
 
-gain_filepath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Tacos\2021-05-18\2021-05-18_0013_0.011mA_TACO_gain\2021-05-18_0013_0.011mA_TACO_gain.ddh5'
-sat_filepath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Tacos\2021-05-18\2021-05-18_0014_0.011mA_TACO_sat\2021-05-18_0014_0.011mA_TACO_sat.ddh5'
+gain_filepath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Tacos\2021-05-18\2021-05-18_0017_0.013mA_TACO_gain\2021-05-18_0017_0.013mA_TACO_gain.ddh5'
+sat_filepath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Tacos\2021-05-18\2021-05-18_0018_0.013mA_TACO_sat\2021-05-18_0018_0.013mA_TACO_sat.ddh5'
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']
@@ -47,7 +47,7 @@ gain_data = gainDict.extract('calculated_gain')
                                             gain_data.data_vals('calculated_gain')
                                             ]
 #%%Extract slices of currents, saturation data, etc which are each individual tacos
-b1_val = 0.011e-3
+b1_val = 0.0145e-3
 b1 = (bias_current == b1_val)
 ""
 gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1], calc_gain[b1]

@@ -5,6 +5,8 @@ import h5py
 import inspect
 from scipy.optimize import curve_fit
 import easygui
+from plottr.data import datadict_storage as dds, datadict as dd
+from plottr.data.datadict_storage import all_datadicts_from_hdf5
 
 FREQ_UNIT = {'GHz' : 1e9,
              'MHz' : 1e6,
@@ -23,7 +25,7 @@ def reflectionFunc(freq, Qext, Qint, f0, magBack, phaseCorrect):
     S_11_down = 1.0 / (1j * delta * (2 + delta / omega0) / (1 + delta / omega0) + omega0 / Qint) + Qext / omega0
     S11 = magBack * (S_11_up / S_11_down) * np.exp(1j * (phaseCorrect))
     realPart = np.real(S11)
-    imagPart = np.imag(S11) 
+    imagPart = np.imag(S11)
 
     return (realPart + 1j * imagPart).view(np.float)
     # return realPart 
@@ -32,6 +34,28 @@ def reflectionFunc(freq, Qext, Qint, f0, magBack, phaseCorrect):
 def reflectionFunc_re(freq, Qext, Qint, f0, magBack, phaseCorrect):
     return reflectionFunc(freq, Qext, Qint, f0, magBack, phaseCorrect)[::2]
 
+def getData_from_datadict(filepath, plot_data = None): 
+    datadict = all_datadicts_from_hdf5(filepath)['data']
+    powers_dB = datadict.extract('power')['power']['values']
+    freqs = datadict.extract('power')['frequency']['values']*2*np.pi
+    phase_rad = datadict.extract('phase')['phase']['values']
+    
+    lin = np.power(10, powers_dB/20)
+    real = lin*np.cos(phase_rad)
+    imag = lin*np.sin(phase_rad)
+    
+    print(np.size(phase_rad))
+    print(np.size(phase_rad))
+    
+    if plot_data:
+        plt.figure('mag')
+        plt.plot(freqs, powers_dB)
+        plt.figure('phase')
+        plt.plot(freqs, phase_rad)
+        
+    return (freqs, real, imag, powers_dB, phase_rad)
+    
+    
 def getData(filename, method='hfss', freq_unit = 'GHz', plot_data=1):
     if method == 'hfss':
         """The csv file must be inthe format of:
@@ -52,10 +76,10 @@ def getData(filename, method='hfss', freq_unit = 'GHz', plot_data=1):
         
     elif method == 'vna':  
         f = h5py.File(filename,'r')
-        freq = f['VNA Frequency (Hz)'][()]*2 * np.pi
+        freq = f['VNA Frequency (Hz)'][()]*2*np.pi
         phase = f['Phase (deg)'][()]
         mag = f['Power (dB)'][()]
-        lin = 10**(mag / 20.0)
+        lin = 10**(mag/20.0)
         f.close()
         
     elif method == 'vna_old': 
@@ -97,8 +121,8 @@ def fit(freq, real, imag, mag, phase, Qguess=(2e5, 1e3),real_only = 0, bounds = 
     # f0Guess = 2*np.pi*5.45e9
     # f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
     if f0Guess == None:
-        f0Guess = freq[int(np.floor(np.size(freq)/2))] #dumb guess of "it's probably in the middle"
-        # f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
+        # f0Guess = freq[int(np.floor(np.size(freq)/2))] #dumb guess of "it's probably in the middle"
+        f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
     print("Guess freq: "+str(f0Guess/(2*np.pi*1e9)))
     lin = 10**(mag / 20.0)
     if magBackGuess == None: 
@@ -107,8 +131,8 @@ def fit(freq, real, imag, mag, phase, Qguess=(2e5, 1e3),real_only = 0, bounds = 
     QextGuess = Qguess[0]
     QintGuess = Qguess[1]
     if bounds == None: 
-        bounds=([QextGuess / 10, QintGuess / 10, f0Guess*0.9, magBackGuess / 5.0, -2 * np.pi],
-                [QextGuess * 10, QintGuess * 10, f0Guess*1.1, magBackGuess * 5.0, 2 * np.pi])
+        bounds=([QextGuess / 10, QintGuess / 10, f0Guess-10e6, magBackGuess / 5.0, -2 * np.pi],
+                [QextGuess * 10, QintGuess * 10, f0Guess+10e6, magBackGuess * 5.0, 2 * np.pi])
     
     target_func = reflectionFunc
     data_to_fit = (real  + 1j * imag).view(np.float)
@@ -143,18 +167,20 @@ def plotRes(freq, real, imag, mag, phase, popt):
 
 if __name__ == '__main__':
     # filepath = easygui.fileopenbox()
-    filepath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Traces\C1_1.879e-5mA'
+    filepath = r'Z:\Texas\Cooldown_20210525\WISPE_3d_0_kappaCheck\2021-05-25\2021-05-25_0001_StrongPort_Kappa_check\2021-05-25_0001_StrongPort_Kappa_check.ddh5'
     # filepath = r'PSB_EP1_Copper_Lid'
     # filepath = r'H:\Data\Fridge Texas\Cooldown_20200917\Cavities\RT_msmt\PC_IP_3_5'
-    (freq, real, imag, mag, phase) = getData(filepath, method="vna",plot_data=0)
-    trim = 1
-    freq = freq[trim:-trim]
-    real = real[trim:-trim]
-    imag = imag[trim:-trim]
-    mag = mag[trim:-trim]
-    phase = phase[trim:-trim]
+    # (freq, real, imag, mag, phase) = getData(filepath, method="vna",plot_data=0)
+    (freq, real, imag, mag, phase) = getData_from_datadict(filepath, plot_data=0)
+    ltrim = 1
+    rtrim = 1
+    freq = freq[ltrim:-rtrim]
+    real = real[ltrim:-rtrim]
+    imag = imag[ltrim:-rtrim]
+    mag = mag[ltrim:-rtrim]
+    phase = phase[ltrim:-rtrim]
     
-    popt, pcov = fit(freq, real, imag, mag, phase, Qguess=(1e3, 1e3), magBackGuess=0.01, phaseGuess = -np.pi/2)  #(ext, int)   
+    popt, pcov = fit(freq, real, imag, mag, phase, Qguess=(1e4, 1e3), magBackGuess=1, phaseGuess = 0)  #(ext, int)   
 
     print(f'f (Hz): {rounder(popt[2]/2/np.pi)}', )
     fitting_params = list(inspect.signature(reflectionFunc).parameters.keys())[1:]

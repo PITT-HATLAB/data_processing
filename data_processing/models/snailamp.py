@@ -233,8 +233,10 @@ class SnailAmp():
     
     def generate_resonance_function_via_fit(self, p, f0, c2_func): 
         return lambda phi: 2*np.pi*f0/(np.sqrt(1+(p/(1-p))/c2_func(phi)))
+    
+    def generate_p_func(self, )
         
-    def generate_gsss_function(self, C0, p, res_func, c2_func, c3_func):
+    def generate_gsss_function(self, C0, p_func, res_func, c2_func, c3_func):
         '''
         source: https://arxiv.org/pdf/1806.06093.pdf
         (The frattini paper)
