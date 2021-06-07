@@ -10,21 +10,20 @@ from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import matplotlib.pyplot as plt
 import numpy as np
-from measurement_modules.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target
+from measurement_modules.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, find_all_ddh5
 from data_processing.fitting.QFit import fit, plotRes, reflectionFunc
 import inspect
 from plottr.data import datadict_storage as dds, datadict as dd
 from scipy.signal import savgol_filter
 from scipy.fftpack import dct, idct
 
-#%%
 class fit_res_sweep():
-    def __init__(self, datadict, writer, save_func, raw_filepath, ind_par_name):
+    def __init__(self, datadict, writer, save_func, raw_filepath, ind_par_name, create_file = True):
         #setup files
-        self.name = name
         self.datadict = datadict
         self.writer = writer
-        self.writer.__enter__()
+        if create_file: 
+            self.writer.__enter__()
         self.save_func = save_func
         #1D Data Extraction
         dicts = all_datadicts_from_hdf5(raw_filepath)['data']
@@ -41,14 +40,17 @@ class fit_res_sweep():
         
     def default_bounds(self, QextGuess, QintGuess, f0Guess, magBackGuess):
         return ([QextGuess / 1.5, QintGuess/1.5, f0Guess*0.9, magBackGuess / 5.0, -2 * np.pi],
-                [QextGuess * 1.5, QintGuess*10, f0Guess*1.5, magBackGuess * 5.0, 2 * np.pi])
+                [QextGuess * 1.5, QintGuess*10, f0Guess*1.1, magBackGuess * 5.0, 2 * np.pi])
     
-    def initial_fit(self, f0Guess, QextGuess = 50, QintGuess = 300, magBackGuess = 0.0001, bounds = None, smooth = False, smooth_win = 11, phaseOffGuess = 0, debug = False, adaptive_window = False, adapt_win_size = 300e6):
+    def initial_fit(self, f0Guess, QextGuess = 50, QintGuess = 300, magBackGuess = 0.0001, bounds_func = None, smooth = False, smooth_win = 11, phaseOffGuess = 0, debug = False, adaptive_window = False, adapt_win_size = 300e6, start_index = 0):
+        print("RUNNING INITIAL FIT")
+        self.autofit_starting_index = start_index
         f0Guess = f0Guess*2*np.pi
-        if bounds == None: 
+        if bounds_func == None: 
             bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
-            
-        filt = (self.ind_par == np.unique(self.ind_par)[0])
+        else: 
+            bounds = bounds_func(QextGuess, QintGuess, f0Guess, magBackGuess)
+        filt = (self.ind_par == np.unique(self.ind_par)[start_index])
 
         if adaptive_window: 
             filt1 = self.vna_freqs < f0Guess + adapt_win_size*2*np.pi/2
@@ -93,7 +95,8 @@ class fit_res_sweep():
     def save_fit(self, ind_par_val, base_popt, base_pconv): 
         self.save_func(self.writer, ind_par_val, base_popt, base_pconv)
         
-    def semiauto_fit(self, ind_par, vna_freqs, vna_mags, vna_phases, init_popt, debug = False, savedata = False, smooth = False, smooth_win = 11, adaptive_window = False, adapt_win_size = 300e6, fourier_filter = False, fourier_cutoff = 40, pconv_tol = 2):
+    def semiauto_fit(self, ind_par, vna_freqs, vna_mags, vna_phases, init_popt, debug = False, savedata = False, smooth = False, smooth_win = 11, adaptive_window = False, adapt_win_size = 300e6, fourier_filter = False, fourier_cutoff = 40, pconv_tol = 2, bounds_func = None, alt_array_scale = 1):
+        print("RUNNING SEMI-AUTO FIT")
         res_freqs = np.zeros(np.size(np.unique(ind_par)))
         Qints = np.zeros(np.size(np.unique(ind_par)))
         Qexts = np.zeros(np.size(np.unique(ind_par)))
@@ -141,8 +144,10 @@ class fit_res_sweep():
                 magBackGuess = init_magBack
                 (QextGuess, QintGuess) = (init_Qext, init_Qint)
                 filt = np.ones(np.size(first_trace_freqs)).astype(bool)
-                
-            bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
+            if bounds_func == None:
+                bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
+            else: 
+                bounds = bounds_func(QextGuess, QintGuess, f0Guess, magBackGuess)
             if i>2: 
                 prev_pconv = pconv
             #fit(freq, real, imag, mag, phase, Qguess=(2e3, 1e3),real_only = 0, bounds = None)
@@ -154,7 +159,7 @@ class fit_res_sweep():
                 if debug: 
                     print(f"Pconv ratio: {pconv_diff_ratio}")
                 j = 0
-                alt_array = np.array([1e6,-1e6,5e6,-5e6, 10e6,-10e6,15e6,-15e6, 20e6, -20e6, 30e6, -30e6])*2*np.pi
+                alt_array = alt_array_scale*np.array([1e6,-1e6,5e6,-5e6, 10e6,-10e6,15e6,-15e6, 20e6, -20e6, 30e6, -30e6])*2*np.pi
                 while np.any(np.abs(pconv_diff_ratio)>pconv_tol): 
                     if j>11: 
                         raise Exception("No good fit at this point")
@@ -191,45 +196,3 @@ class fit_res_sweep():
                 self.save_fit(ind_par_val, popt, pconv)
             
         return np.unique(ind_par), res_freqs, Qints, Qexts, magBacks
-    
-#%%Example usage
-if __name__ == '__main__':
-    %matplotlib inline
-    raw_filepath = r'Z:\Texas\Cooldown_20210525\PC_HPAl_etch_3\2021-06-01\2021-06-01_0001_vna_trace_vs_vna_power\2021-06-01_0001_vna_trace_vs_vna_power.ddh5'
-    ind_par_name = 'Gen_power'
-    name = "PC_HPAl_etched_3_Q_vs_power_fit_-83_to+30"
-    datadict = dd.DataDict(
-                vna_power = dict(unit='dBm'),
-                
-                base_resonant_frequency = dict(axes = ['vna_power']),
-                base_Qint = dict(axes = ['vna_power']),
-                base_Qext = dict(axes = ['vna_power']),
-                base_Qtot = dict(axes = ['vna_power']),
-                
-                base_resonant_frequency_error = dict(axes = ['vna_power']),
-                base_Qint_error = dict(axes = ['vna_power']),
-                base_Qext_error = dict(axes = ['vna_power']),
-            )
-    datadir = r'Z:\Texas\Cooldown_20210525\PC_HPAl_etch_3'
-    writer = dds.DDH5Writer(datadir, datadict, name=name)
-    def ext_save_fit(writer, ind_par_val, base_popt, base_pconv): 
-        writer.add_data(
-            vna_power = ind_par_val, 
-            
-            base_resonant_frequency = base_popt[2]/(2*np.pi), 
-            base_Qint = base_popt[1], 
-            base_Qext = base_popt[0], 
-            base_Qtot = 1/(1/base_popt[1]+1/base_popt[0]),
-            
-            base_resonant_frequency_error = np.sqrt(base_pconv[2, 2])/(2*np.pi), 
-            base_Qint_error = np.sqrt(base_pconv[1, 1]), 
-            base_Qext_error = np.sqrt(base_pconv[0, 0]), 
-            )
-    
-    FR = fit_res_sweep(datadict, writer, ext_save_fit, raw_filepath, ind_par_name)
-    #%%
-if __name__ == '__main__':
-    FR.initial_fit(7.4362155e9, QextGuess = 11e6, QintGuess=30e6, magBackGuess = 0.2, phaseOffGuess = 0, debug = True, smooth = False, smooth_win = 5, adaptive_window = True, adapt_win_size = 1e4)
-    #%% Automatic Fitting (be sure initial fit is good!)
-if __name__ == '__main__':
-    gen_powers, res_freqs, Qints, Qexts, magBacks = FR.semiauto_fit(FR.ind_par, FR.vna_freqs/(2*np.pi), FR.vna_power, FR.vna_phase, FR.initial_popt, debug = False, savedata = True, smooth = False, smooth_win = 5, adaptive_window = True, adapt_win_size = 10e5, fourier_filter = False, pconv_tol = 2)
