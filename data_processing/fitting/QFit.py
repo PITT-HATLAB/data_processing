@@ -117,12 +117,12 @@ def getData(filename, method='hfss', freq_unit = 'GHz', plot_data=1):
         
 
 
-def fit(freq, real, imag, mag, phase, Qguess=(2e5, 1e3),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi):
+def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi):
     # f0Guess = 2*np.pi*5.45e9
     # f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
     if f0Guess == None:
-        # f0Guess = freq[int(np.floor(np.size(freq)/2))] #dumb guess of "it's probably in the middle"
-        f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
+        f0Guess = freq[int(np.floor(np.size(freq)/2))] #dumb guess of "it's probably in the middle"
+        # f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
     print("Guess freq: "+str(f0Guess/(2*np.pi*1e9)))
     lin = 10**(mag / 20.0)
     if magBackGuess == None: 
@@ -131,8 +131,8 @@ def fit(freq, real, imag, mag, phase, Qguess=(2e5, 1e3),real_only = 0, bounds = 
     QextGuess = Qguess[0]
     QintGuess = Qguess[1]
     if bounds == None: 
-        bounds=([QextGuess / 10, QintGuess / 10, f0Guess-10e6, magBackGuess / 5.0, -2 * np.pi],
-                [QextGuess * 10, QintGuess * 10, f0Guess+10e6, magBackGuess * 5.0, 2 * np.pi])
+        bounds=([QextGuess / 10, QintGuess /10, f0Guess-10e6, magBackGuess / 10.0, -2 * np.pi],
+                [QextGuess * 10, QintGuess * 10, f0Guess+10e6, magBackGuess * 10.0, 2 * np.pi])
     
     target_func = reflectionFunc
     data_to_fit = (real  + 1j * imag).view(np.float)
@@ -167,20 +167,20 @@ def plotRes(freq, real, imag, mag, phase, popt):
 
 if __name__ == '__main__':
     # filepath = easygui.fileopenbox()
-    filepath = r'Z:\Texas\Cooldown_20210525\WISPE_3d_0_kappaCheck\2021-05-25\2021-05-25_0001_StrongPort_Kappa_check\2021-05-25_0001_StrongPort_Kappa_check.ddh5'
+    filepath = r'Z:/WISPE_data/WISPE_Tube_B/20210611/2021-06-11/2021-06-11/2021-06-11_0002_cavity_trace_cryo_-60dBm_200pts_3kHzIFBW_500avg/2021-06-11_0002_cavity_trace_cryo_-60dBm_200pts_3kHzIFBW_500avg.ddh5'
     # filepath = r'PSB_EP1_Copper_Lid'
     # filepath = r'H:\Data\Fridge Texas\Cooldown_20200917\Cavities\RT_msmt\PC_IP_3_5'
     # (freq, real, imag, mag, phase) = getData(filepath, method="vna",plot_data=0)
     (freq, real, imag, mag, phase) = getData_from_datadict(filepath, plot_data=0)
     ltrim = 1
-    rtrim = 1
+    rtrim = 10
     freq = freq[ltrim:-rtrim]
     real = real[ltrim:-rtrim]
     imag = imag[ltrim:-rtrim]
     mag = mag[ltrim:-rtrim]
     phase = phase[ltrim:-rtrim]
     
-    popt, pcov = fit(freq, real, imag, mag, phase, Qguess=(1e4, 1e3), magBackGuess=1, phaseGuess = 0)  #(ext, int)   
+    popt, pcov = fit(freq, real, imag, mag, phase, Qguess=(2e3, 1e4), magBackGuess=.0007, phaseGuess = np.piS)  #(ext, int)   
 
     print(f'f (Hz): {rounder(popt[2]/2/np.pi)}', )
     fitting_params = list(inspect.signature(reflectionFunc).parameters.keys())[1:]
