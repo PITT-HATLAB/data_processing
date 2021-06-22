@@ -47,7 +47,7 @@ gain_data = gainDict.extract('calculated_gain')
                                             gain_data.data_vals('calculated_gain')
                                             ]
 #%%Extract slices of currents, saturation data, etc which are each individual tacos
-b1_val = 0.0145e-3
+b1_val = sat_bias_current[0]
 b1 = (bias_current == b1_val)
 ""
 gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1], calc_gain[b1]

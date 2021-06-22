@@ -167,20 +167,20 @@ def plotRes(freq, real, imag, mag, phase, popt):
 
 if __name__ == '__main__':
     # filepath = easygui.fileopenbox()
-    filepath = r'Z:/WISPE_data/WISPE_Tube_B/20210611/2021-06-11/2021-06-11/2021-06-11_0002_cavity_trace_cryo_-60dBm_200pts_3kHzIFBW_500avg/2021-06-11_0002_cavity_trace_cryo_-60dBm_200pts_3kHzIFBW_500avg.ddh5'
+    filepath = r'E:/Data/Cooldown_20210611/SNAIL_Amps/C1/mode_data/2021-06-18/2021-06-18_0001_0.10318mA/2021-06-18_0001_0.10318mA.ddh5'
     # filepath = r'PSB_EP1_Copper_Lid'
     # filepath = r'H:\Data\Fridge Texas\Cooldown_20200917\Cavities\RT_msmt\PC_IP_3_5'
     # (freq, real, imag, mag, phase) = getData(filepath, method="vna",plot_data=0)
     (freq, real, imag, mag, phase) = getData_from_datadict(filepath, plot_data=0)
-    ltrim = 1
-    rtrim = 10
+    ltrim = 500
+    rtrim = 500
     freq = freq[ltrim:-rtrim]
     real = real[ltrim:-rtrim]
     imag = imag[ltrim:-rtrim]
     mag = mag[ltrim:-rtrim]
     phase = phase[ltrim:-rtrim]
     
-    popt, pcov = fit(freq, real, imag, mag, phase, Qguess=(2e3, 1e4), magBackGuess=.0007, phaseGuess = np.piS)  #(ext, int)   
+    popt, pcov = fit(freq, real, imag, mag, phase, Qguess=(3e2, 5e3), magBackGuess=.01, phaseGuess = 0)  #(ext, int)   
 
     print(f'f (Hz): {rounder(popt[2]/2/np.pi)}', )
     fitting_params = list(inspect.signature(reflectionFunc).parameters.keys())[1:]
