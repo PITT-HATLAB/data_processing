@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 #%%
 
 # datadir = r'E:\Data\Cooldown_20210611\SNAIL_Amps\C1\phase_preserving_checks\2021-06-17\amp_off\33_pt_sweep\2021-06-17'
-datadir = r'E:\Data\Cooldown_20210611\SNAIL_Amps\C1\phase_preserving_checks\15dB\amp_on\Multi_LO_sweep\2021-06-21'
+datadir = r'E:\Data\Cooldown_20210611\SNAIL_Amps\C1\phase_preserving_checks\20dB\amp_on\33pt_sweep_with_switch_adjusted\2021-06-23'
 filepaths = find_all_ddh5(datadir)
 
 #%%
@@ -27,7 +27,7 @@ odd_fits = []
 even_contours = []
 odd_contours = []
 for filepath in filepaths: 
-    bins_even, bins_odd, h_even, h_odd, guessParam = PU.extract_2pulse_histogram_from_filepath(filepath, hist_scale = 0.01)
+    bins_even, bins_odd, h_even, h_odd, guessParam = PU.extract_2pulse_histogram_from_filepath(filepath, hist_scale = 0.01, numRecords = 3840*2)
     even_fits.append(PU.fit_2D_Gaussian(bins_even, h_even, 
                                          guessParam[0], 
                                          max_fev = 1000))

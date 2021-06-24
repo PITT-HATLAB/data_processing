@@ -35,9 +35,21 @@ def demod(signal_data, reference_data, mod_freq = 50e6, sampling_rate = 1e9):
         Reference multiplied by Cosine and integrated over each period.
     '''
     
+    '''first pad the arrays to get a multiple of the number of samples in a 
+    demodulation period, this will make the last record technically inaccurate 
+    but there are thousands being 
+    averaged so who cares
+    '''
+    
     #first demodulate both channels
-    point_number = np.arange(np.size(signal_data))
+    # print("Signal Data Shape: ",np.shape(signal_data))
+    # print("Reference Data Shape: ",np.shape(reference_data))
     period = int(sampling_rate/mod_freq)
+    signal_data = np.pad(signal_data, (0,int(period-np.size(signal_data)%period)))
+    reference_data = np.pad(reference_data, (0,int(period-np.size(reference_data)%period)))
+    # print("Signal Data Shape: ",np.shape(signal_data))
+    # print("Reference Data Shape: ",np.shape(reference_data))
+    point_number = np.arange(np.size(reference_data))
     # print('Modulation period: ', period)
     SinArray = np.sin(2*np.pi/period*point_number)
     CosArray = np.cos(2*np.pi/period*point_number)

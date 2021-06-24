@@ -131,8 +131,8 @@ def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = 
     QextGuess = Qguess[0]
     QintGuess = Qguess[1]
     if bounds == None: 
-        bounds=([QextGuess / 10, QintGuess /10, f0Guess-10e6, magBackGuess / 10.0, -2 * np.pi],
-                [QextGuess * 10, QintGuess * 10, f0Guess+10e6, magBackGuess * 10.0, 2 * np.pi])
+        bounds=([QextGuess / 10, QintGuess /10, f0Guess-100e6, magBackGuess / 10.0, -2 * np.pi],
+                [QextGuess * 10, QintGuess * 10, f0Guess+100e6, magBackGuess * 10.0, 2 * np.pi])
     
     target_func = reflectionFunc
     data_to_fit = (real  + 1j * imag).view(np.float)
@@ -167,13 +167,13 @@ def plotRes(freq, real, imag, mag, phase, popt):
 
 if __name__ == '__main__':
     # filepath = easygui.fileopenbox()
-    filepath = r'E:/Data/Cooldown_20210611/SNAIL_Amps/C1/mode_data/2021-06-18/2021-06-18_0001_0.10318mA/2021-06-18_0001_0.10318mA.ddh5'
+    filepath = r'Z:/Data/C1/2021-06-23/2021-06-23_0001_trace_0800_43/2021-06-23_0001_trace_0800_43.ddh5'
     # filepath = r'PSB_EP1_Copper_Lid'
     # filepath = r'H:\Data\Fridge Texas\Cooldown_20200917\Cavities\RT_msmt\PC_IP_3_5'
     # (freq, real, imag, mag, phase) = getData(filepath, method="vna",plot_data=0)
     (freq, real, imag, mag, phase) = getData_from_datadict(filepath, plot_data=0)
-    ltrim = 500
-    rtrim = 500
+    ltrim = 200
+    rtrim = 200
     freq = freq[ltrim:-rtrim]
     real = real[ltrim:-rtrim]
     imag = imag[ltrim:-rtrim]
