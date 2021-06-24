@@ -6,7 +6,7 @@ Created on Thu Apr 29 14:18:59 2021
 """
 from plottr.apps.autoplot import main
 
-from measurement_modules.AWG_and_Alazar import Pulse_Sweeping_utils as PU
+from data_processing.AWG_and_Alazar import Pulse_Processing_utils as PU
 from measurement_modules.Helper_Functions import find_all_ddh5
 import numpy as np
 import matplotlib.pyplot as plt
