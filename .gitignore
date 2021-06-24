@@ -5,3 +5,4 @@ hat_utilities/VNA/__pycache__/VNA_Sweeps.cpython-37.pyc
 hat_utilities/VNA/VNA_ModeSweeper.py
 hat_utilities/__pycache__/Helper_Functions.cpython-37.pyc
 hat_utilities/VNA/__pycache__/VNA_Sweeps_W.cpython-37.pyc
+*.pyc
