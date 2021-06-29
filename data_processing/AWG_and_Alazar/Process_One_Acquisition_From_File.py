@@ -6,11 +6,11 @@ Created on Thu Apr 29 14:18:59 2021
 """
 from plottr.apps.autoplot import main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
-from hat_utilities.AWG_and_Alazar.Pulse_Sweeping_utils import boxcar_histogram
+from measurement_modules.AWG_and_Alazar.Pulse_Sweeping_utils import boxcar_histogram
 import numpy as np
 import matplotlib.pyplot as plt
 
-datapath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Hakan_data\Sweeps\Amplifier_Pump_Power\2021-05-04\2021-05-04_0002_power_-2.0\2021-05-04_0002_power_-2.0.ddh5'
+datapath = r'E:/Data/Cooldown_20210611/SNAIL_Amps/C1/phase_preserving_checks/2021-06-16_0011_rotation_phase_3.77/2021-06-16_0011_rotation_phase_3.77.ddh5'
 
 #autoplot, easiest way to see data if you dont need access to values 
 # main(datapath, 'data')
@@ -19,61 +19,72 @@ datapath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Hakan_data\Sweeps\Amplifier
 dd = all_datadicts_from_hdf5(datapath)['data']
 
 time_unit = dd['time']['unit']
-time_vals = dd['time']['values']
+time_vals = dd['time']['values'].reshape((7500, 208))
 
 rec_unit = dd['record_num']['unit']
-rec_num = dd['record_num']['values']
+rec_num = dd['record_num']['values'].reshape((7500, 208))
 
-I_plus = dd['I_plus']['values']
-I_minus = dd['I_minus']['values']
+I_plus = dd['I_plus']['values'].reshape((7500, 208))
+I_minus = dd['I_minus']['values'].reshape((7500, 208))
 
-Q_plus = dd['Q_plus']['values']
-Q_minus = dd['Q_minus']['values']
+Q_plus = dd['Q_plus']['values'].reshape((7500, 208))
+Q_minus = dd['Q_minus']['values'].reshape((7500, 208))
 
 #plotting averages
-I_plus_avg = np.average(np.reshape(I_plus, (7500, 208)), axis = 0)
-I_minus_avg = np.average(np.reshape(I_minus, (7500, 208)), axis = 0)
-Q_plus_avg = np.average(np.reshape(Q_plus, (7500, 208)), axis = 0)
-Q_minus_avg = np.average(np.reshape(Q_minus, (7500, 208)), axis = 0)
+I_plus_avg = np.average(I_plus, axis = 0)
+I_minus_avg = np.average(I_minus, axis = 0)
+Q_plus_avg = np.average(Q_plus, axis = 0)
+Q_minus_avg = np.average(Q_minus, axis = 0)
 
-fig = plt.figure()
-ax1 = fig.add_subplot(221)
-ax1.set_title("I(t) averaged over records")
-ax1.plot(time_vals[rec_num == 0], I_plus_avg, label = 'Positive Detuning')
-ax1.plot(time_vals[rec_num == 0], I_minus_avg, label = 'Negative Detuning')
-ax1.set_xlabel('Time (ns)')
-ax1.set_ylabel('Voltage (DAC Value)')
-ax1.legend()
+from measurement_modules.AWG_and_Alazar import Pulse_Sweeping_utils as PU
+Gaussian_fits = []
+#re-weave the data back into it's original pre-saved form
 
-ax2 = fig.add_subplot(222)
-ax2.set_title("Q(t) averaged over records")
-ax2.set_xlabel('Time (ns)')
-ax2.set_ylabel('Voltage (DAC Value)')
-ax2.plot(time_vals[rec_num == 0], Q_plus_avg, label = 'Positive Detuning')
-ax2.plot(time_vals[rec_num == 0], Q_minus_avg, label = 'Negative Detuning')
-ax2.legend()
+bins_even, bins_odd, h_even, h_odd = PU.Process_One_Acquisition(datapath.split('/')[-1], I_plus, I_minus, Q_plus, Q_minus, 55, 150, hist_scale = 0.02)
+#%%
+even_info_class = PU.fit_2D_Gaussian(bins_even, h_even)
+odd_info_class = PU.fit_2D_Gaussian(bins_odd, h_odd)
 
-ax3 = fig.add_subplot(223)
-ax3.set_title("Trajectories")
-ax3.set_aspect(1)
-ax3.plot(I_minus_avg, Q_minus_avg, label = 'Negative')
-ax3.plot(I_plus_avg, Q_plus_avg, label = 'Positive')
-ax3.legend()
+xdata, ydata_even, ydata_odd = np.tile(bins_even[0:-1], 99), h_even.flatten(), h_odd.flatten()
 
-# ax4 = fig.add_subplot(224)
-# #plot just one record, record 1000 for example
-# ex_num = 1000
-# filt = rec_num == ex_num #generates boolean array
-# ax4.set_title(f'Record number {ex_num}')
-# ax4.plot(time_vals[filt], I_plus[filt], label = 'I_plus')
-# ax4.plot(time_vals[filt], I_minus[filt], label = 'I_minus')
-# ax4.plot(time_vals[filt], Q_plus[filt], label = 'Q_plus')
-# ax4.plot(time_vals[filt], Q_minus[filt], label = 'Q_minus')
-# ax4.legend()
-# ax4.set_xlabel('Time (ns)')
-# ax4.set_ylabel('Voltage (DAC Value)')
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+    
+even_line_x, even_line_y = PU.get_contour_line(bins_even[:-1], bins_even[:-1], PU.Gaussian_2D(xdata,*even_info_class.info_dict['popt']).reshape(99,99))
 
-ax4 = fig.add_subplot(224)
-ax4.set_aspect(1)
-boxcar_histogram(fig, ax4, 50, 150, I_plus, Q_plus)
+odd_line_x, odd_line_y = PU.get_contour_line(bins_odd[:-1], bins_odd[:-1], PU.Gaussian_2D(xdata,*odd_info_class.info_dict['popt']).reshape(99,99))
+
+fig, ax = plt.subplots()
+pm = ax.pcolormesh(bins_even, bins_even, h_even+h_odd)
+ax.plot(even_line_x, even_line_y, linestyle = '--', color = 'white')
+ax.plot(odd_line_x, odd_line_y, linestyle = '--', color = 'white')
+ax.set_xlabel('In-phase (V)')
+ax.set_ylabel('Quadrature-phase (V)')
+ax.set_title('100x100 bin Histogram')
+ax.set_aspect(1)
+divider = make_axes_locatable(ax)
+cax = divider.append_axes('right', size='5%', pad=0.05)
+fig.colorbar(pm, cax=cax, orientation='vertical')
+ax.grid()
+
+even_info_class.plot_on_ax(ax)
+odd_info_class.plot_on_ax(ax)
+even_info_class.print_info()
+print('\n')
+odd_info_class.print_info()
+plt.show()
+Gaussian_fits.append([even_info_class, odd_info_class])
+    
+# even_voltage = np.sqrt(np.sum(even_info_class.center_vec()**2))
+# odd_voltage = np.sqrt(np.sum(odd_info_class.center_vec()**2))
+
+#%%
+S_off = Gaussian_fits[0]
+S_on = Gaussian_fits[1]
+mag_gain1 = np.linalg.norm(S_on[0].center_vec())/np.linalg.norm(S_off[0].center_vec())
+mag_gain2 = np.linalg.norm(S_on[1].center_vec())/np.linalg.norm(S_off[1].center_vec())
+
+print("Power gain 1 (dB): ", 20*np.log10(mag_gain1))
+print("Power gain 2 (dB): ", 20*np.log10(mag_gain2))
+avg_sigma_on = np.average(np.average(S_on[0].info_dict['sigma_x'], S_on[0].info_dict['sigma_y']))
+print("avg_sigma_on/avg_sigma_off: ", S_on[0].info_dict['sigma_x'])
 

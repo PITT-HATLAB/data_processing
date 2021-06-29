@@ -5,11 +5,14 @@ Created on Thu Apr 29 14:18:59 2021
 @author: Ryan Kaufman - Hatlab
 """
 from plottr.apps.autoplot import main
+from plottr.data import datadict_storage as dds, datadict as dd
 from data_processing.signal_processing import Pulse_Processing_utils as PU
-=======
-from data_processing.AWG_and_Alazar import Pulse_Processing_utils as PU
-from measurement_modules.Helper_Functions import find_all_ddh5
-
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import warnings
+warnings.filterwarnings("ignore")
+import os
 def find_all_ddh5(cwd): 
     dirs = os.listdir(cwd)
     filepaths = []
@@ -35,24 +38,74 @@ filepaths = find_all_ddh5(datadir)
 # IQ_offset =  np.array((0.8358519968365662, 0.031891495461217216))/1000
 IQ_offset =  np.array((0,0))
 cf = 6.19665e9
-#%%
+#%%process everything into plottr's format so that I dont lose my mind with nested dictionaries
 import collections
 amp_on_list = [f for f in filepaths if f.find('amp_1')!=-1]
 amp_off_list = [f for f in filepaths if f.find('amp_0')!=-1]
 #sort everything
-sweep_filepath_dict = collections.defaultdict(dict)
-for filepath in amp_on_list: 
-    det = (float(filepath.split('LO_')[-1].split('_')[0])-cf)/1e6
-    pwr = (float(filepath.split('pwr_')[-1].split('_')[0])-cf)
-    phase = filepath.split('rotation')[-1].split('.ddh5')[0]+'_rad'
-    sweep_filepath_dict[f'{det}'][f'{pwr}'][f'{phase}'] = filepath
+savedir = r'Z:\Data\C1\C1_Hakan\phase_preserving_checks\20dB\Multi_LO_Multi_power\fits'
+savename = 'LO_PWR_PHASE_fits'
+data = dd.DataDict(
+        detuning = dict(unit = 'MHz'),
+        pump_power = dict(unit = 'dBm'),
+        phase = dict(unit = 'dBm'),
+        
+        sigma_x_even = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
+        sigma_y_even = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
+        voltage_even = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
+        sigma_x_odd = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
+        sigma_y_odd = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
+        voltage_odd = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
+        
+        sep_voltage = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
+        sep_over_sigma = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV')
+        )
+
+with dds.DDH5Writer(savedir, data, name=savename) as writer:
+    for filepath in amp_on_list: 
+        det = (float(filepath.split('LO_')[-1].split('_')[0])-cf)/1e6
+        pwr = (float(filepath.split('pwr_')[-1].split('_')[0]))
+        phase = float(filepath.split('phase_')[-1].split('.ddh5')[0])
+        
+        bins_even, bins_odd, h_even, h_odd, guessParam = PU.extract_2pulse_histogram_from_filepath(filepath, odd_only = 0, numRecords = 3840*2, IQ_offset = IQ_offset, plot = False)
+        even_fit = PU.fit_2D_Gaussian(f'det_{det}_pwrr_{pwr}_phase_{phase}_even', bins_even, h_even, 
+                                             guessParam[0], 
+                                             max_fev = 1000, 
+                                             contour_line = 2)
+        
+        odd_fit = PU.fit_2D_Gaussian(f'det_{det}_pwrr_{pwr}_phase_{phase}_odd', bins_odd, h_odd, 
+                                            guessParam[1],
+                                            max_fev = 1000, 
+                                            contour_line = 2)
+
+        writer.add_data(
+            detuning =  det, 
+            pump_power = pwr, 
+            phase = phase, 
+            
+            sigma_x_even = even_fit.info_dict['sigma_x']*1000,
+            sigma_x_odd = odd_fit.info_dict['sigma_x']*1000,
+            
+            sigma_y_even = even_fit.info_dict['sigma_y']*1000,
+            sigma_y_odd = odd_fit.info_dict['sigma_y']*1000,
+            
+            voltage_even = np.linalg.norm(even_fit.center_vec())*1000, 
+            voltage_odd = np.linalg.norm(odd_fit.center_vec())*1000,
+            
+            sep_voltage = np.linalg.norm((even_fit-odd_fit).center_vec())*1000, 
+            sep_over_sigma = np.linalg.norm((even_fit-odd_fit).center_vec())/np.linalg.norm(
+                np.array([np.average([even_fit.info_dict['sigma_x'], odd_fit.info_dict['sigma_x']]), 
+                          np.average([even_fit.info_dict['sigma_y'], odd_fit.info_dict['sigma_y']])])
+                )
+            
+            )
 
 # filepaths = [r'Z:/Data/C1/C1_Hakan/phase_preserving_checks/20dB/Multi-LO_sweep/2021-06-24/2021-06-24_0001_LO_6181650000.0_20dB_Gain_pt_amp_0_rotation_phase_0.0/2021-06-24_0001_LO_6181650000.0_20dB_Gain_pt_amp_0_rotation_phase_0.0.ddh5']
-#%%process by detuniing
+#%%process by detuning
 sweep_info_dict = collections.defaultdict(dict)
 det_arr = np.array(list(sweep_filepath_dict.keys())).astype(float)
-det_filt = (np.abs(det_arr)<=5)*(np.abs(det_arr)>0)
-for det in det_arr[det_filt]:
+pwr_arr = np.array(list(sweep_filepath_dict.keys())).astype(float)
+for det in det_arr:
     even_fits = []
     odd_fits = []
     names = []
@@ -163,5 +216,13 @@ ax.set_xlabel('detuning (MHz)')
 ax.set_ylabel(r'$\frac{Average\ voltage\ (mV)}{Average\ \sigma\ (mV)}$')
 ax.grid()
 ax.legend()
+
+
+
+
+
+
+
+
 
 
