@@ -33,7 +33,7 @@ def find_all_ddh5(cwd):
     return filepaths
 
 #%%
-datadir = r'Z:\Data\C1\C1_Hakan\phase_preserving_checks\20dB\Multi_LO_Multi_power'
+datadir = r'Z:\Data\C1\C1_Hakan\phase_preserving_checks\20dB\Multi-LO_sweep\2021-06-24'
 filepaths = find_all_ddh5(datadir)
 # IQ_offset =  np.array((0.8358519968365662, 0.031891495461217216))/1000
 IQ_offset =  np.array((0,0))
@@ -46,9 +46,8 @@ amp_off_list = [f for f in filepaths if f.find('amp_0')!=-1]
 sweep_filepath_dict = collections.defaultdict(dict)
 for filepath in amp_on_list: 
     det = (float(filepath.split('LO_')[-1].split('_')[0])-cf)/1e6
-    pwr = (float(filepath.split('pwr_')[-1].split('_')[0])-cf)
     phase = filepath.split('rotation')[-1].split('.ddh5')[0]+'_rad'
-    sweep_filepath_dict[f'{det}'][f'{pwr}'][f'{phase}'] = filepath
+    sweep_filepath_dict[f'{det}'][f'{phase}'] = filepath
 
 # filepaths = [r'Z:/Data/C1/C1_Hakan/phase_preserving_checks/20dB/Multi-LO_sweep/2021-06-24/2021-06-24_0001_LO_6181650000.0_20dB_Gain_pt_amp_0_rotation_phase_0.0/2021-06-24_0001_LO_6181650000.0_20dB_Gain_pt_amp_0_rotation_phase_0.0.ddh5']
 #%%process by detuniing
@@ -94,19 +93,11 @@ for det in det_arr[det_filt]:
     sy_arr = []
     center_loc_arr = []
     mag_arr = []
-    
     for i, fit in enumerate(even_fits+odd_fits): 
         sx_arr.append(fit.info_dict['sigma_x'])
         sy_arr.append(fit.info_dict['sigma_y'])
         center_loc_arr.append(fit.center_vec())
         mag_arr.append(np.linalg.norm(fit.center_vec()))
-    
-    sep_arr = []
-    #get the seperation distance voltage for each
-    for i in range(len(even_fits)):
-        diff_class = even_fits[i]-odd_fits[i]
-        sep_arr.append(np.linalg.norm(diff_class.center_vec()))
-        
     
     # print("sigma x average: ", np.average(sx_arr)*1000, "mV std dev: ", np.std(sx_arr)*1000, "mV")
     # print("sigma y average: ", np.average(sy_arr)*1000, "mV std dev: ", np.std(sy_arr)*1000, "mV")
@@ -115,7 +106,6 @@ for det in det_arr[det_filt]:
     sweep_info_dict[f'{det}']['sigma_x_average_(mV)'] = np.average(sx_arr)*1000
     sweep_info_dict[f'{det}']['sigma_y_average (mV)'] = np.average(sy_arr)*1000
     sweep_info_dict[f'{det}']['avg_magnitude (mV)'] = np.average(mag_arr)*1000
-    sweep_info_dict[f'{det}']['average seperation voltage (mV)'] = np.average(sep_arr)*1000
     
     
     

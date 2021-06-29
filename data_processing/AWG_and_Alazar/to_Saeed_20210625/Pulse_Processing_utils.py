@@ -134,11 +134,7 @@ class Gaussian_info:
     def __sub__(self, other_GC):
         sub_class = Gaussian_info()
         for key, val in self.info_dict.items(): 
-            # print(key, val)
-            if type(val) == np.float64: 
-                sub_class.info_dict[key] = val - other_GC.info_dict[key]
-            else: 
-                sub_class.info_dict[key] = None
+            sub_class.info_dict[key] = val - other_GC.info_dict[key]
         return sub_class
     
     def center_vec(self): 
