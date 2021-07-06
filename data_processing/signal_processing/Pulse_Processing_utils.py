@@ -9,7 +9,7 @@ and functionalizing Alazar acquiring
 """
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
+from matplotlib.patches import Ellipse
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -108,16 +108,17 @@ def boxcar_histogram(fig, ax, start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 
 from scipy.optimize import curve_fit
 
 
-def Gaussian_2D(M,amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
+def Gaussian_2D(M,amplitude, xo, yo, sigma_x, sigma_y, theta):
     x, y = M
     xo = float(xo)
     yo = float(yo)
     a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
     b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
     c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
-    g = offset + amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo)
+    g = amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo)
                             + c*((y-yo)**2)))
     return g
+
 
 class Gaussian_info: 
     def __init__(self): 
@@ -147,6 +148,16 @@ class Gaussian_info:
         ax.annotate("", xy=self.center_vec(), xytext=(0, 0), arrowprops=dict(arrowstyle = '->', lw = 3, color = color))
     def plot_array(self):
         return Gaussian_2D(*self.info_dict['popt'])
+    def sigma_contour(self): 
+        x0, y0 = self.center_vec()
+        sx = self.info_dict['sigma_x']
+        sy = self.info_dict['sigma_y']
+        angle = self.info_dict['theta']
+        return Ellipse((x0, y0), sx, sy, angle = angle/(2*np.pi)*360, 
+                       fill = False, 
+                       ls = '--',
+                       color = 'red',
+                       lw = 2)
         
 
 def fit_2D_Gaussian(name, 
@@ -162,6 +173,9 @@ def fit_2D_Gaussian(name,
     # print('xdata_shape: ', np.shape(xdata))
     # print("y shape: ",np.shape(ydata))
     print("running curve_fit")
+    #,amplitude, xo, yo, sigma_x, sigma_y, theta
+    bounds = [[0,np.min(bins), np.min(bins), 0, 0, 0],
+              [np.max(h_arr), np.max(bins), np.max(bins), np.max(bins), np.max(bins), 2*np.pi]]
     popt, pcov = curve_fit(Gaussian_2D, xdata, ydata, p0 = guessParams, maxfev = max_fev)
     GC = Gaussian_info()
     GC.info_dict['name'] = name
@@ -172,7 +186,6 @@ def fit_2D_Gaussian(name,
     GC.info_dict['sigma_x'] = np.abs(popt[3])
     GC.info_dict['sigma_y'] = np.abs(popt[4])
     GC.info_dict['theta'] = popt[5]
-    GC.info_dict['offset'] = popt[6]
     GC.info_dict['popt'] = popt
     GC.info_dict['pcov'] = pcov
     GC.info_dict['contour'] = get_contour_line(X, Y, Gaussian_2D(xdata, *popt).reshape(resh_size), contour_line = contour_line)
@@ -210,7 +223,7 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
     Q_minus_avg = np.average(Q_minus, axis = 0)
     
     if hist_scale == None: 
-        hist_scale = 1.2*np.max(np.array([I_plus_avg, I_minus_avg, Q_plus_avg, Q_minus_avg]))
+        hist_scale = 2*np.max(np.array([I_plus_avg, I_minus_avg, Q_plus_avg, Q_minus_avg]))
     
     #re-weave the data back into it's original pre-saved form
     
@@ -232,8 +245,8 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
     Minus_thetaGuess = 0
     Minus_offsetGuess = 0
     
-    guessParams = [[Plus_ampGuess, Plus_x0Guess, Plus_y0Guess, Plus_sxGuess, Plus_syGuess, Plus_thetaGuess, Plus_offsetGuess],
-                   [Minus_ampGuess, Minus_x0Guess, Minus_y0Guess, Minus_sxGuess, Minus_syGuess, Minus_thetaGuess, Minus_offsetGuess]]
+    guessParams = [[Plus_ampGuess, Plus_x0Guess, Plus_y0Guess, Plus_sxGuess, Plus_syGuess, Plus_thetaGuess],
+                   [Minus_ampGuess, Minus_x0Guess, Minus_y0Guess, Minus_sxGuess, Minus_syGuess, Minus_thetaGuess]]
     
     return bins_even, bins_odd, h_even, h_odd, guessParams
         

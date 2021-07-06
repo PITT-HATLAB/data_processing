@@ -9,7 +9,7 @@ from plottr.data import datadict_storage as dds, datadict as dd
 from data_processing.signal_processing import Pulse_Processing_utils as PU
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1 import make_axes_locatable  
 import warnings
 warnings.filterwarnings("ignore")
 import os
@@ -32,18 +32,64 @@ def find_all_ddh5(cwd):
                     filepaths.append(cwd+'\\'+path)
     return filepaths
 
-#%%
-datadir = r'Z:\Data\C1\C1_Hakan\phase_preserving_checks\20dB\Multi_LO_Multi_power'
+#%%Normalization run, to calibrate the amp gain
+
+IQ_offset =  np.array((0,0))
+records_per_pulsetype = 3840
+cf = 6.151798714e9
+# amp_off_filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/Pump_power_sweeps/1/2021-06-30/2021-06-30_0011_LO_6152798714.0_pwr_-8.69_amp_1_rotation_phase_2.094/2021-06-30_0011_LO_6152798714.0_pwr_-8.69_amp_1_rotation_phase_2.094.ddh5'
+amp_off_filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/amp_off_calibration/2021-06-30/2021-06-30_0003_LO_6152798714.0_pwr_-20_amp_0_rotation_phase_0.0/2021-06-30_0003_LO_6152798714.0_pwr_-20_amp_0_rotation_phase_0.0.ddh5'
+bins_even, bins_odd, h_even, h_odd, guessParam = PU.extract_2pulse_histogram_from_filepath(amp_off_filepath, 
+                                                                                           odd_only = 0, 
+                                                                                           numRecords = int(3840*2), 
+                                                                                           IQ_offset = IQ_offset, 
+                                                                                           plot = True)
+
+amp_off_even_fit = PU.fit_2D_Gaussian('amp_off_even', bins_even, h_even, 
+                                        guessParam[0],
+                                        max_fev = 1000,
+                                        contour_line = 2)
+amp_off_odd_fit = PU.fit_2D_Gaussian('amp_off_odd', bins_odd, h_odd,
+                                        guessParam[1],
+                                        max_fev = 1000,
+                                        contour_line = 2)
+even_fit = amp_off_even_fit
+odd_fit = amp_off_odd_fit
+
+histogram_data_fidelity = 1-1/2*np.sum(np.sqrt((h_odd/records_per_pulsetype)*(h_even/records_per_pulsetype)))
+        
+bins_fine = np.linspace(np.min([bins_even, bins_odd]), np.max([bins_even, bins_odd]), 1000)
+
+even_fit_h = PU.Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *even_fit.info_dict['popt'])/(2*np.pi*even_fit.info_dict['amplitude']*even_fit.info_dict['sigma_x']*even_fit.info_dict['sigma_y'])
+
+odd_fit_h = PU.Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *odd_fit.info_dict['popt'])/(2*np.pi*odd_fit.info_dict['amplitude']*odd_fit.info_dict['sigma_x']*odd_fit.info_dict['sigma_y'])
+
+fit_fidelity = 1-1/2*np.sum(np.sqrt(np.abs(even_fit_h)*np.abs(odd_fit_h)))
+
+fig, ax = plt.subplots()
+pc = ax.pcolormesh(bins_even, bins_even, h_even)
+amp_off_even_fit.plot_on_ax(ax)
+ax.add_patch(amp_off_even_fit.sigma_contour())
+ax.set_aspect(1)
+plt.colorbar(pc)
+
+fig, ax = plt.subplots()
+pc = ax.pcolormesh(bins_odd, bins_odd, h_odd)
+amp_off_odd_fit.plot_on_ax(ax)
+ax.add_patch(amp_off_odd_fit.sigma_contour())
+ax.set_aspect(1)
+plt.colorbar(pc)
+
+amp_off_voltage = np.average([np.linalg.norm(amp_off_odd_fit.center_vec()), np.linalg.norm(amp_off_even_fit.center_vec())])*1000
+
+#%%process everything into plottr's format so that I dont lose my mind with nested dictionaries
+datadir = r'Z:\Data\C1\C1_Hakan\Gain_pt_0.103mA\Pump_power_sweeps\1'
 filepaths = find_all_ddh5(datadir)
 # IQ_offset =  np.array((0.8358519968365662, 0.031891495461217216))/1000
-IQ_offset =  np.array((0,0))
-cf = 6.19665e9
-#%%process everything into plottr's format so that I dont lose my mind with nested dictionaries
-import collections
 amp_on_list = [f for f in filepaths if f.find('amp_1')!=-1]
 amp_off_list = [f for f in filepaths if f.find('amp_0')!=-1]
 #sort everything
-savedir = r'Z:\Data\C1\C1_Hakan\phase_preserving_checks\20dB\Multi_LO_Multi_power\fits'
+savedir = r'Z:\Data\C1\C1_Hakan\Gain_pt_0.103mA\Pump_power_sweeps\1_fit'
 savename = 'LO_PWR_PHASE_fits'
 data = dd.DataDict(
         detuning = dict(unit = 'MHz'),
@@ -56,9 +102,12 @@ data = dd.DataDict(
         sigma_x_odd = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
         sigma_y_odd = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
         voltage_odd = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
-        
         sep_voltage = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV'),
-        sep_over_sigma = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV')
+        sep_over_sigma = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'mV/mV'),
+        
+        even_power_gain = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'dB'),
+        odd_power_gain = dict(axes=['detuning', 'pump_power', 'phase'], unit = 'dB'), 
+        avg_power_gain =  dict(axes=['detuning', 'pump_power', 'phase'], unit = 'dB')
         )
 
 with dds.DDH5Writer(savedir, data, name=savename) as writer:
@@ -66,8 +115,13 @@ with dds.DDH5Writer(savedir, data, name=savename) as writer:
         det = (float(filepath.split('LO_')[-1].split('_')[0])-cf)/1e6
         pwr = (float(filepath.split('pwr_')[-1].split('_')[0]))
         phase = float(filepath.split('phase_')[-1].split('.ddh5')[0])
+        records_per_pulsetype = 3840
+        bins_even, bins_odd, h_even, h_odd, guessParam = PU.extract_2pulse_histogram_from_filepath(filepath, 
+                                                                                                   odd_only = 0, 
+                                                                                                   numRecords = records_per_pulsetype*2, 
+                                                                                                   IQ_offset = IQ_offset, 
+                                                                                                   plot = False)
         
-        bins_even, bins_odd, h_even, h_odd, guessParam = PU.extract_2pulse_histogram_from_filepath(filepath, odd_only = 0, numRecords = 3840*2, IQ_offset = IQ_offset, plot = False)
         even_fit = PU.fit_2D_Gaussian(f'det_{det}_pwrr_{pwr}_phase_{phase}_even', bins_even, h_even, 
                                              guessParam[0], 
                                              max_fev = 1000, 
@@ -77,6 +131,15 @@ with dds.DDH5Writer(savedir, data, name=savename) as writer:
                                             guessParam[1],
                                             max_fev = 1000, 
                                             contour_line = 2)
+        histogram_data_fidelity = 1-1/2*np.sum(np.sqrt((h_odd/records_per_pulsetype)*(h_even/records_per_pulsetype)))
+        
+        bins_fine = np.arange(np.min([bins_even, bins_odd]), np.max([bins_even, bins_odd]), 1e4)
+        
+        even_fit_h = PU.Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *even_fit.info_dict['popt'])/(2*np.pi*even_fit.info_dict['amplitude']*even_fit.info_dict['sigma_x']*even_fit.info_dict['sigma_y'])
+        
+        odd_fit_h = PU.Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *odd_fit.info_dict['popt'])/(2*np.pi*odd_fit.info_dict['amplitude']*odd_fit.info_dict['sigma_x']*odd_fit.info_dict['sigma_y'])
+        
+        fit_fidelity = 1-1/2*np.sum(np.sqrt(even_fit_h*odd_fit_h))
 
         writer.add_data(
             detuning =  det, 
@@ -96,133 +159,8 @@ with dds.DDH5Writer(savedir, data, name=savename) as writer:
             sep_over_sigma = np.linalg.norm((even_fit-odd_fit).center_vec())/np.linalg.norm(
                 np.array([np.average([even_fit.info_dict['sigma_x'], odd_fit.info_dict['sigma_x']]), 
                           np.average([even_fit.info_dict['sigma_y'], odd_fit.info_dict['sigma_y']])])
-                )
-            
+                ),
+            even_power_gain = 20*np.log10(np.linalg.norm(even_fit.center_vec())*1000/amp_off_voltage), 
+            odd_power_gain = 20*np.log10(np.linalg.norm(odd_fit.center_vec())*1000/amp_off_voltage), 
+            avg_power_gain = 20*np.log10(np.average([np.linalg.norm(even_fit.center_vec()), np.linalg.norm(odd_fit.center_vec())])*1000/amp_off_voltage)
             )
-
-# filepaths = [r'Z:/Data/C1/C1_Hakan/phase_preserving_checks/20dB/Multi-LO_sweep/2021-06-24/2021-06-24_0001_LO_6181650000.0_20dB_Gain_pt_amp_0_rotation_phase_0.0/2021-06-24_0001_LO_6181650000.0_20dB_Gain_pt_amp_0_rotation_phase_0.0.ddh5']
-#%%process by detuning
-sweep_info_dict = collections.defaultdict(dict)
-det_arr = np.array(list(sweep_filepath_dict.keys())).astype(float)
-pwr_arr = np.array(list(sweep_filepath_dict.keys())).astype(float)
-for det in det_arr:
-    even_fits = []
-    odd_fits = []
-    names = []
-    
-    for phase, filepath in sweep_filepath_dict[f'{det}'].items():
-        # print(phase, filepath)
-        name = f"Detuning_{det}_MHz{phase}"
-        names.append(name)
-        print(f'processing {name}')
-        bins_even, bins_odd, h_even, h_odd, guessParam = PU.extract_2pulse_histogram_from_filepath(filepath, odd_only = 0, numRecords = 3840*2, IQ_offset = IQ_offset, plot = False)
-        even_fits.append(PU.fit_2D_Gaussian(name+'_even', bins_even, h_even, 
-                                             guessParam[0], 
-                                             max_fev = 1000, 
-                                             contour_line = 2))
-        
-        odd_fits.append(PU.fit_2D_Gaussian(name+'_odd', bins_odd, h_odd, 
-                                            guessParam[1],
-                                            max_fev = 1000, 
-                                            contour_line = 2))
-
-    fig = plt.figure(figsize = (18,12))
-    ax = fig.add_subplot(111)
-    ax.set_aspect(1)
-    for i, fit in enumerate(even_fits+odd_fits): 
-        # print(fit.info_dict['contour'][0])
-        try: 
-            ax.plot(fit.info_dict['contour'][0], fit.info_dict['contour'][1], label = names[i])
-        except: 
-            ax.plot(fit.info_dict['contour'][0], fit.info_dict['contour'][1], label = names[i//2])
-        fit.plot_on_ax(ax, color = 'black')
-        ax.legend()
-    
-    # get average sigmas and other stats
-    fig, ax = plt.subplots()
-    sx_arr = []
-    sy_arr = []
-    center_loc_arr = []
-    mag_arr = []
-    
-    for i, fit in enumerate(even_fits+odd_fits): 
-        sx_arr.append(fit.info_dict['sigma_x'])
-        sy_arr.append(fit.info_dict['sigma_y'])
-        center_loc_arr.append(fit.center_vec())
-        mag_arr.append(np.linalg.norm(fit.center_vec()))
-    
-    sep_arr = []
-    #get the seperation distance voltage for each
-    for i in range(len(even_fits)):
-        diff_class = even_fits[i]-odd_fits[i]
-        sep_arr.append(np.linalg.norm(diff_class.center_vec()))
-        
-    
-    # print("sigma x average: ", np.average(sx_arr)*1000, "mV std dev: ", np.std(sx_arr)*1000, "mV")
-    # print("sigma y average: ", np.average(sy_arr)*1000, "mV std dev: ", np.std(sy_arr)*1000, "mV")
-    # print("Avg magnitude: ", np.average(mag_arr))
-    
-    sweep_info_dict[f'{det}']['sigma_x_average_(mV)'] = np.average(sx_arr)*1000
-    sweep_info_dict[f'{det}']['sigma_y_average (mV)'] = np.average(sy_arr)*1000
-    sweep_info_dict[f'{det}']['avg_magnitude (mV)'] = np.average(mag_arr)*1000
-    sweep_info_dict[f'{det}']['average seperation voltage (mV)'] = np.average(sep_arr)*1000
-    
-    
-    
-    
-#%% plotting summary information
-#extract detunings array, average_mag_array, sigma_x_array, and sigma_y array
-det_arr = []
-avg_mag_arr = []
-sx_arr = []
-sy_arr = []
-for det in sweep_info_dict.keys():
-    det_arr.append(float(det))
-    sx_arr.append(sweep_info_dict[det]['sigma_x_average_(mV)'])
-    sy_arr.append(sweep_info_dict[det]['sigma_y_average (mV)'])
-    avg_mag_arr.append(sweep_info_dict[det]['avg_magnitude (mV)'])
-det_arr = np.array(det_arr)
-avg_mag_array = np.array(avg_mag_arr)
-sx_arr = np.array(sx_arr)
-sy_arr = np.array(sy_arr)
-
-
-SMALL_SIZE = 8
-MEDIUM_SIZE = 12
-BIGGER_SIZE = 18
-
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-
-
-plt.close('all')
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.plot(det_arr, avg_mag_arr, '.')
-ax.set_xlabel('detuning (MHz)')
-ax.set_ylabel('Average voltage (mV)')
-ax.grid()
-
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.plot(det_arr, avg_mag_arr/sx_arr, '.', label = '$\sigma_x$')
-ax.plot(det_arr, avg_mag_arr/sy_arr, '.', label = '$\sigma_y$')
-ax.set_xlabel('detuning (MHz)')
-ax.set_ylabel(r'$\frac{Average\ voltage\ (mV)}{Average\ \sigma\ (mV)}$')
-ax.grid()
-ax.legend()
-
-
-
-
-
-
-
-
-
-
