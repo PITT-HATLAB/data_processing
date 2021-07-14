@@ -1,9 +1,9 @@
-import easygui
+# import easygui
 from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import matplotlib.pyplot as plt
 import numpy as np
-from measurement_modules.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target
+from data_processing.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target
 from data_processing.fitting.QFit import fit, plotRes, reflectionFunc
 import inspect
 from plottr.data import datadict_storage as dds, datadict as dd
@@ -102,9 +102,9 @@ class fit_fluxsweep():
             base_Qint = base_popt[1], 
             base_Qext = base_popt[0], 
             
-            base_resonant_frequency_error = base_pconv[2, 2]/(2*np.pi), 
-            base_Qint_error = base_pconv[1, 1], 
-            base_Qext_error = base_pconv[0, 0], 
+            base_resonant_frequency_error = np.sqrt(base_pconv[2, 2])/(2*np.pi), 
+            base_Qint_error = np.sqrt(base_pconv[1, 1]), 
+            base_Qext_error = np.sqrt(base_pconv[0, 0]), 
             )
     def semiauto_fit(self, bias_currents, vna_freqs, vna_mags, vna_phases, popt, debug = False, savedata = False, smooth = False, smooth_win = 11, adaptive_window = False, adapt_win_size = 300e6, fourier_filter = False, fourier_cutoff = 40, pconv_tol = 2):
         res_freqs = np.zeros(np.size(np.unique(bias_currents)))

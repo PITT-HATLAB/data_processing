@@ -5,12 +5,12 @@ Created on Fri Feb 19 14:27:01 2021
 @author: Hatlab_3
 """
 
-import easygui
+# import easygui
 from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import matplotlib.pyplot as plt
 import numpy as np
-from measurement_modules.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row
+from data_processing.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row
 import matplotlib.colors as color
 from scipy.ndimage import gaussian_filter
 

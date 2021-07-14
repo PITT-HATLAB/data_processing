@@ -4,7 +4,7 @@ import csv
 import h5py
 import inspect
 from scipy.optimize import curve_fit
-import easygui
+# import easygui
 from plottr.data import datadict_storage as dds, datadict as dd
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 

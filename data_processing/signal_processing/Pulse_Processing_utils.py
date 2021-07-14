@@ -175,7 +175,7 @@ def fit_2D_Gaussian(name,
     print("running curve_fit")
     #,amplitude, xo, yo, sigma_x, sigma_y, theta
     bounds = [[0,np.min(bins), np.min(bins), 0, 0, 0],
-              [np.max(h_arr), np.max(bins), np.max(bins), np.max(bins), np.max(bins), 2*np.pi]]
+              [np.max(h_arr), np.max(bins), np.max(bins), np.max(bins), np.max(bins), np.pi/2]]
     popt, pcov = curve_fit(Gaussian_2D, xdata, ydata, p0 = guessParams, maxfev = max_fev)
     GC = Gaussian_info()
     GC.info_dict['name'] = name
@@ -216,6 +216,8 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
     Q_plus = dd['Q_plus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-Q_offset
     Q_minus = dd['Q_minus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-Q_offset
     
+    print(np.size(I_minus))
+    
     #averages
     I_plus_avg = np.average(I_plus, axis = 0)
     I_minus_avg = np.average(I_minus, axis = 0)
@@ -250,5 +252,172 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
     
     return bins_even, bins_odd, h_even, h_odd, guessParams
         
+def get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2): 
     
+    bins_even, bins_odd, h_even, h_odd, guessParam = extract_2pulse_histogram_from_filepath(amp_off_filepath, 
+                                                                                               odd_only = 0, 
+                                                                                               numRecords = int(3840*2), 
+                                                                                               IQ_offset = (0,0), 
+                                                                                               plot = plot, 
+                                                                                               hist_scale = hist_scale)
+    
+    amp_off_even_fit = fit_2D_Gaussian('amp_off_even', bins_even, h_even, 
+                                            guessParam[0],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    amp_off_odd_fit = fit_2D_Gaussian('amp_off_odd', bins_odd, h_odd,
+                                            guessParam[1],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    even_fit = amp_off_even_fit
+    odd_fit = amp_off_odd_fit
+    
+    histogram_data_fidelity = 1-1/2*np.sum(np.sqrt((h_odd/records_per_pulsetype)*(h_even/records_per_pulsetype)))
+            
+    bins_fine = np.linspace(np.min([bins_even, bins_odd]), np.max([bins_even, bins_odd]), 1000)
+    
+    even_fit_h = Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *even_fit.info_dict['popt'])/(2*np.pi*even_fit.info_dict['amplitude']*even_fit.info_dict['sigma_x']*even_fit.info_dict['sigma_y'])
+    
+    odd_fit_h = Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *odd_fit.info_dict['popt'])/(2*np.pi*odd_fit.info_dict['amplitude']*odd_fit.info_dict['sigma_x']*odd_fit.info_dict['sigma_y'])
+    
+    fit_fidelity = 1-1/2*np.sum(np.sqrt(np.abs(even_fit_h)/np.sum(even_fit_h)*np.abs(odd_fit_h)/np.sum(odd_fit_h)))
+    print(f"Histogram data fidelity: {histogram_data_fidelity}\nFit fidelity: {fit_fidelity}")
+    if plot: 
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_even, bins_even, h_even)
+        amp_off_even_fit.plot_on_ax(ax)
+        ax.add_patch(amp_off_even_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+        
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_odd, bins_odd, h_odd)
+        amp_off_odd_fit.plot_on_ax(ax)
+        ax.add_patch(amp_off_odd_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+    
+    amp_off_voltage = np.average([np.linalg.norm(amp_off_odd_fit.center_vec()), np.linalg.norm(amp_off_even_fit.center_vec())])*1000
+    
+    return amp_off_voltage
+
+def get_IQ_offset_from_filepath(amp_off_filepath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2): 
+    
+    bins_even, bins_odd, h_even, h_odd, guessParam = extract_2pulse_histogram_from_filepath(amp_off_filepath, 
+                                                                                               odd_only = 0, 
+                                                                                               numRecords = int(3840*2), 
+                                                                                               IQ_offset = (0,0), 
+                                                                                               plot = True, 
+                                                                                               hist_scale = hist_scale)
+    
+    amp_off_even_fit = fit_2D_Gaussian('amp_off_even', bins_even, h_even, 
+                                            guessParam[0],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    amp_off_odd_fit = fit_2D_Gaussian('amp_off_odd', bins_odd, h_odd,
+                                            guessParam[1],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    even_fit = amp_off_even_fit
+    odd_fit = amp_off_odd_fit
+    
+    histogram_data_fidelity = 1-1/2*np.sum(np.sqrt((h_odd/records_per_pulsetype)*(h_even/records_per_pulsetype)))
+            
+    bins_fine = np.linspace(np.min([bins_even, bins_odd]), np.max([bins_even, bins_odd]), 1000)
+    
+    even_fit_h = Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *even_fit.info_dict['popt'])/(2*np.pi*even_fit.info_dict['amplitude']*even_fit.info_dict['sigma_x']*even_fit.info_dict['sigma_y'])
+    
+    odd_fit_h = Gaussian_2D(np.meshgrid(bins_fine, bins_fine), *odd_fit.info_dict['popt'])/(2*np.pi*odd_fit.info_dict['amplitude']*odd_fit.info_dict['sigma_x']*odd_fit.info_dict['sigma_y'])
+    
+    fit_fidelity = 1-1/2*np.sum(np.sqrt(np.abs(even_fit_h)/np.sum(even_fit_h)*np.abs(odd_fit_h)/np.sum(odd_fit_h)))
+    print(f"Histogram data fidelity: {histogram_data_fidelity}\nFit fidelity: {fit_fidelity}")
+    if plot: 
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_even, bins_even, h_even)
+        amp_off_even_fit.plot_on_ax(ax)
+        ax.add_patch(amp_off_even_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+        
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_odd, bins_odd, h_odd)
+        amp_off_odd_fit.plot_on_ax(ax)
+        ax.add_patch(amp_off_odd_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+    
+    offset = np.average(np.array([amp_off_odd_fit.center_vec(), amp_off_even_fit.center_vec()]), axis = 0)
+    
+    return offset
+
+def hist_discriminant(h1, h2):
+    #1 if in h1, 0 if in h2
+    return ((h1-h2)>0)
+def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2): 
+    
+    bins_even, bins_odd, h_even, h_odd, guessParam = extract_2pulse_histogram_from_filepath(filepath, 
+                                                                                               odd_only = 0, 
+                                                                                               numRecords = int(3840*2), 
+                                                                                               IQ_offset = (0,0), 
+                                                                                               plot = True, 
+                                                                                               hist_scale = hist_scale)
+    h_odd_norm = np.copy(h_odd/np.sum(h_odd))
+    h_even_norm = np.copy(h_even/np.sum(h_even))
+    
+    amp_off_even_fit = fit_2D_Gaussian('amp_off_even', bins_even, h_even, 
+                                            guessParam[0],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    amp_off_odd_fit = fit_2D_Gaussian('amp_off_odd', bins_odd, h_odd,
+                                            guessParam[1],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    even_fit = amp_off_even_fit
+    odd_fit = amp_off_odd_fit
+    
+    even_fit_h = Gaussian_2D(np.meshgrid(bins_even[:-1], bins_even[:-1]), *even_fit.info_dict['popt'])
+    # even_fit_h_norm = np.copy(even_fit_h/np.sum(even_fit_h))
+    
+    odd_fit_h = Gaussian_2D(np.meshgrid(bins_odd[:-1], bins_odd[:-1]), *odd_fit.info_dict['popt'])
+    # odd_fit_h_norm = np.copy(odd_fit_h/np.sum(odd_fit_h))
+    
+    is_even = hist_discriminant(even_fit_h, odd_fit_h)
+    is_odd = np.logical_not(is_even)
+    
+    #debugging
+    # print(np.sum(h_odd), np.sum(h_even))
+    # print(np.sum(h_odd_norm), np.sum(h_even_norm))
+    # print('fid sums', np.sum(h_odd_norm[is_even]), np.sum(h_even_norm[is_odd]))
+    
+    plt.pcolormesh(bins_odd, bins_odd, h_odd_norm)
+    plt.colorbar()
+    
+    data_fidelity = 1-np.sum(h_odd_norm[is_even], dtype = "float64")-np.sum(h_even_norm[is_odd], dtype = "float64")
+    
+    if plot: 
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_even, bins_even, h_even)
+        amp_off_even_fit.plot_on_ax(ax)
+        ax.add_patch(amp_off_even_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+        
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_odd, bins_odd, h_odd)
+        amp_off_odd_fit.plot_on_ax(ax)
+        ax.add_patch(amp_off_odd_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+        
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_odd, bins_odd, is_even, cmap = 'seismic')
+        amp_off_odd_fit.plot_on_ax(ax)
+        amp_off_even_fit.plot_on_ax(ax)
+        ax.add_patch(amp_off_odd_fit.sigma_contour())
+        ax.add_patch(amp_off_even_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+    
+    
+    return data_fidelity, 0
     

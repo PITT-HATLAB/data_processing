@@ -40,14 +40,14 @@ cf = 6171427180.18
 # amp_off_filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/Pump_power_sweeps/1/2021-06-30/2021-06-30_0011_LO_6152798714.0_pwr_-8.69_amp_1_rotation_phase_2.094/2021-06-30_0011_LO_6152798714.0_pwr_-8.69_amp_1_rotation_phase_2.094.ddh5'
 # amp_off_filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/signal_power_sweeps/1_initial_guess/2021-07-06/2021-07-06_0003_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.0_V_Phase_0.0_rad_/2021-07-06_0003_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.0_V_Phase_0.0_rad_.ddh5'
 
-filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/signal_power_sweeps/3_mid_powers/2021-07-06/2021-07-06_0019_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.5_V_Phase_0.0_rad_/2021-07-06_0019_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.5_V_Phase_0.0_rad_.ddh5'
+# filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/signal_power_sweeps/3_mid_powers/2021-07-06/2021-07-06_0019_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.5_V_Phase_0.0_rad_/2021-07-06_0019_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.5_V_Phase_0.0_rad_.ddh5'
 
-filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/signal_power_sweeps/3_mid_powers_sig_sweep/2021-07-07_0034_Amp_1__LO_freq_6154298714.0_Hz_Sig_Volt_0.2_V_Phase_0.0_rad_/2021-07-07_0034_Amp_1__LO_freq_6154298714.0_Hz_Sig_Volt_0.2_V_Phase_0.0_rad_.ddh5'
+# filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/signal_power_sweeps/3_mid_powers/2021-07-06/2021-07-06_0052_Amp_1__LO_freq_6153298714.0_Hz_Sig_Volt_0.5_V_Phase_0.0_rad_/2021-07-06_0052_Amp_1__LO_freq_6153298714.0_Hz_Sig_Volt_0.5_V_Phase_0.0_rad_.ddh5'
 
-# filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.102mA/loopbacks/2021-07-12/2021-07-12_0001_Amp_0__Phase_0.0_rad_/2021-07-12_0001_Amp_0__Phase_0.0_rad_.ddh5'
+filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.102mA/loopbacks/2021-07-12/2021-07-12_0003_Amp_0__Phase_4.189_rad_/2021-07-12_0003_Amp_0__Phase_4.189_rad_.ddh5'
 # PU.get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = 0.01, records_per_pulsetype = 3870*2)
 # IQ_offset = PU.get_IQ_offset_from_filepath(amp_off_filepath, plot = False, hist_scale = 0.02, records_per_pulsetype = 3870*2)
-data_fidelity, fit_fidelity = PU.get_fidelity_from_filepath(filepath, plot = True, hist_scale = 0.02, records_per_pulsetype = 3840*2)
+data_fidelity, fit_fidelity = PU.get_fidelity_from_filepath(filepath, plot = True, hist_scale = 0.005, records_per_pulsetype = 3840*2)
 print(data_fidelity, fit_fidelity)
 IQ_offset = (0,0)
 

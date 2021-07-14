@@ -4,7 +4,7 @@ Created on Wed Nov 18 12:36:26 2020
 
 @author: Hatlab_3
 """
-import easygui
+# import easygui
 from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import matplotlib.pyplot as plt
@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.colors as color
 from scipy.ndimage import gaussian_filter
 
-from measurement_modules.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row
+from data_processing.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row
 from data_processing.ddh5_Plotting.utility_modules.TACO_utility_functions import make_tacos, make_sat_img_plot
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.weight': 'bold'})
@@ -23,8 +23,8 @@ plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
 device_name = 'SA_C1'
 
-gain_filepath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Tacos\2021-05-18\2021-05-18_0017_0.013mA_TACO_gain\2021-05-18_0017_0.013mA_TACO_gain.ddh5'
-sat_filepath = r'E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Tacos\2021-05-18\2021-05-18_0018_0.013mA_TACO_sat\2021-05-18_0018_0.013mA_TACO_sat.ddh5'
+gain_filepath = r'Z:/Data/SA_2X_B1/tacos/2021-07-13/2021-07-13_0045_2.3e-05mA_TACO_gain/2021-07-13_0045_2.3e-05mA_TACO_gain.ddh5'
+sat_filepath = r'Z:/Data/SA_2X_B1/tacos/2021-07-13/2021-07-13_0046_2.3e-05mA_TACO_sat/2021-07-13_0046_2.3e-05mA_TACO_sat.ddh5'
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']
@@ -47,7 +47,7 @@ gain_data = gainDict.extract('calculated_gain')
                                             gain_data.data_vals('calculated_gain')
                                             ]
 #%%Extract slices of currents, saturation data, etc which are each individual tacos
-b1_val = sat_bias_current[0]
+b1_val = np.unique(sat_bias_current)[0]
 b1 = (bias_current == b1_val)
 ""
 gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1], calc_gain[b1]
@@ -66,7 +66,7 @@ ax.grid(linestyle = '--', zorder = 2)
 #%%saturation plots 
 bp1 = (sat_bias_current == b1_val)
 sf1, svp1, sgp1, sg1 = sat_gen_freq[bp1], sat_vna_powers[bp1], sat_gen_power[bp1], sat_gain[bp1]
-fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1, sg1, norm_power = -82, levels = [-20, -1,1, 20], filter_window = 10, vmin = -1.7, vmax = 1.7)
+fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1, sg1, norm_power = -72, levels = [-20, -1,1, 20], filter_window = 10, vmin = -1.7, vmax = 1.7)
 #supplementary graph info
 if fancy:
     title = f'{device_name} Saturation power vs. Generator Frequency\nBias = {np.round(b1_val*1000, 4)}mA'
