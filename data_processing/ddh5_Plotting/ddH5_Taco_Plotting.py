@@ -23,8 +23,8 @@ plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
 device_name = 'SA_C1'
 
-gain_filepath = r'Z:/Data/SA_2X_B1/tacos/2021-07-13/2021-07-13_0045_2.3e-05mA_TACO_gain/2021-07-13_0045_2.3e-05mA_TACO_gain.ddh5'
-sat_filepath = r'Z:/Data/SA_2X_B1/tacos/2021-07-13/2021-07-13_0046_2.3e-05mA_TACO_sat/2021-07-13_0046_2.3e-05mA_TACO_sat.ddh5'
+gain_filepath = r'Z:/Data/SA_2X_B1/tacos/2021-07-14/2021-07-14_0001_2.25e-05mA_TACO_gain/2021-07-14_0001_2.25e-05mA_TACO_gain.ddh5'
+sat_filepath = r'Z:/Data/SA_2X_B1/tacos/2021-07-14/2021-07-14_0002_2.25e-05mA_TACO_sat/2021-07-14_0002_2.25e-05mA_TACO_sat.ddh5'
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']
@@ -48,7 +48,7 @@ gain_data = gainDict.extract('calculated_gain')
                                             ]
 #%%Extract slices of currents, saturation data, etc which are each individual tacos
 b1_val = np.unique(sat_bias_current)[0]
-b1 = (bias_current == b1_val)
+b1 = (bias_current == b1_val)*(gen_power<11)*(gen_power>8.5)
 ""
 gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1], calc_gain[b1]
 fig, ax, cb = make_tacos(b1_val, gf1, gp1, g1, vmin = 15, vmax = 25)

@@ -8,11 +8,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sympy as sp
 from data_processing.models.SNAIL_supporting_modules.Participation_and_Alpha_Fitter import slider_fit
+from data_processing.fitting.QFit import fit, plotRes
 from scipy.optimize import fsolve
 from scipy.interpolate import interp1d
 from timeit import default_timer as timer
-from measurement_modules.Helper_Functions import find_all_ddh5
+from data_processing.Helper_Functions import find_all_ddh5
 from data_processing.ddh5_Plotting.TACO_multiplot_b1 import superTACO_Bars
+import pandas as pd
 
 def parallel(v1, v2): 
     return 1/(1/v1+1/v2)
@@ -64,7 +66,7 @@ def c2_func_gen_vectorize(alpha_val):
 
 
 class SnailAmp(): 
-    def __init__(self, junction_sizes: tuple, quanta_offset: float, quanta_size: float, Jc = 0.8): #uA/um^2
+    def __init__(self): #uA/um^2
         '''
         Parameters
         ----------
@@ -79,15 +81,20 @@ class SnailAmp():
         -------
         None.
         '''
+        
         self.hbar = 1.0545718e-34
         self.e = 1.60218e-19
         self.phi0 = np.pi*self.hbar/self.e
         
-        self.s_size, self.l_size = junction_sizes
+    def generate_quanta_function(self, quanta_offset, quanta_size): 
+        #function for converting bias currents to quanta fractions
         self.quanta_offset = quanta_offset
         self.quanta_size = quanta_size
-        #function for converting bias currents to quanta fractions
         self.conv_func = lambda c: (c-quanta_offset)/quanta_size
+        
+    def info_from_junction_sizes(self, junction_sizes, res = 100, Jc = 0.8):
+        self.s_size, self.l_size = junction_sizes
+
         
         self.alpha_from_sizes = self.s_size/self.l_size
         self.I0s, self.I0l = Jc*self.s_size*1e-6, Jc*self.l_size*1e-6
@@ -97,8 +104,11 @@ class SnailAmp():
         
         self.Ls0 = parallel(self.Lss, self.Lsl)
         
-        self.c2_func, self.c3_func, self.c4_func = self.generate_coefficient_functions(self.alpha_from_sizes, res = 100)
+        self.c2_func, self.c3_func, self.c4_func = self.generate_coefficient_functions(self.alpha_from_sizes, res = res)
         
+        return self.c2_func, self.c3_func, self.c4_func
+    
+    
     def Ic_to_Ej(self, Ic: float):
         '''
         Parameters
@@ -233,8 +243,6 @@ class SnailAmp():
     
     def generate_resonance_function_via_fit(self, p, f0, c2_func): 
         return lambda phi: 2*np.pi*f0/(np.sqrt(1+(p/(1-p))/c2_func(phi)))
-    
-    def generate_p_func(self, )
         
     def generate_gsss_function(self, C0, p_func, res_func, c2_func, c3_func):
         '''
@@ -245,7 +253,7 @@ class SnailAmp():
         '''
         #calculate Ec
         Ec = self.e**2/(2*C0)
-        return lambda phi: 1/6*p**2*c3_func(phi)/c2_func(phi)*np.sqrt(Ec*self.hbar*res_func(phi))
+        return lambda phi: 1/6*p_func(phi)**2*c3_func(phi)/c2_func(phi)*np.sqrt(Ec*self.hbar*res_func(phi))
         
     def collect_TACO_data(self, gain_folder, plot = False): 
         gain_cwd = gain_folder
@@ -305,12 +313,62 @@ class SnailAmp():
         g3_arr = -0.5*(mode_kappas/numPumpPhotons)*np.sqrt((np.sqrt(lpg)-1)/(np.sqrt(lpg)+1))
         return numPumpPhotons, g3_arr
     
+    def process_HFSS_sweep(self, HFSS_filepath): 
+        data = pd.read_csv(HFSS_filepath)
+        HFSS_dicts = []
+        for inductance in np.unique(data['Ls [pH]'].to_numpy()):
+            filt = (data['Ls [pH]'].to_numpy() == inductance)
+            HFSS_dicts.append(dict(
+                SNAIL_inductance = inductance,
+                freq = data['Freq [GHz]'].to_numpy()[filt]*1e9,
+                freqrad = data['Freq [GHz]'].to_numpy()[filt]*1e9*2*np.pi, #fitter takes rad*hz
+                mag = data['mag(S(B,B)) []'].to_numpy()[filt],
+                phase = data['cang_deg_val(S(B,B)) []'].to_numpy()[filt], 
+                phaserad = data['cang_deg_val(S(B,B)) []'].to_numpy()[filt]*2*np.pi/360,
+                lin = np.power(10, data['mag(S(B,B)) []'].to_numpy()[filt]/20),
+                real = np.power(10, data['mag(S(B,B)) []'].to_numpy()[filt]/20)*np.cos(data['cang_deg_val(S(B,B)) []'].to_numpy()[filt]*2*np.pi/360),
+                imag = np.power(10, data['mag(S(B,B)) []'].to_numpy()[filt]/20)*np.sin(data['cang_deg_val(S(B,B)) []'].to_numpy()[filt]*2*np.pi/360),
+                imY = data['im(Y(sl,sl)) []'].to_numpy()[filt],
+                ))
+        return HFSS_dicts
         
+    def fit_modes(self, *args, bounds = None, f0Guess_arr = None, Qguess = (1e2, 1e4), window_size = 600e6, plot = False):
+        QextGuess, QintGuess = Qguess
+        magBackGuess = 1
         
+        HFSS_inductances, HFSS_res_freqs, HFSS_kappas = [], [], []
         
+        for i, md in enumerate(args): 
+            if type(f0Guess_arr) == np.ndarray: 
+                f0Guess_arr = np.copy(f0Guess_arr)
+                filt = (md['freqrad']>f0Guess_arr[i]-window_size/2)*(md['freqrad']<f0Guess_arr[i]+window_size/2)
+                f0Guess = f0Guess_arr[i]
+            else: 
+                filt = np.ones(np.size(md['freqrad'])).astype(bool)
+                f0Guess = np.mean(md['freqrad'])
+                
+                
+            if bounds == None: 
+                bounds = ([QextGuess / 10, QintGuess /10, f0Guess-500e6, magBackGuess / 2, 0],
+                          [QextGuess * 10, QintGuess * 10, f0Guess+500e6, magBackGuess * 2, np.pi])
+            
+            popt, pcov = fit(md['freqrad'][filt], md['real'][filt], md['imag'][filt], md['mag'][filt], md['phaserad'][filt], Qguess = Qguess, f0Guess = f0Guess, phaseGuess = 0)
+            if plot: 
+                plotRes(md['freqrad'], md['real'], md['imag'], md['mag'], md['phaserad'], popt)
+                
+            Qtot = popt[0] * popt[1] / (popt[0] + popt[1])
+            kappa = popt[2]/2/np.pi/Qtot
+            f0 = popt[2]/(2*np.pi)
+            inductance = md['SNAIL_inductance']
+            
+            HFSS_inductances.append(inductance)
+            HFSS_res_freqs.append(f0)
+            HFSS_kappas.append(kappa)
+            
+        return HFSS_inductances, HFSS_res_freqs, HFSS_kappas
+            
         
-        
-        
+        #def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi)
         
         
         

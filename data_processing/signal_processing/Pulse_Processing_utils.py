@@ -205,7 +205,11 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
     dd = all_datadicts_from_hdf5(datapath)['data']
     
     time_unit = dd['time']['unit']
+    
+    print(np.size(np.unique(dd['time']['values'])))
     time_vals = dd['time']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))
+    
+    
     
     rec_unit = dd['record_num']['unit']
     rec_num = dd['record_num']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))
@@ -353,6 +357,7 @@ def get_IQ_offset_from_filepath(amp_off_filepath, plot = False, hist_scale = Non
 def hist_discriminant(h1, h2):
     #1 if in h1, 0 if in h2
     return ((h1-h2)>0)
+
 def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2): 
     
     bins_even, bins_odd, h_even, h_odd, guessParam = extract_2pulse_histogram_from_filepath(filepath, 

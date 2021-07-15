@@ -131,8 +131,8 @@ def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = 
     QextGuess = Qguess[0]
     QintGuess = Qguess[1]
     if bounds == None: 
-        bounds=([QextGuess / 10, QintGuess /10, f0Guess-100e6, magBackGuess / 10.0, -2 * np.pi],
-                [QextGuess * 10, QintGuess * 10, f0Guess+100e6, magBackGuess * 10.0, 2 * np.pi])
+        bounds=([QextGuess / 10, QintGuess /10, f0Guess/2, magBackGuess / 10.0, -2 * np.pi],
+                [QextGuess * 10, QintGuess * 10, f0Guess*2, magBackGuess * 10.0, 2 * np.pi])
     
     target_func = reflectionFunc
     data_to_fit = (real  + 1j * imag).view(np.float)

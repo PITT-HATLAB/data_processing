@@ -6,13 +6,12 @@ Created on Tue Feb 16 12:55:36 2021
 
 Find all TACOS in a directory, pull out the best powers, and plot them in 3d space to see if it's actually a TACO or not'
 """
-import easygui
 import os 
 from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import numpy as np
 import matplotlib.pyplot as plt
-from measurement_modules.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row, find_all_ddh5
+from data_processing.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target, log_normalize_up_to_row, find_all_ddh5
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.ndimage import gaussian_filter
 import matplotlib.colors as color
