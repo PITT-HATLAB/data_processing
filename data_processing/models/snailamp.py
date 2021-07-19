@@ -235,8 +235,8 @@ class SnailAmp():
     def set_linear_capacitance(self, C0): 
         self.C0 = C0
         
-    def generate_inductance_function(self, Ls0, c2_func):
-        return lambda phi: Ls0/c2_func(phi)
+    def generate_inductance_function(self, L_large, c2_func):
+        return lambda phi: L_large/c2_func(phi)
     
     def generate_resonance_function_via_LC(self, L0, C0, Ls_func): 
         return lambda phi: 1/np.sqrt((L0+Ls_func(phi))*C0)
@@ -347,7 +347,6 @@ class SnailAmp():
                 filt = np.ones(np.size(md['freqrad'])).astype(bool)
                 f0Guess = np.mean(md['freqrad'])
                 
-                
             if bounds == None: 
                 bounds = ([QextGuess / 10, QintGuess /10, f0Guess-500e6, magBackGuess / 2, 0],
                           [QextGuess * 10, QintGuess * 10, f0Guess+500e6, magBackGuess * 2, np.pi])
@@ -366,7 +365,12 @@ class SnailAmp():
             HFSS_kappas.append(kappa)
             
         return HFSS_inductances, HFSS_res_freqs, HFSS_kappas
-            
+    
+    def find_res_from_admittance(freq, admittance): 
+        ad_der = np.diff(admittance)
+        
+        
+        return(freq[np.where()])
         
         #def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi)
         

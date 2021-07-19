@@ -362,7 +362,7 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
     
     bins_even, bins_odd, h_even, h_odd, guessParam = extract_2pulse_histogram_from_filepath(filepath, 
                                                                                                odd_only = 0, 
-                                                                                               numRecords = int(3840*2), 
+                                                                                               numRecords = records_per_pulsetype, 
                                                                                                IQ_offset = (0,0), 
                                                                                                plot = True, 
                                                                                                hist_scale = hist_scale)
@@ -381,10 +381,10 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
     odd_fit = amp_off_odd_fit
     
     even_fit_h = Gaussian_2D(np.meshgrid(bins_even[:-1], bins_even[:-1]), *even_fit.info_dict['popt'])
-    # even_fit_h_norm = np.copy(even_fit_h/np.sum(even_fit_h))
+    even_fit_h_norm = np.copy(even_fit_h/np.sum(even_fit_h))
     
     odd_fit_h = Gaussian_2D(np.meshgrid(bins_odd[:-1], bins_odd[:-1]), *odd_fit.info_dict['popt'])
-    # odd_fit_h_norm = np.copy(odd_fit_h/np.sum(odd_fit_h))
+    odd_fit_h_norm = np.copy(odd_fit_h/np.sum(odd_fit_h))
     
     is_even = hist_discriminant(even_fit_h, odd_fit_h)
     is_odd = np.logical_not(is_even)
@@ -398,6 +398,7 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
     plt.colorbar()
     
     data_fidelity = 1-np.sum(h_odd_norm[is_even], dtype = "float64")-np.sum(h_even_norm[is_odd], dtype = "float64")
+    fit_fidelity = 1-np.sum(odd_fit_h_norm[is_even], dtype = "float64")-np.sum(even_fit_h_norm[is_odd], dtype = "float64")
     
     if plot: 
         fig, ax = plt.subplots()
@@ -424,5 +425,5 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
         plt.colorbar(pc)
     
     
-    return data_fidelity, 0
+    return data_fidelity, fit_fidelity
     
