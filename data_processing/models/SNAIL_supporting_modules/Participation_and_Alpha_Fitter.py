@@ -29,7 +29,7 @@ def convert_to_2D(filt_arr, to_be_2d):
     for val in np.unique(filt_arr):
         d2_arr.append(to_be_2d[filt_arr == val])
     return np.array(d2_arr)
-def slider_fit(fs_filepath, fit_filepath, quanta_start, quanta_size, p_arr, alpha_arr):
+def slider_fit(fs_filepath, fit_filepath, quanta_start, quanta_size, p_arr, alpha_arr, start_freq = 7e9):
     currents, freqs, mags, phases = get_fs_data(fs_filepath)
     
     snail_freqs_fits = pickle.load(open(fit_filepath, "rb"))
@@ -93,7 +93,7 @@ def slider_fit(fs_filepath, fit_filepath, quanta_start, quanta_size, p_arr, alph
     
     sp = Slider(axp, 'P index',0, np.size(p_arr)-1, valinit=0, valstep=1)
     salpha = Slider(axalpha, 'Alpha index', 0, np.size(alpha_arr)-1, valinit=0, valstep=1)
-    sfreq = Slider(axfreq, 'start frequency', 6e9, 6.5e9, valinit=6e9)
+    sfreq = Slider(axfreq, 'start frequency', start_freq-3e9, start_freq+3e9, valinit=start_freq)
     
     sp.on_changed(update)
     salpha.on_changed(update)

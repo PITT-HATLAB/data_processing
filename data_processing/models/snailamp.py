@@ -371,6 +371,8 @@ class SnailAmp():
         
         
         return(freq[np.where()])
+    
+    def 
         
         #def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi)
         
