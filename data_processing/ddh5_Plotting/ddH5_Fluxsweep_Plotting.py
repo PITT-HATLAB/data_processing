@@ -20,7 +20,7 @@ def find_quanta(currents, res_freqs, show = True, smooth_window = 11, order = 2)
             plt.plot(currents[pt], res_freqs[pt], 'r*')
     if np.size(ext) == 2: 
         quanta_size = np.abs(currents[ext[1]]-currents[ext[0]])
-        quanta_offset = min(currents[ext], key=abs)
+        quanta_offset = min(currents[ext])
     else: 
         raise Exception(f'Two extrema not found: {ext}')
     current_to_quanta_conversion_function = lambda c: (c-quanta_offset)/quanta_size

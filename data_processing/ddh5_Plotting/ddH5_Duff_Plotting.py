@@ -4,24 +4,23 @@ Created on Wed Jan 13 10:14:25 2021
 
 @author: Hatlab_3
 """
-import easygui
+# import easygui
 from plottr.apps.autoplot import autoplotDDH5, script, main
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import matplotlib.pyplot as plt
 import numpy as np
-from hat_utilities.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target
-from hat_utilities.fitting.QFit import fit, plotRes, reflectionFunc
+from data_processing.Helper_Functions import get_name_from_path, shift_array_relative_to_middle, log_normalize_to_row, select_closest_to_target
+from data_processing.fitting.QFit import fit, plotRes, reflectionFunc
 import inspect
 from plottr.data import datadict_storage as dds, datadict as dd
 from scipy.signal import savgol_filter
 from scipy.interpolate import interp1d
 from scipy.fftpack import dct, idct
 
-FS_filepath = r'E:\Data\Cooldown_20210104\20210330_MariaChemPot_Processing\2021-03-30\2021-03-30_0006_20210330_Chempot_FS_Fit\2021-03-30_0006_20210330_Chempot_FS_Fit.ddh5'
-Duff_filepath = r'E:\Data\Cooldown_20210104\2021-03-30\2021-03-30_0012_Chempot_Duffing_wide\2021-03-30_0012_Chempot_Duffing_wide.ddh5'
-save_filepath = r'E:\Data\Cooldown_20210104'
-#%%Duffing Autoplot
-main(Duff_filepath, 'data')
+# FS_filepath = r'Z:/Data/SA_2X_B1/fluxsweep/fits/2021-07-22/2021-07-22_0024_SA_2X_B1/2021-07-22_0024_SA_2X_B1.ddh5'
+# Duff_filepath = r'Z:/Data/SA_2X_B1/duffing/2021-07-23/2021-07-23_0004_SA_2X_B1_duffing/2021-07-23_0004_SA_2X_B1_duffing.ddh5'
+# save_filepath = r'Z:\Data\SA_2X_B1\duffing\fits'
+
 #%%Create measurement-based saver for the fit data. 
 
 class fit_Duff_Measurement():
@@ -33,9 +32,11 @@ class fit_Duff_Measurement():
         - generate duffing graph
         
     '''
-    def __init__(self, Duff_filepath, FS_filepath, save_filepath, name):
+    def __init__(self, name):
         #setup files
         self.name = name
+        
+    def create_file(self, save_filepath): 
         self.datadict = dd.DataDict(
             current = dict(unit='A'),
             gen_power = dict(unit = 'dBm'),
@@ -57,7 +58,9 @@ class fit_Duff_Measurement():
         self.datadir = save_filepath
         self.writer = dds.DDH5Writer(self.datadir, self.datadict, name=self.name)
         self.writer.__enter__()
-        
+        return None
+    
+    def load_data(self, Duff_filepath, FS_filepath, current_filt = None): 
         #Duffing Data Extraction
         duff_dicts = all_datadicts_from_hdf5(Duff_filepath)
         duffDict = duff_dicts['data']
@@ -66,16 +69,26 @@ class fit_Duff_Measurement():
         dvphDict = duffDict.extract('driven_vna_phase')
         dvpoDict = duffDict.extract('driven_vna_power')
         
-        #get the arrays back out
-        self.undriven_vna_phase = uvphDict.data_vals('undriven_vna_phase')
-        self.undriven_vna_power = uvpoDict.data_vals('undriven_vna_power')
-        self.driven_vna_phase = dvphDict.data_vals('driven_vna_phase')
-        self.driven_vna_power= dvpoDict.data_vals('driven_vna_power')
-        self.vna_freqs = uvphDict.data_vals('vna_frequency')*2*np.pi
-        self.currents = uvphDict.data_vals('current')
-        self.gen_powers = dvpoDict.data_vals('gen_power')
+        if current_filt == None: 
+            lower = np.min(uvphDict.data_vals('current'))
+            upper = np.max(uvphDict.data_vals('current'))
+        else: 
+            [lower, upper] = current_filt
+            #get the arrays back out
+            
+        filt = (uvphDict.data_vals('current')<upper)*(uvphDict.data_vals('current')>lower)
+        self.undriven_vna_phase = uvphDict.data_vals('undriven_vna_phase')[filt]
+        self.undriven_vna_power = uvpoDict.data_vals('undriven_vna_power')[filt]
+        self.driven_vna_phase = dvphDict.data_vals('driven_vna_phase')[filt]
+        self.driven_vna_power= dvpoDict.data_vals('driven_vna_power')[filt]
+        self.vna_freqs = uvphDict.data_vals('vna_frequency')[filt]*2*np.pi
+        self.currents = uvphDict.data_vals('current')[filt]
+        self.gen_powers = dvpoDict.data_vals('gen_power')[filt]
+
+                        
         
         self.res_func, self.qint_func, self.qext_func = self.read_fs_data(FS_filepath)
+        return None
         
     def read_fs_data(self, fs_filepath, interpolation = 'linear'):
         ret = all_datadicts_from_hdf5(fs_filepath)
@@ -193,8 +206,8 @@ class fit_Duff_Measurement():
         plotRes(init_vna_freqs, real, imag, init_pow_trace, init_phase_trace, popt)
         
     def default_bounds(self, QextGuess, QintGuess, f0Guess, magBackGuess):
-        return ([QextGuess / 1.5, QintGuess / 1.5, f0Guess/2, magBackGuess / 5.0, -2 * np.pi],
-                [QextGuess * 1.5, QintGuess +200, f0Guess*1.5, magBackGuess * 5.0, 2 * np.pi])
+        return ([QextGuess / 1.5, QintGuess / 1.5, f0Guess/2, magBackGuess / 2, -2*np.pi],
+                [QextGuess * 1.5, QintGuess +200, f0Guess*2, magBackGuess * 2, 2*np.pi])
     
     def semiauto_fit(self, bias_currents, vna_freqs, vna_mags, vna_phases, popt, 
                      debug = False, 
@@ -204,7 +217,8 @@ class fit_Duff_Measurement():
                      adapt_win_size = 300e6, 
                      fourier_filter = False, 
                      fourier_cutoff = 40, 
-                     pconv_tol = 10):
+                     pconv_tol = 10, 
+                     bounds = None):
         res_freqs = np.zeros(np.size(np.unique(bias_currents)))
         Qints = np.zeros(np.size(np.unique(bias_currents)))
         Qexts = np.zeros(np.size(np.unique(bias_currents)))
@@ -256,8 +270,8 @@ class fit_Duff_Measurement():
                 magBackGuess = init_magBack
                 (QextGuess, QintGuess) = (init_Qext, init_Qint)
                 filt = np.ones(np.size(first_trace_freqs)).astype(bool)
-                
-            bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
+            if bounds == None: 
+                bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
             if i>2: 
                 prev_pconv = pconv
             #fit(freq, real, imag, mag, phase, Qguess=(2e3, 1e3),real_only = 0, bounds = None)
@@ -268,10 +282,10 @@ class fit_Duff_Measurement():
                 if debug: 
                     print(f"Pconv ratio: {pconv_diff_ratio}")
                 j = 0
-                alt_array = np.array([1e6,-1e6,5e6,-5e6, 10e6,-10e6,15e6,-15e6, 20e6, -20e6, 30e6, -30e6])*2*np.pi
+                alt_array = np.array([1e6,-1e6,5e6,-5e6, 10e6,-10e6,15e6,-15e6, 20e6, -20e6, 30e6, -30e6, 50e6, -50e6, 100e6, -100e6])*2*np.pi
                 while np.any(np.abs(pconv_diff_ratio)>pconv_tol): 
-                    if j>11: 
-                        raise Exception("No good fit at this point")
+                    if j>np.size(alt_array)-1: 
+                        raise Exception(f"No good fit at this point: (Bias: {current}, Power: {self.latest_power})")
                     print(f"sudden change in Q detected (pconv_diff_ratio: {pconv_diff_ratio}), trying resonant guess + {alt_array[j]/(2*np.pi)}")
                     #try above
                     if debug: 
@@ -315,7 +329,7 @@ class fit_Duff_Measurement():
             smooth_win = 11, 
             adaptive_window = False, 
             adapt_win_size = 300e6,  
-
+            bounds = None,
             fourier_filter = False, 
             fourier_cutoff = 40, 
             pconv_tol = 10):
@@ -327,6 +341,7 @@ class fit_Duff_Measurement():
             
             
         for i, gen_power in enumerate(np.unique(self.gen_powers)[fitted_gen_powers]): 
+            self.latest_power = gen_power
             pow_condn = self.gen_powers == gen_power
             
             bias_currents = self.currents[pow_condn]
@@ -346,10 +361,63 @@ class fit_Duff_Measurement():
                                                                                                            adapt_win_size = adapt_win_size, 
                                                                                                            fourier_filter = fourier_filter, 
                                                                                                            fourier_cutoff = fourier_cutoff, 
-                                                                                                           pconv_tol = pconv_tol)
+                                                                                                           pconv_tol = pconv_tol, 
+                                                                                                           bounds = bounds)
             if i == 0: 
                 self.low_power_res_fit_func = interp1d(fit_currents, fit_freqs, 'linear')
             if save_data: 
                 self.save_fit(bias_currents, gen_power, popts, pconvs, self.low_power_res_fit_func)
     
 
+#%%
+
+# #Duffing Autoplot
+# #main(Duff_filepath, 'data')
+
+
+# FS_filepath = r'Z:/Data/SA_2X_B1/fluxsweep/fits/2021-07-22/2021-07-22_0024_SA_2X_B1/2021-07-22_0024_SA_2X_B1.ddh5'
+# Duff_filepath = r'Z:/Data/SA_2X_B1/duffing/2021-07-23/2021-07-23_0010_SA_2X_B1_duffing_fine/2021-07-23_0010_SA_2X_B1_duffing_fine.ddh5'
+# save_filepath = r'Z:\Data\SA_2X_B1\duffing\fits'
+
+# DFit = fit_Duff_Measurement(Duff_filepath, FS_filepath, save_filepath, 'SA_B1_Duff_fine')
+# #%%
+# DFit.initial_fit(8.0e9, 
+#                   QextGuess = 50, 
+#                   QintGuess = 1000, 
+#                   magBackGuess = 0.01, 
+#                   bounds = None, 
+#                   smooth = False, 
+#                   smooth_win = 11,
+#                   phaseOffGuess = 0, 
+#                   debug = False, 
+#                   adaptive_window = False, 
+#                   adapt_win_size = 300e6
+#                 )
+# #%%
+# print(np.min(DFit.gen_powers))
+# #%%
+# DFit.fit(
+#         debug = False, 
+#         save_data = True, 
+#         max_gen_power = -20, 
+#         savedata = True, 
+#         smooth = False, 
+#         smooth_win = 11, 
+#         adaptive_window = True,  
+#         adapt_win_size = 400e6,  
+#         fourier_filter = False, 
+#         fourier_cutoff = 40, 
+#         pconv_tol = 10)
+# #%%
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

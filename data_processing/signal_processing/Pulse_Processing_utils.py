@@ -10,8 +10,7 @@ and functionalizing Alazar acquiring
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.patches import Ellipse
-
-import numpy as np
+from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
@@ -80,6 +79,8 @@ def Process_One_Acquisition(name, sI_c1, sI_c2, sQ_c1 ,sQ_c2, bin_start, bin_sto
         plt.show()
     return bins_even, bins_odd, h_even.T, h_odd.T
     
+def general_2D_histogram(): 
+    
     
     
 def boxcar_histogram(fig, ax, start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 0, scale = 1, num_bins = 100):
@@ -104,9 +105,6 @@ def boxcar_histogram(fig, ax, start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 
     ax.grid()
     
     return bins, h
-
-from scipy.optimize import curve_fit
-
 
 def Gaussian_2D(M,amplitude, xo, yo, sigma_x, sigma_y, theta):
     x, y = M
@@ -426,4 +424,62 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
     
     
     return data_fidelity, fit_fidelity
+
+def get_fidelity_vs_records(datapath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2, bin_start = 50, bin_stop = 150): 
+    odd_only = 0
+    numRecords = records_per_pulsetype
+    IQ_offset = (0,0)
+    plot = True, 
+
+    I_offset, Q_offset = IQ_offset
+    dd = all_datadicts_from_hdf5(datapath)['data']
     
+    time_unit = dd['time']['unit']
+    
+    print(np.size(np.unique(dd['time']['values'])))
+    time_vals = dd['time']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))
+    
+    
+    
+    rec_unit = dd['record_num']['unit']
+    rec_num = dd['record_num']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))
+    
+    I_plus = dd['I_plus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-I_offset
+    I_minus = dd['I_minus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-I_offset
+    
+    Q_plus = dd['Q_plus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-Q_offset
+    Q_minus = dd['Q_minus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-Q_offset
+    
+    print(np.size(I_minus))
+    
+    #averages
+    I_plus_avg = np.average(I_plus, axis = 0)
+    I_minus_avg = np.average(I_minus, axis = 0)
+    Q_plus_avg = np.average(Q_plus, axis = 0)
+    Q_minus_avg = np.average(Q_minus, axis = 0)
+    
+    if hist_scale == None: 
+        hist_scale = 2*np.max(np.array([I_plus_avg, I_minus_avg, Q_plus_avg, Q_minus_avg]))
+    
+    #re-weave the data back into it's original pre-saved form
+    
+    bins_even, bins_odd, h_even, h_odd = Process_One_Acquisition(datapath.split('/')[-1].split('\\')[-1], I_plus, I_minus, Q_plus, Q_minus, bin_start, bin_stop, hist_scale = hist_scale, even_only = 0, odd_only = 0, plot = plot)
+    
+    Plus_x0Guess = np.average(np.average(I_plus_avg[bin_start:bin_stop]))
+    Plus_y0Guess = np.average(np.average(Q_plus_avg[bin_start:bin_stop]))
+    Plus_ampGuess = np.max(h_even)
+    Plus_sxGuess = np.max(bins_even)/5
+    Plus_syGuess = Plus_sxGuess
+    Plus_thetaGuess = 0
+    Plus_offsetGuess = 0
+    
+    Minus_x0Guess = np.average(np.average(I_minus_avg[bin_start:bin_stop]))
+    Minus_y0Guess = np.average(np.average(Q_minus_avg[bin_start:bin_stop]))
+    Minus_ampGuess = np.max(h_even)
+    Minus_sxGuess = np.max(bins_even)/5
+    Minus_syGuess = Minus_sxGuess
+    Minus_thetaGuess = 0
+    Minus_offsetGuess = 0
+    
+    guessParams = [[Plus_ampGuess, Plus_x0Guess, Plus_y0Guess, Plus_sxGuess, Plus_syGuess, Plus_thetaGuess],
+                   [Minus_ampGuess, Minus_x0Guess, Minus_y0Guess, Minus_sxGuess, Minus_syGuess, Minus_thetaGuess]]

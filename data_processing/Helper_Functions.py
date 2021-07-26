@@ -65,7 +65,7 @@ def log_normalize_to_row(x, y, arr, y_norm_val = None):
         norm_row = arr[i]
         normed_arr = []
         for i, row in enumerate(arr):
-            if i == 0: print(row)
+            # if i == 0: print(row)
             # print(f'{i}th row: {row}')
             normed_arr.append(row-norm_row)
         # print(normed_arr)

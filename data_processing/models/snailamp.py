@@ -15,6 +15,7 @@ from timeit import default_timer as timer
 from data_processing.Helper_Functions import find_all_ddh5
 from data_processing.ddh5_Plotting.TACO_multiplot_b1 import superTACO_Bars
 import pandas as pd
+from scipy.optimize import curve_fit
 
 def parallel(v1, v2): 
     return 1/(1/v1+1/v2)
@@ -135,9 +136,54 @@ class SnailAmp():
         '''
         return self.phi0/(2*np.pi*Ic)
         
+    def gradient_descent_participation_fitter(self, fitted_res_func, initial_p_guess, initial_alpha_guess, init_f0_guess, res = 100, bounds = None):
+        
+        '''
+        Parameters
+        ----------
+        fitted_res_func : function:ndarray->ndarray
+            function which takes in flux fraction in [0, 1] and produces the resonant frequency of the experimental device
+        
+        initial_p_guess: float
+            guess for the participation ratio of the SNAIL at 0-flux
+        
+        initial_alpha_guess: float
+            guess for the ratio of large junction inductance to small junciton inductance of the SNAIL
+        
+        kwargs: 
+            res - the number of points with which to do the fitting. Fewer is faster, more is better
+        Returns
+        -------
+        fitted alpha
+        fitted p
+        '''
+        fit_quanta = np.sort(np.append(np.append(np.linspace(0,1, int(res/4)), np.linspace(0.25,0.75, int(res/4))),np.linspace(0.45,0.55, int(res/2))))*2*np.pi
+        
+        def fit_func(quanta_arr, alpha, p_rat, f0): 
+            
+            print(f"P: {p_rat}, alpha: {alpha}, f0: {f0}")
+            #make the c2 we need from the supplied alpha
+            c2_func = c2_func_gen_vectorize(alpha)
+            res_freqs = f0/(np.sqrt(1+p_rat/c2_func(quanta_arr).astype(float)))
+            
+            return res_freqs
+        
+        #fit the data
+        if bounds ==None: 
+            bounds = [[0.1, 0.001, fitted_res_func(0)*0.7],
+                      [0.33, 1, fitted_res_func(0)*1.3]]
+            
+        popt, pcov = curve_fit(fit_func, fit_quanta, fitted_res_func(fit_quanta), p0 = [initial_alpha_guess, initial_p_guess, init_f0_guess], 
+                               bounds = bounds)
+        
+        [fitted_alpha, fitted_p, fitted_f0] = popt
+        [d_alpha, d_p, d_f0] = [np.sqrt(pcov[0,0]), np.sqrt(pcov[1,1]), np.sqrt(pcov[2,2])]
+        return fit_func, [fitted_alpha, fitted_p, fitted_f0], [d_alpha, d_p, d_f0]
+        
+    def frattini_p_to_part(self, fp, alpha):
+        return 1/(1/fp*c2_func_gen_vectorize(alpha)(0)+1)
     
-
-    def slider_participation_fitter(self, stored_fits_filepath: str, fluxsweep_filepath: str, ret_sliders = False): 
+    def slider_participation_fitter(self, stored_fits_filepath: str, fluxsweep_filepath: str, ret_sliders = False, start_freq = 7e9): 
         '''
         Parameters
         ----------
@@ -159,7 +205,8 @@ class SnailAmp():
                                                                  self.quanta_offset, 
                                                                  self.quanta_size, 
                                                                  self.p_arr, 
-                                                                 self.alpha_arr)
+                                                                 self.alpha_arr, 
+                                                                 start_freq = start_freq)
         if ret_sliders: 
             return self.p_arr, self.alpha_arr, self.p_slider, self.a_slider, self.f_slider
         else: 
@@ -372,7 +419,7 @@ class SnailAmp():
         
         return(freq[np.where()])
     
-    def 
+
         
         #def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi)
         

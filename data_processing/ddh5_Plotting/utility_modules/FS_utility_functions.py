@@ -47,12 +47,12 @@ class fit_fluxsweep():
         return ([QextGuess / 1.5, QintGuess / 1.5, f0Guess/2, magBackGuess / 5.0, -2 * np.pi],
                 [QextGuess * 1.5, QintGuess +200, f0Guess*1.5, magBackGuess * 5.0, 2 * np.pi])
     
-    def initial_fit(self, f0Guess, QextGuess = 50, QintGuess = 300, magBackGuess = 0.0001, bounds = None, smooth = False, smooth_win = 11, phaseOffGuess = 0, debug = False, adaptive_window = False, adapt_win_size = 300e6):
+    def initial_fit(self, f0Guess, QextGuess = 50, QintGuess = 300, magBackGuess = 0.0001, bounds = None, smooth = False, smooth_win = 11, phaseOffGuess = 0, debug = False, adaptive_window = False, adapt_win_size = 300e6, start_current_index = 0):
         f0Guess = f0Guess*2*np.pi
         if bounds == None: 
             bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
             
-        filt = (self.currents == np.unique(self.currents)[0])
+        filt = (self.currents == np.unique(self.currents)[start_current_index])
 
         if adaptive_window: 
             filt1 = self.vna_freqs < f0Guess + adapt_win_size*2*np.pi/2
