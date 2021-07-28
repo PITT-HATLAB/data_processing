@@ -85,7 +85,7 @@ class SnailAmp():
         
         self.hbar = 1.0545718e-34
         self.e = 1.60218e-19
-        self.phi0 = np.pi*self.hbar/self.e
+        self.phi0 = 2*np.pi*self.hbar/(2*self.e)
         
     def generate_quanta_function(self, quanta_offset, quanta_size): 
         #function for converting bias currents to quanta fractions
@@ -93,7 +93,7 @@ class SnailAmp():
         self.quanta_size = quanta_size
         self.conv_func = lambda c: (c-quanta_offset)/quanta_size
         
-    def info_from_junction_sizes(self, junction_sizes, res = 100, Jc = 0.8):
+    def info_from_junction_sizes(self, junction_sizes, res = 100, Jc = 0.8, verbose = False):
         self.s_size, self.l_size = junction_sizes
 
         
@@ -105,11 +105,11 @@ class SnailAmp():
         
         self.Ls0 = parallel(self.Lss, self.Lsl)
         
-        self.c2_func, self.c3_func, self.c4_func = self.generate_coefficient_functions(self.alpha_from_sizes, res = res)
+        self.c2_func, self.c3_func, self.c4_func = self.generate_coefficient_functions(self.alpha_from_sizes, res = res, verbose = False)
         
         return self.c2_func, self.c3_func, self.c4_func
     
-    
+
     def Ic_to_Ej(self, Ic: float):
         '''
         Parameters
@@ -223,7 +223,7 @@ class SnailAmp():
         
         return self.alpha_from_FS, self.p_from_FS, self.f_slider.val
         
-    def generate_coefficient_functions(self, alpha_val, res = int(100), plot = False, show_coefficients = False):
+    def generate_coefficient_functions(self, alpha_val, res = int(100), plot = False, show_coefficients = False, verbose = False):
         '''
         Parameters
         ----------
@@ -241,13 +241,15 @@ class SnailAmp():
             DESCRIPTION.
 
         '''
-        print("Calculating expansion coefficients")
+        if verbose:
+            print("Calculating expansion coefficients")
         start_time = timer()
         
         phi_ext_arr = np.linspace(0,2*np.pi, res)
         c4_arr = c4_func_gen_vectorize(alpha_val)(phi_ext_arr)
         end_time = timer()
-        print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
+        if verbose: 
+            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
         c4_func = interp1d(phi_ext_arr, c4_arr, 'quadratic')
         
         
@@ -256,7 +258,8 @@ class SnailAmp():
         phi_ext_arr = np.linspace(0,2*np.pi, res)
         c3_arr = c3_func_gen_vectorize(alpha_val)(phi_ext_arr)
         end_time = timer()
-        print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
+        if verbose: 
+            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
         c3_func = interp1d(phi_ext_arr, c3_arr, 'quadratic')
         
         
@@ -265,7 +268,8 @@ class SnailAmp():
         phi_ext_arr = np.linspace(0,2*np.pi, res)
         c2_arr = c2_func_gen_vectorize(alpha_val)(phi_ext_arr)
         end_time = timer()
-        print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
+        if verbose: 
+            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
         c2_func = interp1d(phi_ext_arr, c2_arr, 'quadratic')
         
         if plot: 
@@ -281,6 +285,9 @@ class SnailAmp():
         self.L0 = L0
     def set_linear_capacitance(self, C0): 
         self.C0 = C0
+        
+    def generate_participation_function(self, L0, Lfunc): 
+        return lambda phi: Lfunc(phi)/(L0+Lfunc(phi))
         
     def generate_inductance_function(self, L_large, c2_func):
         return lambda phi: L_large/c2_func(phi)
@@ -302,7 +309,7 @@ class SnailAmp():
         Ec = self.e**2/(2*C0)
         return lambda phi: 1/6*p_func(phi)**2*c3_func(phi)/c2_func(phi)*np.sqrt(Ec*self.hbar*res_func(phi))
         
-    def collect_TACO_data(self, gain_folder, plot = False): 
+    def collect_TACO_data(self, gain_folder, plot = False, tla_pump = 0): 
         gain_cwd = gain_folder
         res = find_all_ddh5(gain_cwd)
         info_dict, bias_currents, best_gen_freqs, best_gen_powers, gains = superTACO_Bars(res, angles = [60,20], quanta_size = self.quanta_size, quanta_offset = self.quanta_offset, bardims = [0.001, 0.7], barbase = -24, plot = False)
@@ -310,17 +317,16 @@ class SnailAmp():
         if plot: 
             fig2 = plt.figure(2)
             ax = fig2.add_subplot(131)
-            total_line_attenuation = 72
-            ax.plot(self.conv_func(bias_currents), np.array(best_gen_powers)-total_line_attenuation, 'b.', markersize = 15)
+            ax.plot(self.conv_func(bias_currents), np.array(best_gen_powers)-tla_pump, 'b.', markersize = 15)
             ax.set_title(r'Lowest 20dB Power (dBm) vs. Flux ($\Phi_0$)')
             ax.set_xlabel('Flux Quanta ($\Phi/\Phi_0)$')
             ax.set_ylabel('Generator Power @20dB Gain (dBm)')
             ax.grid()
         
-        return bias_currents, best_gen_freqs, best_gen_powers, gains
+        return bias_currents, best_gen_freqs, best_gen_powers-tla_pump, gains
         
     def g3_from_pump_power(self, 
-                           gains: np.ndarray, 
+                           dBgains: np.ndarray, 
                            pump_powers: np.ndarray, 
                            mode_kappas: np.ndarray, 
                            pump_omegas: np.ndarray,
@@ -354,11 +360,19 @@ class SnailAmp():
         
         lin_pump_powers = np.power(10,pump_powers/10)*0.001 #pump power in watts
         #get the expected value of pump photons present in the resonator
-        numPumpPhotons = np.sqrt(8*mode_kappas*lin_pump_powers/(pump_omegas*self.hbar))/np.absolute(mode_kappas-2j*pump_detunings_from_res)
-        Lin_Power_gains = np.power(10,gains/20)
+        npTZC_arr = []
+        numPumpPhotonsTZC = lin_pump_powers/(pump_omegas*self.hbar)*(np.sqrt(mode_kappas)/(mode_kappas/2-1j*(pump_detunings_from_res)))**2
+        for val in numPumpPhotonsTZC:
+            npTZC_arr.append(np.linalg.norm(val))
+        numPumpPhotons = np.array(npTZC_arr)
+        numPumpPhotonsDev = np.sqrt(8*mode_kappas*lin_pump_powers/(pump_omegas*self.hbar))/np.absolute(mode_kappas-2j*pump_detunings_from_res)
+        Lin_Power_gains = np.power(10,dBgains/20)
         lpg = Lin_Power_gains
+        
         g3_arr = -0.5*(mode_kappas/numPumpPhotons)*np.sqrt((np.sqrt(lpg)-1)/(np.sqrt(lpg)+1))
-        return numPumpPhotons, g3_arr
+        
+        
+        return numPumpPhotonsDev, g3_arr, numPumpPhotons
     
     def process_HFSS_sweep(self, HFSS_filepath): 
         data = pd.read_csv(HFSS_filepath)
@@ -386,13 +400,16 @@ class SnailAmp():
         HFSS_inductances, HFSS_res_freqs, HFSS_kappas = [], [], []
         
         for i, md in enumerate(args): 
+            # print(type(f0Guess_arr))
             if type(f0Guess_arr) == np.ndarray: 
                 f0Guess_arr = np.copy(f0Guess_arr)
                 filt = (md['freqrad']>f0Guess_arr[i]-window_size/2)*(md['freqrad']<f0Guess_arr[i]+window_size/2)
                 f0Guess = f0Guess_arr[i]
             else: 
                 filt = np.ones(np.size(md['freqrad'])).astype(bool)
-                f0Guess = np.mean(md['freqrad'])
+                # print(np.diff(md['phaserad']))
+                # plt.plot(md['freq'][:-1]/1e9, np.diff(md['phaserad']))
+                f0Guess = md['freq'][np.argmin(np.diff(md['phaserad']))]*2*np.pi
                 
             if bounds == None: 
                 bounds = ([QextGuess / 10, QintGuess /10, f0Guess-500e6, magBackGuess / 2, 0],
@@ -414,16 +431,27 @@ class SnailAmp():
         return HFSS_inductances, HFSS_res_freqs, HFSS_kappas
     
     def find_res_from_admittance(freq, admittance): 
-        ad_der = np.diff(admittance)
-        
-        
-        return(freq[np.where()])
+        pass
     
-
+    def g3_from_admittance(self, Ej_large, omegas, Imy, res_omega, res_phi, c3_func): 
+        f_res_loc = np.argmin(np.abs(omegas-res_omega))
+        Zpeff = 2/(res_omega*np.gradient(Imy)[f_res_loc])
+        return Ej_large*c3_func(res_phi)*(2*np.pi/self.phi0*np.sqrt(self.hbar/2*Zpeff))**3
         
-        #def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi)
-        
-        
+    
+if __name__ == '__main__': 
+    SA = SnailAmp()
+    HFSS_filepath = r'D:\HFSS_Sims\SA_2X\mode_s.csv'
+    HFSS_dicts = SA.process_HFSS_sweep(HFSS_filepath)
+    #fit all of them, try to choose a guess frequency and Q's that cooperate with all of them
+    HFSS_inductances, HFSS_res_freqs, HFSS_kappas = SA.fit_modes(*HFSS_dicts, 
+                                                                  Qguess = (5e1,1e3), 
+                                                                  window_size = 100e6, 
+                                                                  plot = True, 
+                                                                  f0Guess_arr = None)
+    HFSS_inductances = np.array(HFSS_inductances)
+    HFSS_kappas = np.array(HFSS_kappas)
+    
         
         
         

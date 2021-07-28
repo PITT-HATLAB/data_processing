@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-datapath = r'\\136.142.53.51\data002\Texas\Cooldown_20210408\SA_C1\Hakan_data\Sweeps\Amplifier_Pump_Power\2021-05-04\2021-05-04_0005_power_1.5\2021-05-04_0005_power_1.5.ddh5'
+datapath = r'G:/My Drive/shared/Amplifier_Response_Data/Data/Loopbacks/2021-07-12/2021-07-12_0001_Amp_0__Phase_0.0_rad_/2021-07-12_0001_Amp_0__Phase_0.0_rad_.ddh5'
 
 def histogram(fig, ax, start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 0, scale = 1, num_bins = 100, boxcar = True, I_weights = None, Q_weights = None):
     I_bground = Ioffset
@@ -62,16 +62,16 @@ Q_plus = dd['Q_plus']['values']
 Q_minus = dd['Q_minus']['values']
 
 #plotting averages
-I_plus_avg = np.average(np.reshape(I_plus, (7500, 208)), axis = 0)
-I_minus_avg = np.average(np.reshape(I_minus, (7500, 208)), axis = 0)
-Q_plus_avg = np.average(np.reshape(Q_plus, (7500, 208)), axis = 0)
-Q_minus_avg = np.average(np.reshape(Q_minus, (7500, 208)), axis = 0)
+I_plus_avg = np.average(np.reshape(I_plus, (3840, 205)), axis = 0)
+I_minus_avg = np.average(np.reshape(I_minus, (3840, 205)), axis = 0)
+Q_plus_avg = np.average(np.reshape(Q_plus, (3840, 205)), axis = 0)
+Q_minus_avg = np.average(np.reshape(Q_minus, (3840, 205)), axis = 0)
 
 #generate histogram weight functions from average traces
 I_wf = generate_weight_function(I_plus_avg, I_minus_avg, 50,150)
 Q_wf = generate_weight_function(Q_plus_avg, Q_minus_avg, 50,150)
 
-fig = plt.figure()
+fig = plt.figure(figsize = (12,8))
 ax1 = fig.add_subplot(221)
 ax1.set_title("I(t) averaged over records")
 ax1.plot(time_vals[rec_num == 0], I_plus_avg, label = 'Positive Detuning')
@@ -120,19 +120,19 @@ histfig = plt.figure()
 ax21 = histfig.add_subplot(221)
 ax21.set_aspect(1)
 ax21.set_title("Plus waveform, weights off")
-histogram(fig, ax21, 50, 150, I_plus.reshape((7500, 208)), Q_plus.reshape((7500, 208)), scale = 1000, boxcar = True)
+histogram(fig, ax21, 50, 150, I_plus.reshape((3840, 205)), Q_plus.reshape((3840, 205)), scale = 1000, boxcar = True)
 
 ax22 = histfig.add_subplot(222)
 ax22.set_title("Minus waveform, weights off")
 ax22.set_aspect(1)
-histogram(fig, ax22, 50, 150, I_minus.reshape((7500, 208)), Q_minus.reshape((7500, 208)), scale = 1000, boxcar = True)
+histogram(fig, ax22, 50, 150, I_minus.reshape((3840, 205)), Q_minus.reshape((3840, 205)), scale = 1000, boxcar = True)
 
 ax23 = histfig.add_subplot(223)
 ax23.set_aspect(1)
 ax23.set_title("Both waveforms, weights off")
-histogram(histfig, ax23, 50, 150, np.append(I_plus, I_minus).reshape((15000, 208)), np.append(Q_plus, Q_minus).reshape((15000, 208)), scale = 1000, boxcar = True)
+histogram(histfig, ax23, 50, 150, np.append(I_plus, I_minus).reshape((3840*2, 205)), np.append(Q_plus, Q_minus).reshape((3840*2, 205)), scale = 1000, boxcar = True)
 
 ax24 = histfig.add_subplot(224)
 ax24.set_aspect(1)
 ax24.set_title("Both waveforms, weights on")
-histogram(histfig, ax24, 50, 150, np.append(I_plus, I_minus).reshape((15000, 208)), np.append(Q_plus, Q_minus).reshape((15000, 208)), scale = 1000, I_weights = I_wf, Q_weights = Q_wf)
+histogram(histfig, ax24, 50, 150, np.append(I_plus, I_minus).reshape((3840*2, 205)), np.append(Q_plus, Q_minus).reshape((3840*2, 205)), scale = 1000, I_weights = I_wf, Q_weights = Q_wf)

@@ -23,7 +23,7 @@ plt.rc('axes', labelsize=15)    # fontsize of the x and y labels
 plt.rc('xtick', labelsize=12)    # fontsize of the tick labels
 plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
-def get_sat_info(sat_bias_current, sat_gen_freq, sat_gen_power, sat_vna_freq, sat_vna_powers, sat_gain, levels = [-2,-1.5,-1, -0.25, 0.25,1, 1.5,2], norm_power = -40, x_val = None, filter_window = 0, vmin = -1, vmax = 1, plot = True): 
+def get_sat_info(sat_bias_current, sat_gen_freq, sat_gen_power, sat_vna_freq, sat_vna_powers, sat_gain, levels = [-2,-1.5,-1, -0.25, 0.25,1, 1.5,2], norm_power = -40, x_val = None, filter_window = 0, vmin = -1, vmax = 1, plot = True, xlim = None, ylim = None): 
     y_norm_val = max([norm_power, np.min(sat_vna_powers)+2]) #Signal power at which to normalize the rest of the plot to
     # print(f'Normalizing saturation to {y_norm_val} VNA power')
     # print(f'lowest VNA power: {np.min(sat_vna_powers)}')
@@ -86,7 +86,12 @@ def superSat(filepaths,
              cscale = 10e6, 
              kerr = False, 
              kerr_null: float = None, 
-             kerr_scale: float = None): 
+             kerr_scale: float = None, 
+             scale_flip = False, 
+             device_name: str = '', 
+             quanta_flip = False, 
+             xlim = None, 
+             ylim = None): 
     '''
     assemble all of the saturation sweeps, extract the best (highest) 
     saturation power in (gen_freqs, gen_powers) space, plot vs current
@@ -150,10 +155,15 @@ def superSat(filepaths,
         ax1 = fig.add_subplot(111)
         plt_powers = np.array(best_sat_powers)-tla_signal
         # print(conv)
-        p1 = ax1.plot(conv_func(np.array(plot_currents)), plt_powers, 'b.', markersize = 15)
-        ax1.title.set_text('Best Saturation Power (dBm cryo) vs. Flux')
+        if quanta_flip:     
+            p1 = ax1.plot(1-conv_func(np.array(plot_currents)), plt_powers, 'b.', markersize = 15)
+        else: 
+            p1 = ax1.plot(conv_func(np.array(plot_currents)), plt_powers, 'b.', markersize = 15)
+        ax1.title.set_text(f'{device_name}Best Saturation Power vs. Flux')
         ax1.set_xlabel('Flux Quanta ($\Phi/\Phi_0$)')
         ax1.set_ylabel('Saturation Power (dBm)')
+        if ylim is not None: 
+            ax1.set_ylim(ylim[0], ylim[1])
         plt.grid()
         
         fig2 = plt.figure()
@@ -163,13 +173,21 @@ def superSat(filepaths,
         img = ax2.scatter(np.array(sat_gen_powers)-tla_pump, np.array(sat_powers)-tla_signal, c = colors2, cmap = 'viridis', vmin = np.min(colors2), vmax = np.max(colors2), zorder = 1)
         cb2 = fig2.colorbar(img, ax = ax2)
         cb2.set_label("Bias Flux ($\Phi/\Phi_0$)")
-        ax2.title.set_text('Saturation Power vs. Pump power')
+        ax2.title.set_text(f'{device_name}Saturation Power vs. Pump power')
         ax2.set_xlabel('Generator Power (dBm Cryo)')
         ax2.set_ylabel('Saturation Power (dBm Cryo)')
+        if xlim is not None:
+            ax2.set_xlim(xlim[0], xlim[1])
+        if ylim is not None: 
+            ax2.set_ylim(xlim[0], xlim[1])
         plt.grid()
         
         if kerr: 
-            colors_arr = [color.hex2color('#4444FF'),color.hex2color('#4444FF'),color.hex2color('#4444FF'), color.hex2color('#03fc41'),color.hex2color('#03fc41'), color.hex2color('#FF4444'), color.hex2color('#FF4444'), color.hex2color('#FF4444')]
+            colors_arr = [color.hex2color('#000066'),color.hex2color('#444488'),color.hex2color('#4444FF'), color.hex2color('#03fc41'),color.hex2color('#03fc41'), color.hex2color('#FF4444'), color.hex2color('#884444'), color.hex2color('#660000')]
+            tick_labels = ['- 1', '0', '+ 1']
+            if scale_flip: 
+                colors_arr.reverse()
+                tick_labels.reverse()
             _cmap = color.LinearSegmentedColormap.from_list('my_cmap', colors_arr)
             fig1 = plt.figure()
             ax1 = fig1.add_subplot(111)
@@ -178,11 +196,15 @@ def superSat(filepaths,
             scale = cscale
             img = ax1.scatter(np.array(sat_gen_powers)-tla_pump, np.array(sat_powers)-tla_signal, c = colors2, cmap = _cmap, vmin = kerr_null-kerr_scale, vmax = kerr_null+kerr_scale, zorder = 1)
             cb1 = fig1.colorbar(img, ax = ax1, ticks=[kerr_null-kerr_scale, kerr_null, kerr_null+kerr_scale])
-            cb1.set_label("Kerr sign")
-            cb1.ax.set_yticklabels(['< 0', '0', '> 0'])
-            ax1.title.set_text('Saturation Power vs. Pump power')
+            cb1.set_label("Self-Kerr (arb. units)")
+            cb1.ax.set_yticklabels(tick_labels)
+            ax1.title.set_text(f'{device_name}Saturation Power vs. Pump power')
             ax1.set_xlabel('Generator Power (dBm Cryo)')
             ax1.set_ylabel('Saturation Power (dBm Cryo)')
+            if xlim is not None: 
+                ax1.set_xlim(xlim[0], xlim[1])
+            if ylim is not None: 
+                ax1.set_ylim(ylim[0], ylim[1])
             plt.grid()
 
         # ax1.vlines(conv_func(-0.173e-3), np.min(plt_powers), np.max(plt_powers), linestyles = 'dashed', colors = ['red'])
@@ -222,6 +244,7 @@ def superSat(filepaths,
         plt.xlabel('Bias Current (mA)')
         plt.ylabel('Saturation Power (dBm)')
         plt.title('Maximum Saturation Power vs. Bias Current')
+        
         plt.grid()
         # plt.figure(2)
         # plt.plot(np.array(plot_currents)*1000, np.array(best_sat_gen_frequencies)/1000, 'b.', markersize = 15)
@@ -249,20 +272,24 @@ def superSat(filepaths,
     ax1 = fig1.add_subplot(111)
     # print(conv)
     scale = cscale
-    img = ax1.scatter(np.array(sat_gen_powers)-tla_pump, np.array(sat_powers)-tla_signal, c = np.array(sat_detunings)/1e6, cmap = 'RdYlBu', vmin = -cscale, vmax = cscale, zorder = 1)
+    
+    colors_arr = [color.hex2color('#000066'),color.hex2color('#444488'),color.hex2color('#4444FF'), color.hex2color('#03fc41'),color.hex2color('#03fc41'), color.hex2color('#FF4444'), color.hex2color('#884444'), color.hex2color('#660000')]
+    if scale_flip: 
+        colors_arr.reverse()
+        tick_labels.reverse()
+    _cmap = color.LinearSegmentedColormap.from_list('my_cmap', colors_arr)
+    
+    img = ax1.scatter(np.array(sat_gen_powers)-tla_pump, np.array(sat_powers)-tla_signal, c = np.array(sat_detunings)/1e6, cmap = _cmap, vmin = -cscale, vmax = cscale, zorder = 1)
     cb1 = fig1.colorbar(img, ax = ax1)
     cb1.set_label("Detuning (MHz)")
-    ax1.title.set_text('Saturation Power vs. Pump power')
+    ax1.title.set_text(f'{device_name}Saturation Power vs. Pump power')
     ax1.set_xlabel('Generator Power (dBm Cryo)')
     ax1.set_ylabel('Saturation Power (dBm Cryo)')
+    if xlim is not None: 
+        ax1.set_xlim(xlim[0], xlim[1])
+    if ylim is not None:
+        ax1.set_ylim(ylim[0], ylim[1])
     plt.grid()
-    
-
-    
-    
-
-    
-
 
 def superTACO_Bars(filepaths, angles = [45,45], quanta_size = None, quanta_offset = None, bardims = [1,1], barbase = -30, plot = False):
     #step 1: assemble best powers into bias_currents vs. (gen_freq vs. best_powers) array
