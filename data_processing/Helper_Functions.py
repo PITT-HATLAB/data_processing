@@ -128,4 +128,28 @@ def load_instrument(inst_class, *args, **kwargs):
     except AttributeError:
         pass    
 
+def freq_differences(freq_dict): 
+    diff_dict = {}
+    sum_dict = {}
+    for i, (k1, f1) in enumerate(freq_dict.items()): 
+        for j, (k2, f2) in enumerate(freq_dict.items()): 
+            if j>i: 
+                print(f"({k1} + {k2}): {f1+f2}")
+                sum_dict[f"({k1}+{k2})"] = f1+f2
+                
+                print(f"({k1} - {k2}): {np.abs(f1-f2)}")
+                diff_dict[f"({k1}-{k2})"] = np.abs(f1-f2)
+                
+    return sum_dict, diff_dict
+
+def check_if_close(freq_dict, threshold = 0.5): #threshold and freqs in GHz 
+    for i, (k1, f1) in enumerate(freq_dict.items()): 
+        for j, (k2, f2) in enumerate(freq_dict.items()): 
+            if i>j and np.abs(f2-f1)<threshold: 
+                print(f"{k2} - {k1} is too close: {np.abs(f1-f2)}")
+    
+    
+    
+    
+    
     

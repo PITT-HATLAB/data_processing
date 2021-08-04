@@ -48,6 +48,7 @@ def get_sat_info(sat_bias_current, sat_gen_freq, sat_gen_power, sat_vna_freq, sa
     sat_powers = []
     sat_gen_powers = []
     detunings = []
+    sat_center_freqs = []
     
     for i, col in enumerate(smoothed_normed_data.T): 
         buffer = np.size(col[sat_vna_powers[0]<= y_norm_val])
@@ -70,10 +71,11 @@ def get_sat_info(sat_bias_current, sat_gen_freq, sat_gen_power, sat_vna_freq, sa
         sat_gen_powers.append(sat_gen_power[i])
         
         detunings.append(sat_gen_freq[i]-zero_freq)
+        sat_center_freqs.append(sat_gen_freq[i])
         
     max_loc = np.where(sat_powers[0:-1] == np.max(sat_powers[0:-1]))[0][0]
     
-    return (np.array(sat_gen_freq+(sat_gen_freq[1]-sat_gen_freq[0])/2)/1e6)[max_loc], sat_vna_freq[max_loc], sat_powers[max_loc], np.array(sat_powers), np.array(sat_gen_powers), np.array(detunings), sat_bias_current*np.ones(len(detunings))
+    return (np.array(sat_gen_freq+(sat_gen_freq[1]-sat_gen_freq[0])/2)/1e6)[max_loc], sat_vna_freq[max_loc], sat_powers[max_loc], np.array(sat_powers), np.array(sat_gen_powers), np.array(detunings), np.array(sat_center_freqs), sat_bias_current*np.ones(len(detunings))
 
 def superSat(filepaths, 
              y_norm_val = -70, 
@@ -110,6 +112,7 @@ def superSat(filepaths,
     sat_gen_powers = []
     sat_detunings = []
     sat_bias_arr = []
+    sat_center_freqs_arr = []
     
     best_sat_powers = []
     best_sat_gen_frequencies = []
@@ -136,7 +139,19 @@ def superSat(filepaths,
             # make_sat_contour_plot(b1_val, sf1, svp1, sg1, norm_power = -60, levels = [-2, -1, -0.05,0.05, 1, 2], x_val = 10.687e3)
             sf1, sgp1, svp1, sgp1, sg1, svf1 = sat_gen_freq[bp1], sat_gen_power[bp1], sat_vna_powers[bp1], sat_gen_power[bp1], sat_gain[bp1], sat_vna_freq[bp1]
             
-            best_sat_gen_freq, best_sat_vna_freq, best_sat_pow, sat_power_arr, sat_gen_power_arr, sat_detuning_arr, bias_arr = get_sat_info(current, sf1, sgp1, svf1, svp1, sg1, norm_power = y_norm_val, levels = [-20, -1,1, 20], x_val = None, filter_window = filter_window, vmin = -1.7, vmax = 1.7, plot = plot_individual)
+            best_sat_gen_freq, best_sat_vna_freq, best_sat_pow, sat_power_arr, sat_gen_power_arr, sat_detuning_arr, sat_center_freqs, bias_arr = get_sat_info(
+                current, 
+                sf1, 
+                sgp1, 
+                svf1, 
+                svp1, 
+                sg1, 
+                norm_power = y_norm_val, 
+                levels = [-20, -1,1, 20], 
+                x_val = None, 
+                filter_window = filter_window, 
+                vmin = -1.7, vmax = 1.7, 
+                plot = plot_individual)
             
             best_sat_gen_frequencies.append(best_sat_gen_freq)
             best_sat_vna_frequencies.append(best_sat_vna_freq)
@@ -146,6 +161,7 @@ def superSat(filepaths,
             sat_gen_powers.extend(sat_gen_power_arr)
             sat_detunings.extend(sat_detuning_arr)
             sat_bias_arr.extend(bias_arr)
+            sat_center_freqs_arr.extend(sat_center_freqs)
             
     # print(list(zip(plot_currents, best_sat_powers, best_sat_frequencies)))
     
@@ -206,7 +222,21 @@ def superSat(filepaths,
             if ylim is not None: 
                 ax1.set_ylim(ylim[0], ylim[1])
             plt.grid()
-
+            
+            
+        #plot best saturation wrt signal frequency. ie for all vna frequencies, plot the best saturation. Generally this is the generator freq/2
+        
+        fig3 = plt.figure()
+        ax3 = fig3.add_subplots(111)
+        img = ax3.scatter(sat_center_freqs_arr/1e9, sat_gen_powers)
+        ax3.set_xlabel("Signal Frequency (GHz)")
+        ax3.set_ylabel("Saturation Power (dBm Cryo)")
+        
+        colors2 = np.array(sat_bias_arr)*1e6
+        img = ax2.scatter(np.array(sat_gen_powers)-tla_pump, np.array(sat_powers)-tla_signal, c = colors2, cmap = 'magma', vmin = np.min(colors2), vmax = np.max(colors2), zorder = 1)
+        cb2 = fig2.colorbar(img, ax = ax3)
+        cb2.set_label("Bias Current ($\mu A$)")
+        
         # ax1.vlines(conv_func(-0.173e-3), np.min(plt_powers), np.max(plt_powers), linestyles = 'dashed', colors = ['red'])
         
         # plt.figure(2)
@@ -237,36 +267,6 @@ def superSat(filepaths,
         # plt.title("Best Saturation Power vs. Signal Frequency")
         # plt.grid()
         # plt.legend()
-    else: 
-        plt.figure()
-        plt.plot(np.array(plot_currents)*1000, best_sat_powers, 'b.', markersize = 15)
-        plt.title('Best Saturation Power (dBm Cryo) vs. Bias Current (mA)')
-        plt.xlabel('Bias Current (mA)')
-        plt.ylabel('Saturation Power (dBm)')
-        plt.title('Maximum Saturation Power vs. Bias Current')
-        
-        plt.grid()
-        # plt.figure(2)
-        # plt.plot(np.array(plot_currents)*1000, np.array(best_sat_gen_frequencies)/1000, 'b.', markersize = 15)
-        # plt.xlabel('Bias Current (mA)')
-        # plt.ylabel('Generator Frequency (GHz)')
-        # plt.title('Generator Frequency at Best Saturation Point vs. Bias Current')
-        # plt.grid()
-        # plt.figure(3)
-        # plt.plot(np.array(plot_currents)*1000, np.array(best_sat_vna_frequencies)/1e9, 'b.', markersize = 15)
-        # plt.xlabel('Bias Current (mA)')
-        # plt.ylabel('VNA CW Frequency (GHz)')
-        # plt.title('Signal Frequency at Best Saturation Point vs. Bias Current')
-        # plt.grid()
-        # plt.figure(4)
-        # plt.plot(np.array(best_sat_vna_frequencies)/1e9, best_sat_powers, 'k.', label = 'VNA Frequencies', markersize = 15)
-        # plt.plot(np.array(best_sat_gen_frequencies)/2000, best_sat_powers, 'b.', label = 'Generator Frequencies/2', markersize = 15)
-        # plt.ylabel('Saturation Power (dBm)')
-        # plt.xlabel('Generator/VNA Frequency (GHz)')
-        # plt.title("Best Saturation Power vs. Signal Frequency")
-        # plt.grid()
-        # plt.legend()
-        pass
     
     fig1 = plt.figure()
     ax1 = fig1.add_subplot(111)
@@ -290,7 +290,11 @@ def superSat(filepaths,
     if ylim is not None:
         ax1.set_ylim(ylim[0], ylim[1])
     plt.grid()
-
+    fig1.savefig(r'G:\My Drive\old files\WRITE - Presentations\mpl_figures\test.pdf', format = 'pdf')
+    
+    
+    
+    
 def superTACO_Bars(filepaths, angles = [45,45], quanta_size = None, quanta_offset = None, bardims = [1,1], barbase = -30, plot = False):
     #step 1: assemble best powers into bias_currents vs. (gen_freq vs. best_powers) array
     #ie for each n bias current there is a gen_freq array
@@ -396,5 +400,5 @@ if __name__ == "__main__":
     
     sat_cwd = r'Z:\Data\SA_2X_B1\best_tacos\sat'
     res = find_all_ddh5(sat_cwd)
-    superSat(res, y_norm_val = -80, filter_window=9, conv = False, plot_individual = False, tla_signal = 61, tla_pump = 71.5, cscale = 100e6)
+    superSat(res, y_norm_val = -80, filter_window=9, conv = False, plot_individual = False, tla_signal = 61, tla_pump = 71.5, cscale = 100)
 

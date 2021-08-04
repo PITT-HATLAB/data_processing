@@ -94,8 +94,8 @@ class SnailAmp():
         self.conv_func = lambda c: (c-quanta_offset)/quanta_size
         
     def info_from_junction_sizes(self, junction_sizes, res = 100, Jc = 0.8, verbose = False):
-        
         self.s_size, self.l_size = junction_sizes
+
         
         self.alpha_from_sizes = self.s_size/self.l_size
         self.I0s, self.I0l = Jc*self.s_size*1e-6, Jc*self.l_size*1e-6
