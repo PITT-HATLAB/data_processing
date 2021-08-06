@@ -45,7 +45,7 @@ def c4_func_gen_vectorize(alpha_val): #can be fed an array
     a, Ej, phi_s, phi_e, phi_m = sp.symbols('alpha,E_j,phi_s,phi_e, phi_min')
     U_snail = (-a*sp.cos(phi_s) - 3*sp.cos((phi_e-phi_s)/3))
     expansion = sp.series(U_snail, phi_s, x0 = phi_m, n = 5)
-    coeff = expansion.removeO().coeff(sp.Pow(phi_s-phi_m, 4))
+    coeff = expansion.removeO().coeff(sp.Pow(phi_s-phi_m, 4))*24
     c4exp = lambda phi_ext: coeff.subs([(a, alpha_val), (phi_e, phi_ext), (phi_m, get_phi_min(alpha_val, phi_ext))])
     return np.vectorize(c4exp)
 
@@ -53,7 +53,7 @@ def c3_func_gen_vectorize(alpha_val): #can be fed an array
     a, Ej, phi_s, phi_e, phi_m = sp.symbols('alpha,E_j,phi_s,phi_e, phi_min')
     U_snail = (-a*sp.cos(phi_s) - 3*sp.cos((phi_e-phi_s)/3))
     expansion = sp.series(U_snail, phi_s, x0 = phi_m, n = 4)
-    coeff = expansion.removeO().coeff(sp.Pow(phi_s-phi_m, 3))
+    coeff = expansion.removeO().coeff(sp.Pow(phi_s-phi_m, 3))*6
     c3exp = lambda phi_ext: coeff.subs([(a, alpha_val), (phi_e, phi_ext), (phi_m, get_phi_min(alpha_val, phi_ext))])
     return np.vectorize(c3exp)
 
@@ -61,7 +61,7 @@ def c2_func_gen_vectorize(alpha_val):
     a, Ej, phi_s, phi_e, phi_m = sp.symbols('alpha,E_j,phi_s,phi_e, phi_min')
     U_snail = (-a*sp.cos(phi_s) - 3*sp.cos((phi_e-phi_s)/3))
     expansion = sp.series(U_snail, phi_s, x0 = phi_m, n = 3)
-    coeff = expansion.removeO().coeff(sp.Pow(phi_s-phi_m, 2))
+    coeff = expansion.removeO().coeff(sp.Pow(phi_s-phi_m, 2))*2
     c2exp = lambda phi_ext: coeff.subs([(a, alpha_val), (phi_e, phi_ext), (phi_m, get_phi_min(alpha_val, phi_ext))])
     return np.vectorize(c2exp)
 
@@ -109,6 +109,22 @@ class SnailAmp():
         
         return self.c2_func, self.c3_func, self.c4_func
     
+    def info_from_junction_i0(self, junction_i0_small, junction_i0_large, res = 100, Jc = 0.8, verbose = False):
+        '''
+        junction_i0_small: junction critical current in A
+        junction_i0_large: junction critical current in A
+        '''
+        
+        self.I0s, self.I0l = junction_i0_small, junction_i0_large
+        
+        self.Lss, self.Lsl = self.Ic_to_Lj(self.I0s), self.Ic_to_Lj(self.I0l)
+        self.Ejs, self.Ejl = self.Ic_to_Ej(self.I0s), self.Ic_to_Ej(self.I0l)
+        
+        self.alpha_from_i0 = self.Ejs/self.Ejl
+
+        self.c2_func, self.c3_func, self.c4_func = self.generate_coefficient_functions(self.alpha_from_i0, res = res, verbose = False)
+        
+        return self.c2_func, self.c3_func, self.c4_func
 
     def Ic_to_Ej(self, Ic: float):
         '''
@@ -135,6 +151,64 @@ class SnailAmp():
         src: https://en.wikipedia.org/wiki/Josephson_effect
         '''
         return self.phi0/(2*np.pi*Ic)
+    
+    def generate_coefficient_functions(self, alpha_val, res = int(100), plot = False, show_coefficients = False, verbose = False):
+        '''
+        Parameters
+        ----------
+        alpha_val : float
+            alpha value between 0 and 0.33
+        res : int, optional
+            number of points to base interpolation off of. The default is 100.
+        Returns
+        -------
+        c2_func : lambda function
+            function that will return the value of c2
+        c3_func : lambda function
+            DESCRIPTION.
+        c4_func : lambda function
+            DESCRIPTION.
+
+        '''
+        if verbose:
+            print("Calculating expansion coefficients")
+        start_time = timer()
+        
+        phi_ext_arr = np.linspace(0,2*np.pi, res)
+        c4_arr = c4_func_gen_vectorize(alpha_val)(phi_ext_arr)
+        end_time = timer()
+        if verbose: 
+            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
+        c4_func = interp1d(phi_ext_arr, c4_arr, 'quadratic')
+        
+        
+        #c3: 
+        start_time = timer()
+        phi_ext_arr = np.linspace(0,2*np.pi, res)
+        c3_arr = c3_func_gen_vectorize(alpha_val)(phi_ext_arr)
+        end_time = timer()
+        if verbose: 
+            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
+        c3_func = interp1d(phi_ext_arr, c3_arr, 'quadratic')
+        
+        
+        #c2: 
+        start_time = timer()
+        phi_ext_arr = np.linspace(0,2*np.pi, res)
+        c2_arr = c2_func_gen_vectorize(alpha_val)(phi_ext_arr)
+        end_time = timer()
+        if verbose: 
+            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
+        c2_func = interp1d(phi_ext_arr, c2_arr, 'quadratic')
+        
+        if plot: 
+            plt.plot(phi_ext_arr, self.c2_func(phi_ext_arr), label = "c2")
+            plt.plot(phi_ext_arr, self.c3_func(phi_ext_arr), label = "c3")
+            plt.plot(phi_ext_arr, self.c4_func(phi_ext_arr), label = 'c4')
+            
+            plt.legend()
+        
+        return c2_func, c3_func, c4_func
         
     def gradient_descent_participation_fitter(self, fitted_res_func, initial_p_guess, initial_alpha_guess, init_f0_guess, res = 100, bounds = None):
         
@@ -223,63 +297,7 @@ class SnailAmp():
         
         return self.alpha_from_FS, self.p_from_FS, self.f_slider.val
         
-    def generate_coefficient_functions(self, alpha_val, res = int(100), plot = False, show_coefficients = False, verbose = False):
-        '''
-        Parameters
-        ----------
-        alpha_val : float
-            alpha value between 0 and 0.33
-        res : int, optional
-            number of points to base interpolation off of. The default is 100.
-        Returns
-        -------
-        c2_func : lambda function
-            function that will return the value of c2
-        c3_func : lambda function
-            DESCRIPTION.
-        c4_func : lambda function
-            DESCRIPTION.
 
-        '''
-        if verbose:
-            print("Calculating expansion coefficients")
-        start_time = timer()
-        
-        phi_ext_arr = np.linspace(0,2*np.pi, res)
-        c4_arr = c4_func_gen_vectorize(alpha_val)(phi_ext_arr)
-        end_time = timer()
-        if verbose: 
-            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
-        c4_func = interp1d(phi_ext_arr, c4_arr, 'quadratic')
-        
-        
-        #c3: 
-        start_time = timer()
-        phi_ext_arr = np.linspace(0,2*np.pi, res)
-        c3_arr = c3_func_gen_vectorize(alpha_val)(phi_ext_arr)
-        end_time = timer()
-        if verbose: 
-            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
-        c3_func = interp1d(phi_ext_arr, c3_arr, 'quadratic')
-        
-        
-        #c2: 
-        start_time = timer()
-        phi_ext_arr = np.linspace(0,2*np.pi, res)
-        c2_arr = c2_func_gen_vectorize(alpha_val)(phi_ext_arr)
-        end_time = timer()
-        if verbose: 
-            print(f"Elapsed time: {np.round(end_time-start_time, 2)} seconds")
-        c2_func = interp1d(phi_ext_arr, c2_arr, 'quadratic')
-        
-        if plot: 
-            plt.plot(phi_ext_arr, self.c2_func(phi_ext_arr), label = "c2")
-            plt.plot(phi_ext_arr, self.c3_func(phi_ext_arr), label = "c3")
-            plt.plot(phi_ext_arr, self.c4_func(phi_ext_arr), label = 'c4')
-            
-            plt.legend()
-        
-        return c2_func, c3_func, c4_func
     
     def set_linear_inductance(self, L0): 
         self.L0 = L0

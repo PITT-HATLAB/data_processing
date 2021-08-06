@@ -10,7 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-datapath = r'G:/My Drive/shared/Amplifier_Response_Data/Data/Loopbacks/2021-07-12/2021-07-12_0001_Amp_0__Phase_0.0_rad_/2021-07-12_0001_Amp_0__Phase_0.0_rad_.ddh5'
+datapath = r'C:/Users/Hatlab-RRK/Downloads/2021-07-12_0001_Amp_0__Phase_0.0_rad_.ddh5'
+name = '2021-07-12_0001_Amp_0__Phase_0.0_rad_.ddh5'
 
 def histogram(fig, ax, start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 0, scale = 1, num_bins = 100, boxcar = True, I_weights = None, Q_weights = None):
     I_bground = Ioffset
@@ -71,7 +72,8 @@ Q_minus_avg = np.average(np.reshape(Q_minus, (3840, 205)), axis = 0)
 I_wf = generate_weight_function(I_plus_avg, I_minus_avg, 50,150)
 Q_wf = generate_weight_function(Q_plus_avg, Q_minus_avg, 50,150)
 
-fig = plt.figure(figsize = (12,8))
+fig = plt.figure(figsize = (14,12))
+fig.suptitle(name, fontsize = 30)
 ax1 = fig.add_subplot(221)
 ax1.set_title("I(t) averaged over records")
 ax1.plot(time_vals[rec_num == 0], I_plus_avg, label = 'Positive Detuning')
@@ -116,16 +118,16 @@ ax4.plot()
 # ax4.set_xlabel('Time (ns)')
 # ax4.set_ylabel('Voltage (DAC Value)')
 
-histfig = plt.figure()
+histfig = plt.figure(figsize = (16,12))
 ax21 = histfig.add_subplot(221)
 ax21.set_aspect(1)
 ax21.set_title("Plus waveform, weights off")
-histogram(fig, ax21, 50, 150, I_plus.reshape((3840, 205)), Q_plus.reshape((3840, 205)), scale = 1000, boxcar = True)
+histogram(fig, ax21, 50, 150, I_plus.reshape((3840, 205)), Q_plus.reshape((3840, 205)), scale = 0.01, boxcar = True)
 
 ax22 = histfig.add_subplot(222)
 ax22.set_title("Minus waveform, weights off")
 ax22.set_aspect(1)
-histogram(fig, ax22, 50, 150, I_minus.reshape((3840, 205)), Q_minus.reshape((3840, 205)), scale = 1000, boxcar = True)
+histogram(fig, ax22, 50, 150, I_minus.reshape((3840, 205)), Q_minus.reshape((3840, 205)), scale = 0.01, boxcar = True)
 
 ax23 = histfig.add_subplot(223)
 ax23.set_aspect(1)

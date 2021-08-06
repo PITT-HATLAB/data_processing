@@ -18,7 +18,7 @@ from plottr.data.datadict_storage import all_datadicts_from_hdf5
 def Process_One_Acquisition(name, sI_c1, sI_c2, sQ_c1 ,sQ_c2, bin_start, bin_stop, hist_scale = 200, odd_only = False, even_only = False, plot = False):
     if plot: 
         fig = plt.figure(1, figsize = (12,8))
-        fig.suptitle(name)
+        fig.suptitle(name, fontsize = 20)
         ax1 = fig.add_subplot(221)
         ax1.set_title("I")
         ax1.plot(np.average(sI_c1, axis = 0), label = 'even records')
@@ -78,9 +78,6 @@ def Process_One_Acquisition(name, sI_c1, sI_c2, sQ_c1 ,sQ_c2, bin_start, bin_sto
             boxcar_histogram(fig, ax4, bin_start, bin_stop, np.concatenate((sI_c1, sI_c2)), np.concatenate((sQ_c1, sQ_c2)), Ioffset = 0, Qoffset = 0, scale = hist_scale)
         plt.show()
     return bins_even, bins_odd, h_even.T, h_odd.T
-    
-def general_2D_histogram(): 
-    
     
     
 def boxcar_histogram(fig, ax, start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 0, scale = 1, num_bins = 100):

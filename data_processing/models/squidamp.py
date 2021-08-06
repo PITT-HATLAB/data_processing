@@ -66,7 +66,7 @@ def c2_func_gen_vectorize(alpha_val):
     return np.vectorize(c2exp)
 
 
-class SnailAmp(): 
+class SquidAmp(): 
     def __init__(self): #uA/um^2
         '''
         Parameters
