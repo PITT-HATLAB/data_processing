@@ -20,6 +20,7 @@ from scipy.fftpack import dct, idct
 # FS_filepath = r'Z:/Data/SA_2X_B1/fluxsweep/fits/2021-07-22/2021-07-22_0024_SA_2X_B1/2021-07-22_0024_SA_2X_B1.ddh5'
 # Duff_filepath = r'Z:/Data/SA_2X_B1/duffing/2021-07-23/2021-07-23_0004_SA_2X_B1_duffing/2021-07-23_0004_SA_2X_B1_duffing.ddh5'
 # save_filepath = r'Z:\Data\SA_2X_B1\duffing\fits'
+#create a custom exception that handles fit errors in a more transparent way 
 
 #%%Create measurement-based saver for the fit data. 
 
@@ -30,8 +31,8 @@ class fit_Duff_Measurement():
         - run semiauto_fit for each generator power, return an array of popts in an N_currents x M_gen_powers array
         - use plotRes to debug fitter
         - generate duffing graph
-        
     '''
+    
     def __init__(self, name):
         #setup files
         self.name = name
@@ -237,7 +238,6 @@ class fit_Duff_Measurement():
             if smooth: 
                 first_trace_phase = savgol_filter(first_trace_phase, smooth_win, 3)
                 first_trace_mag = savgol_filter(first_trace_mag, smooth_win, 3)
-        
                 
             imag = first_trace_mag * np.sin(first_trace_phase)
             real = first_trace_mag * np.cos(first_trace_phase)
@@ -247,13 +247,15 @@ class fit_Duff_Measurement():
                     plt.plot(first_trace_freqs, real)
                     plt.plot(first_trace_freqs, imag)
                     plt.title('before filter')
-                imag = idct(dct(imag)[fourier_cutoff:])    
+                imag = idct(dct(imag)[fourier_cutoff:])  
                 real = idct(dct(real)[fourier_cutoff:])
                 if debug: 
                     plt.figure(4)
                     plt.plot(real)
                     plt.plot(imag)
                     plt.title('after filter')
+                    print("Bias current: {current}")
+                    print("Generator Power: {}")
             if i >= 2: 
                 if adaptive_window: 
                     filt1 = first_trace_freqs<np.average(res_freqs[i-1:i])*2*np.pi+adapt_win_size*2*np.pi/2
@@ -293,7 +295,7 @@ class fit_Duff_Measurement():
                             print("trying above")
                         else: 
                             print("trying_below")
-                    popt, pconv = fit(first_trace_freqs[filt], real[filt], imag[filt], first_trace_mag, first_trace_phase, Qguess =         (QextGuess,QintGuess), f0Guess = f0Guess+alt_array[j], real_only = 0, bounds = bounds, magBackGuess = magBackGuess)
+                    popt, pconv = fit(first_trace_freqs[filt], real[filt], imag[filt], first_trace_mag, first_trace_phase, Qguess = (QextGuess,QintGuess), f0Guess = f0Guess+alt_array[j], real_only = 0, bounds = bounds, magBackGuess = magBackGuess)
                     
                     pconv_diff_ratio = (np.array(pconv[0,0], pconv[1,1])-np.array(prev_pconv[0,0], prev_pconv[1,1]))/np.array(prev_pconv[0,0], prev_pconv[1,1])
                     j+=1
@@ -348,7 +350,7 @@ class fit_Duff_Measurement():
             vna_freqs = self.vna_freqs[pow_condn]
             vna_phases = self.driven_vna_phase[pow_condn]
             vna_mags = self.driven_vna_power[pow_condn]
-            
+            print("Generator Power: {gen_power} dBm")
             fit_currents, fit_freqs, fit_Qints, fit_Qexts, fit_magBacks, popts, pconvs = self.semiauto_fit(bias_currents, 
                                                                                                            vna_freqs/(2*np.pi), 
                                                                                                            vna_mags, 

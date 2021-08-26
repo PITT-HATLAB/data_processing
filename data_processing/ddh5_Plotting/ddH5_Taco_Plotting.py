@@ -21,10 +21,10 @@ plt.rc('axes', labelsize=15)    # fontsize of the x and y labels
 plt.rc('xtick', labelsize=12)    # fontsize of the tick labels
 plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
-device_name = 'SA_2X_B1'
+device_name = 'SHARC_5B1'
 
-gain_filepath = r'Z:/Data/SA_2X_B1/tacos_TX/2021-07-22/2021-07-22_0009_-7.5e-06mA_TACO_high_gain/2021-07-22_0009_-7.5e-06mA_TACO_high_gain.ddh5'
-sat_filepath = r'Z:/Data/SA_2X_B1/tacos_TX/2021-07-22/2021-07-22_0010_-7.5e-06mA_TACO_high_sat/2021-07-22_0010_-7.5e-06mA_TACO_high_sat.ddh5'
+gain_filepath = r'Z:/Data/SH_5B1/Tacos/SSS/2021-08-25/2021-08-25_0001_0.002073mA_TACO_gain/2021-08-25_0001_0.002073mA_TACO_gain.ddh5'
+sat_filepath = r'Z:/Data/SH_5B1/Tacos/SSS/2021-08-25/2021-08-25_0002_0.002073mA_TACO_sat/2021-08-25_0002_0.002073mA_TACO_sat.ddh5'
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']
@@ -68,7 +68,7 @@ ax.grid(linestyle = '--', zorder = 2)
 bp1 = (sat_bias_current == np.unique(sat_bias_current)[0])
 # plt.plot(bp1)
 sf1, svp1, sgp1, sg1 = sat_gen_freq[bp1], sat_vna_powers[bp1], sat_gen_power[bp1], sat_gain[bp1]
-fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1, sg1, norm_power = -82, levels = [-20, -1,1, 20], filter_window = 10, vmin = -1.7, vmax = 1.7)
+fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1, sg1, norm_power = -92, levels = [-20, -1,1, 20], filter_window = 10, vmin = -1.7, vmax = 1.7)
 #supplementary graph info
 if fancy:
     title = f'{device_name} Saturation power vs. Generator Frequency\nBias = {np.round(b1_val*1000, 4)}mA'

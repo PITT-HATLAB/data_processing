@@ -15,6 +15,12 @@ import matplotlib.pyplot as plt
 
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 
+def Process_One_Acquisition_np(filepath, plot = False, pulse_types = 2):
+    
+    
+    return pulse
+    
+
 def Process_One_Acquisition(name, sI_c1, sI_c2, sQ_c1 ,sQ_c2, bin_start, bin_stop, hist_scale = 200, odd_only = False, even_only = False, plot = False):
     if plot: 
         fig = plt.figure(1, figsize = (12,8))
@@ -201,7 +207,7 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
     
     time_unit = dd['time']['unit']
     
-    print(np.size(np.unique(dd['time']['values'])))
+    # print(np.size(np.unique(dd['time']['values'])))
     time_vals = dd['time']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))
     
     
@@ -215,7 +221,7 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
     Q_plus = dd['Q_plus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-Q_offset
     Q_minus = dd['Q_minus']['values'].reshape((numRecords//2, np.size(dd['time']['values'])//(numRecords//2)))-Q_offset
     
-    print(np.size(I_minus))
+    # print(np.size(I_minus))
     
     #averages
     I_plus_avg = np.average(I_plus, axis = 0)
@@ -300,11 +306,11 @@ def get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_s
     
     return amp_off_voltage
 
-def get_IQ_offset_from_filepath(amp_off_filepath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2): 
+def get_IQ_offset_from_filepath(amp_off_filepath, plot = False, hist_scale = None, records_per_pulsetype = 3840*2): 
     
     bins_even, bins_odd, h_even, h_odd, guessParam = extract_2pulse_histogram_from_filepath(amp_off_filepath, 
                                                                                                odd_only = 0, 
-                                                                                               numRecords = int(3840*2), 
+                                                                                               numRecords = records_per_pulsetype, 
                                                                                                IQ_offset = (0,0), 
                                                                                                plot = True, 
                                                                                                hist_scale = hist_scale)
@@ -420,7 +426,7 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
         plt.colorbar(pc)
     
     
-    return data_fidelity, fit_fidelity
+    return data_fidelity, fit_fidelity, even_fit, odd_fit
 
 def get_fidelity_vs_records(datapath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2, bin_start = 50, bin_stop = 150): 
     odd_only = 0

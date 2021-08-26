@@ -227,8 +227,8 @@ def superSat(filepaths,
         #plot best saturation wrt signal frequency. ie for all vna frequencies, plot the best saturation. Generally this is the generator freq/2
         
         fig3 = plt.figure()
-        ax3 = fig3.add_subplots(111)
-        img = ax3.scatter(sat_center_freqs_arr/1e9, sat_gen_powers)
+        ax3 = fig3.add_subplot(111)
+        img = ax3.scatter(np.array(sat_center_freqs_arr)/1e9, sat_gen_powers)
         ax3.set_xlabel("Signal Frequency (GHz)")
         ax3.set_ylabel("Saturation Power (dBm Cryo)")
         

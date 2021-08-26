@@ -16,6 +16,20 @@ from data_processing.Helper_Functions import find_all_ddh5
 from data_processing.ddh5_Plotting.TACO_multiplot_b1 import superTACO_Bars
 import pandas as pd
 from scipy.optimize import curve_fit
+from scipy.signal import savgol_filter
+
+
+def find_quanta(currents, res_freqs, smooth_window = 0):
+    if smooth_window != 0: 
+        res_freqs = savgol_filter(res_freqs, smooth_window, 2)
+    max_res_current = currents[np.argmax(res_freqs)]
+    min_res_current = currents[np.argmin(res_freqs)]
+    quanta_size = 2*np.abs(min_res_current - max_res_current)
+    quanta_offset = max_res_current
+    current_to_quanta_conversion_function = lambda c: (c-quanta_offset)/quanta_size
+    quanta_to_current_function = lambda q: q*quanta_size+quanta_offset
+    
+    return quanta_size, quanta_offset, current_to_quanta_conversion_function, quanta_to_current_function
 
 def parallel(v1, v2): 
     return 1/(1/v1+1/v2)
@@ -392,22 +406,22 @@ class SnailAmp():
         
         return numPumpPhotonsDev, g3_arr, numPumpPhotons
     
-    def process_HFSS_sweep(self, HFSS_filepath): 
+    def process_HFSS_sweep(self, HFSS_filepath, ref_port_name = 'B', lumped_port_name = 'sl', ind_name = 'Ls'): 
         data = pd.read_csv(HFSS_filepath)
         HFSS_dicts = []
-        for inductance in np.unique(data['Ls [pH]'].to_numpy()):
-            filt = (data['Ls [pH]'].to_numpy() == inductance)
+        for inductance in np.unique(data[f'{ind_name} [pH]'].to_numpy()):
+            filt = (data[f'{ind_name} [pH]'].to_numpy() == inductance)
             HFSS_dicts.append(dict(
                 SNAIL_inductance = inductance,
                 freq = data['Freq [GHz]'].to_numpy()[filt]*1e9,
                 freqrad = data['Freq [GHz]'].to_numpy()[filt]*1e9*2*np.pi, #fitter takes rad*hz
-                mag = data['mag(S(B,B)) []'].to_numpy()[filt],
-                phase = data['cang_deg_val(S(B,B)) []'].to_numpy()[filt], 
-                phaserad = data['cang_deg_val(S(B,B)) []'].to_numpy()[filt]*2*np.pi/360,
-                dBmag = np.power(10, data['mag(S(B,B)) []'].to_numpy()[filt]/20),
-                real = data['mag(S(B,B)) []'].to_numpy()[filt]*np.cos(data['cang_deg_val(S(B,B)) []'].to_numpy()[filt]*2*np.pi/360),
-                imag = data['mag(S(B,B)) []'].to_numpy()[filt]*np.sin(data['cang_deg_val(S(B,B)) []'].to_numpy()[filt]*2*np.pi/360),
-                imY = data['im(Y(sl,sl)) []'].to_numpy()[filt],
+                mag = data[f'mag(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt],
+                phase = data[f'cang_deg_val(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt], 
+                phaserad = data[f'cang_deg_val(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*2*np.pi/360,
+                dBmag = np.power(10, data[f'mag(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]/20),
+                real = data[f'mag(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*np.cos(data[f'cang_deg_val(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*2*np.pi/360),
+                imag = data[f'mag(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*np.sin(data[f'cang_deg_val(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*2*np.pi/360),
+                imY = data[f'im(Y({lumped_port_name},{lumped_port_name})) []'].to_numpy()[filt],
                 ))
         return HFSS_dicts
         
@@ -428,6 +442,7 @@ class SnailAmp():
                 # print(np.diff(md['phaserad']))
                 # plt.plot(md['freq'][:-1]/1e9, np.diff(md['phaserad']))
                 f0Guess = md['freq'][np.argmin(np.diff(md['phaserad']))]*2*np.pi
+                filt = (md['freqrad']>f0Guess-window_size/2)*(md['freqrad']<f0Guess+window_size/2)
                 
             if bounds == None: 
                 bounds = ([QextGuess / 10, QintGuess /10, f0Guess-500e6, magBackGuess / 2, 0],

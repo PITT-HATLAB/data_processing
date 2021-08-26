@@ -41,24 +41,24 @@ cf = 6171427180.18
 # amp_off_filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/signal_power_sweeps/1_initial_guess/2021-07-06/2021-07-06_0003_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.0_V_Phase_0.0_rad_/2021-07-06_0003_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.0_V_Phase_0.0_rad_.ddh5'
 
 # filepath = r'G:/My Drive/shared/Amplifier_Response_Data/Data/Pump_pwr_detuning_sweeps/2021-07-07/2021-07-07_0409_Amp_1__pwr_-8.83_dBm_LO_freq_6172127180.18_Hz_Phase_0.0_rad_/2021-07-07_0409_Amp_1__pwr_-8.83_dBm_LO_freq_6172127180.18_Hz_Phase_0.0_rad_.ddh5'
-filepath = r'G:/My Drive/shared/Amplifier_Response_Data/Data/Pump_pwr_detuning_sweeps/2021-07-07/2021-07-07_0274_Amp_1__pwr_-9.43_dBm_LO_freq_6172127180.18_Hz_Phase_0.0_rad_/2021-07-07_0274_Amp_1__pwr_-9.43_dBm_LO_freq_6172127180.18_Hz_Phase_0.0_rad_.ddh5'
+filepath = r'Z:/Data/SA_2X_B1/Hakan/loopbacks/2021-08-17/2021-08-17_0012_amp_init_testing_Amp_1__/2021-08-17_0012_amp_init_testing_Amp_1__.ddh5'
 
 # filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.102mA/loopbacks/2021-07-12/2021-07-12_0001_Amp_0__Phase_0.0_rad_/2021-07-12_0001_Amp_0__Phase_0.0_rad_.ddh5'
 # PU.get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = 0.01, records_per_pulsetype = 3870*2)
-# IQ_offset = PU.get_IQ_offset_from_filepath(amp_off_filepath, plot = False, hist_scale = 0.02, records_per_pulsetype = 3870*2)
-data_fidelity, fit_fidelity = PU.get_fidelity_from_filepath(filepath, plot = True, hist_scale = 0.022, records_per_pulsetype = 3840*2)
+# IQ_offset = PU.get_IQ_offset_from_filepath(filepath, plot = False, hist_scale = 0.002, records_per_pulsetype = 3840*2)
+data_fidelity, fit_fidelity = PU.get_fidelity_from_filepath(filepath, plot = True, hist_scale = 0.02, records_per_pulsetype = 3840*2)
 print(data_fidelity, fit_fidelity)
 IQ_offset = (0,0)
 
 #%%process everything into plottr's format so that I dont lose my mind with nested dictionaries
-datadir = r'Z:\Data\C1\C1_Hakan\Gain_pt_0.102mA\loopbacks\2021-07-12'
+datadir = r'Z:\Data\SA_2X_B1\Hakan\signal_power_sweeps\2021-08-17\0.2_to_0.7_3MHz_detuned_20dB_gain'
 filepaths = find_all_ddh5(datadir)
 amp_on_filepaths = [f for f in filepaths if f.lower().find('amp_1')!=-1]
 amp_off_filepaths = [f for f in filepaths if f.lower().find('amp_0')!=-1]
 # IQ_offset =  np.array((0.8358519968365662, 0.031891495461217216))/1000
 #sort everything
-savedir = r'Z:\Data\C1\C1_Hakan\Gain_pt_0.102mA\loopbacks\1_fit'
-savename = 'LO_VOLT_PHASE_fits'
+savedir = r'Z:\Data\SA_2X_B1\Hakan\signal_power_sweeps\2021-08-17\0.2_to_0.7_3MHz_detuned_20dB_gain\fit'
+savename = 'Signal_power_fits'
 data = dd.DataDict(
         detuning = dict(unit = 'MHz'),
         pump_pwr = dict(unit = 'dBm'),
@@ -126,9 +126,9 @@ with dds.DDH5Writer(savedir, data, name=savename) as writer:
             is_even = PU.hist_discriminant(even_fit_h, odd_fit_h)
             is_odd = np.logical_not(is_even)
             
-            data_fidelity = 1-np.sum(h_odd_norm[is_even], dtype = "float64")-np.sum(h_even_norm[is_odd], dtype = "float64")
+            data_fidelity = 1-(np.sum(h_odd_norm[is_even], dtype = "float64")+np.sum(h_even_norm[is_odd], dtype = "float64"))/2
             
-            fit_fidelity = 1-np.sum(odd_fit_h_norm[is_even], dtype = "float64")-np.sum(even_fit_h_norm[is_odd], dtype = "float64")
+            fit_fidelity = 1-(np.sum(odd_fit_h_norm[is_even], dtype = "float64")+np.sum(even_fit_h_norm[is_odd], dtype = "float64"))/2
             
             writer.add_data(
                 detuning =  det, 

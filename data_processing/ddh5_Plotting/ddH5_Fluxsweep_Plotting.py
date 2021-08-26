@@ -24,7 +24,7 @@ def find_quanta(currents, res_freqs, show = True, smooth_window = 11, order = 2)
     else: 
         raise Exception(f'Two extrema not found: {ext}')
     current_to_quanta_conversion_function = lambda c: (c-quanta_offset)/quanta_size
-    quanta_to_current_function = lambda q: q/quanta_size+min(currents[ext], key=abs)
+    quanta_to_current_function = lambda q: q*quanta_size+quanta_offset
     return quanta_size, quanta_offset, current_to_quanta_conversion_function, quanta_to_current_function
 if __name__ == '__main__': 
     
