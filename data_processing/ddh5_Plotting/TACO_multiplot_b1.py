@@ -400,5 +400,5 @@ if __name__ == "__main__":
     
     sat_cwd = r'Z:\Data\SA_2X_B1\best_tacos\sat'
     res = find_all_ddh5(sat_cwd)
-    superSat(res, y_norm_val = -80, filter_window=9, conv = False, plot_individual = False, tla_signal = 61, tla_pump = 71.5, cscale = 100)
+    superSat(res, y_norm_val = -92, filter_window=9, conv = False, plot_individual = False, tla_signal = 61, tla_pump = 71.5, cscale = 100)
 

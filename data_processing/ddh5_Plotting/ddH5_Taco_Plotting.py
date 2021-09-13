@@ -21,10 +21,10 @@ plt.rc('axes', labelsize=15)    # fontsize of the x and y labels
 plt.rc('xtick', labelsize=12)    # fontsize of the tick labels
 plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
-device_name = 'SHARC_5B1'
+device_name = 'SA_3C1_3132'
 
-gain_filepath = r'Z:/Data/SH_5B1/Tacos/SSS/2021-08-25/2021-08-25_0001_0.002073mA_TACO_gain/2021-08-25_0001_0.002073mA_TACO_gain.ddh5'
-sat_filepath = r'Z:/Data/SH_5B1/Tacos/SSS/2021-08-25/2021-08-25_0002_0.002073mA_TACO_sat/2021-08-25_0002_0.002073mA_TACO_sat.ddh5'
+gain_filepath = r'Z:/Data/SA_3C1_3132/tacos/2021-09-01/2021-09-01_0009_-2e-05mA_TACO_gain/2021-09-01_0009_-2e-05mA_TACO_gain.ddh5'
+sat_filepath = r'Z:/Data/SA_3C1_3132/tacos/2021-09-01/2021-09-01_0010_-2e-05mA_TACO_sat/2021-09-01_0010_-2e-05mA_TACO_sat.ddh5'
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']
@@ -64,11 +64,11 @@ else:
 ax.title.set_text(title)
 ax.xaxis.set_major_locator(plt.MaxNLocator(5))
 ax.grid(linestyle = '--', zorder = 2)
-#%%saturation plots 
+#saturation plots 
 bp1 = (sat_bias_current == np.unique(sat_bias_current)[0])
 # plt.plot(bp1)
 sf1, svp1, sgp1, sg1 = sat_gen_freq[bp1], sat_vna_powers[bp1], sat_gen_power[bp1], sat_gain[bp1]
-fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1, sg1, norm_power = -92, levels = [-20, -1,1, 20], filter_window = 10, vmin = -1.7, vmax = 1.7)
+fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1, sg1, norm_power = -92, levels = [-20, -1,1, 20], filter_window = 15, vmin = -1.7, vmax = 1.7)
 #supplementary graph info
 if fancy:
     title = f'{device_name} Saturation power vs. Generator Frequency\nBias = {np.round(b1_val*1000, 4)}mA'
@@ -84,17 +84,17 @@ cb.set_label("S21 change from 20dB (dB)")
 # make_gain_profiles(gain_filepath, angles = [20, 45])
 
 fig, ax = make_gain_surface(gain_filepath)
-ax.azim = 90
-ax.elev = 90
+ax.azim = 45
+ax.elev = 45
 #%%Plot individual power sweeps to check
 gain_traces = gainDict.extract('gain_trace').data_vals('gain_trace')
 vna_freqs = gainDict.extract('gain_trace').data_vals('vna_frequency')
 colors = [color.hex2color('#0000FF'), color.hex2color('#FFFFFF'), color.hex2color('#FF0000')]
 _cmap = color.LinearSegmentedColormap.from_list('my_cmap', colors)
-f_val = 9860e6
-f1 = gen_frequency == f_val
-vnaf1, gp2, g2 = vna_freqs[b1*f1]/1e6, gen_power[b1*f1], gain_traces[b1*f1]
-plt.pcolormesh(vnaf1, gp2, g2, cmap = _cmap, vmin = -20, vmax = 20)
+f_val = 12.02e9
+f1 = gen_frequency == gen_frequency[np.argmin(np.abs(gen_frequency-f_val))]
+vnaf1, gp2, g2 = vna_freqs[b1*f1]/1e6, gen_power[b1*f1], gain_traces[b1*f1]-20
+plt.pcolormesh(vnaf1, gp2, g2, cmap = _cmap, vmin = -3, vmax = 3)
 plt.colorbar()
 plt.xlabel('VNA Frequency (MHz)')
 plt.ylabel('Gen Power (dBm)')
