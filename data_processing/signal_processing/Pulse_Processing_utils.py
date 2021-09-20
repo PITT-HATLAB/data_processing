@@ -84,6 +84,74 @@ def Process_One_Acquisition(name, sI_c1, sI_c2, sQ_c1 ,sQ_c2, bin_start, bin_sto
             boxcar_histogram(fig, ax4, bin_start, bin_stop, np.concatenate((sI_c1, sI_c2)), np.concatenate((sQ_c1, sQ_c2)), Ioffset = 0, Qoffset = 0, scale = hist_scale)
         plt.show()
     return bins_even, bins_odd, h_even.T, h_odd.T
+
+def Process_One_Acquisition_3_state(name, sI_c1, sI_c2, sI_c3, sQ_c1 ,sQ_c2, sQ_c3, bin_start, bin_stop, hist_scale = 200, odd_only = False, even_only = False, plot = False):
+    if plot: 
+        fig = plt.figure(1, figsize = (12,8))
+        fig.suptitle(name, fontsize = 20)
+        ax1 = fig.add_subplot(221)
+        ax1.set_title("I")
+        ax1.plot(np.average(sI_c1, axis = 0), label = 'G_records')
+        ax1.plot(np.average(sI_c2, axis = 0), label = 'E_records')
+        ax1.plot(np.average(sI_c3, axis = 0), label = 'F_records')
+        # ax1.set_aspect(1)
+        ax1.legend(loc = 'upper right')
+        ax2 = fig.add_subplot(222)
+        ax2.set_title("Q")
+        ax2.plot(np.average(sQ_c1, axis = 0), label = 'G records')
+        ax2.plot(np.average(sQ_c2, axis = 0), label = 'E records')
+        ax2.plot(np.average(sQ_c3, axis = 0), label = 'F records')
+        # ax2.set_aspect(1)
+        ax2.legend(loc = 'upper right')
+        ax3 = fig.add_subplot(223)
+        ax3.set_aspect(1)
+        ax3.plot(np.average(sI_c1, axis = 0), np.average(sQ_c1, axis = 0))
+        ax3.plot(np.average(sI_c2, axis = 0),np.average(sQ_c2, axis = 0))
+        ax3.plot(np.average(sI_c3, axis = 0),np.average(sQ_c3, axis = 0))
+        
+        # #figure for difference trace
+        # fig2 = plt.figure(2, figsize = (12,8))
+        # ax21 = fig2.add_subplot(221)
+        # ax21.set_title("I (even-odd records)")
+        # ax21.plot(np.average(sI_c1-sI_c2, axis = 0), label = 'even-odd records')
+        
+        # # ax1.set_aspect(1)
+        # ax22 = fig2.add_subplot(222)
+        # ax22.set_title("Q (even-odd records)")
+        # ax22.plot(np.average(sQ_c1-sQ_c2, axis = 0), label = 'even-odd records')
+        
+        # # ax2.set_aspect(1)
+        # ax23 = fig2.add_subplot(223)
+        # ax23.set_title("Trajectories")
+        # ax23.set_aspect(1)
+        # ax23.plot(np.average(sI_c1-sI_c2, axis = 0), np.average(sQ_c1-sQ_c2, axis = 0))
+        
+        
+        # ax24 = fig2.add_subplot(224)
+        # ax24.set_title("magnitudes")
+        # ax24.plot(np.average(sI_c1-sI_c2, axis = 0)**2+np.average(sQ_c1-sQ_c2, axis = 0)**2, label = 'magnitude')
+        ax4 = fig.add_subplot(224)
+
+    fig2, ax99 = plt.subplots()
+    # print(np.shape(sI_c1))
+    bins_G, h_G = boxcar_histogram(fig2, ax99, bin_start, bin_stop, sI_c1, sQ_c1, Ioffset = 0, Qoffset = 0, scale = hist_scale)
+    bins_E, h_E = boxcar_histogram(fig2, ax99, bin_start, bin_stop, sI_c2, sQ_c2, Ioffset = 0, Qoffset = 0, scale = hist_scale)
+    bins_F, h_F = boxcar_histogram(fig2, ax99, bin_start, bin_stop, sI_c3, sQ_c3, Ioffset = 0, Qoffset = 0, scale = hist_scale)
+    plt.close(fig2)
+    
+    if plot: 
+        if even_only and not odd_only: 
+            print('displaying only even')
+            boxcar_histogram(fig, ax4, bin_start, bin_stop, sI_c1, sQ_c1, Ioffset = 0, Qoffset = 0, scale = hist_scale)
+            
+        elif odd_only and not even_only: 
+            print('displaying only odd')
+            boxcar_histogram(fig, ax4, bin_start, bin_stop, sI_c2, sQ_c2, Ioffset = 0, Qoffset = 0, scale = hist_scale)
+        else: 
+            print('displaying both')
+            boxcar_histogram(fig, ax4, bin_start, bin_stop, np.concatenate((sI_c1, sI_c2, sI_c3)), np.concatenate((sQ_c1, sQ_c2, sQ_c3)), Ioffset = 0, Qoffset = 0, scale = hist_scale)
+        # plt.show()
+    return bins_G, bins_E, bins_F, h_G.T, h_E.T, h_F.T
     
     
 def boxcar_histogram(fig, ax, start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 0, scale = 1, num_bins = 100):
@@ -256,6 +324,93 @@ def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 5
                    [Minus_ampGuess, Minus_x0Guess, Minus_y0Guess, Minus_sxGuess, Minus_syGuess, Minus_thetaGuess]]
     
     return bins_even, bins_odd, h_even, h_odd, guessParams
+
+def extract_3pulse_histogram_from_filepath(datapath, plot = False, bin_start = 55, bin_stop = 150, hist_scale = None, even_only = False, odd_only = False, numRecords = 3840*2, IQ_offset = (0,0), state_relabel = 0):
+    I_offset, Q_offset = IQ_offset
+    dd = all_datadicts_from_hdf5(datapath)['data']
+    
+    time_unit = dd['time']['unit']
+    
+    # print(np.size(np.unique(dd['time']['values'])))
+    time_vals = dd['time']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))
+    
+    
+    
+    rec_unit = dd['record_num']['unit']
+    rec_num = dd['record_num']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))
+    print('cycling labels by ', state_relabel)
+    if state_relabel == 0: 
+        
+        I_G = dd['I_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        I_E = dd['I_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        I_F = dd['I_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        
+        Q_G = dd['Q_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+        Q_E = dd['Q_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+        Q_F = dd['Q_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+    elif state_relabel ==1: 
+        I_G = dd['I_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        I_E = dd['I_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        I_F = dd['I_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        
+        Q_G = dd['Q_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+        Q_E = dd['Q_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+        Q_F = dd['Q_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+    elif state_relabel ==2: 
+        I_G = dd['I_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        I_E = dd['I_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        I_F = dd['I_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
+        
+        Q_G = dd['Q_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+        Q_E = dd['Q_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+        Q_F = dd['Q_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
+    # print(np.size(I_minus))
+    
+    #averages
+    I_G_avg = np.average(I_G, axis = 0)
+    I_E_avg = np.average(I_E, axis = 0)
+    I_F_avg = np.average(I_F, axis = 0)
+    
+    Q_G_avg = np.average(Q_G, axis = 0)
+    Q_E_avg = np.average(Q_E, axis = 0)
+    Q_F_avg = np.average(Q_F, axis = 0)
+    
+    if hist_scale == None: 
+        hist_scale = 2*np.max(np.array([I_G_avg, I_E_avg, Q_G_avg, Q_E_avg]))
+    
+    #re-weave the data back into it's original pre-saved form
+    
+    bins_G, bins_E, bins_F, h_G, h_E, h_F = Process_One_Acquisition_3_state(datapath.split('/')[-1].split('\\')[-1], I_G, I_E, I_F, Q_G, Q_E, Q_F,bin_start, bin_stop, hist_scale = hist_scale, even_only = even_only, odd_only = odd_only, plot = plot)
+    
+    G_x0Guess = np.average(np.average(I_G_avg[bin_start:bin_stop]))
+    G_y0Guess = np.average(np.average(Q_G_avg[bin_start:bin_stop]))
+    G_ampGuess = np.max(h_G)
+    G_sxGuess = np.max(bins_G)/5
+    G_syGuess = G_sxGuess
+    G_thetaGuess = 0
+    G_offsetGuess = 0
+    
+    E_x0Guess = np.average(np.average(I_E_avg[bin_start:bin_stop]))
+    E_y0Guess = np.average(np.average(Q_E_avg[bin_start:bin_stop]))
+    E_ampGuess = np.max(h_E)
+    E_sxGuess = np.max(bins_E)/5
+    E_syGuess = E_sxGuess
+    E_thetaGuess = 0
+    E_offsetGuess = 0
+    
+    F_x0Guess = np.average(np.average(I_F_avg[bin_start:bin_stop]))
+    F_y0Guess = np.average(np.average(Q_F_avg[bin_start:bin_stop]))
+    F_ampGuess = np.max(h_F)
+    F_sxGuess = np.max(bins_F)/5
+    F_syGuess = F_sxGuess
+    F_thetaGuess = 0
+    F_offsetGuess = 0
+    
+    guessParams = [[G_ampGuess, G_x0Guess, G_y0Guess, G_sxGuess, G_syGuess, G_thetaGuess],
+                   [E_ampGuess, E_x0Guess, E_y0Guess, E_sxGuess, E_syGuess, E_thetaGuess], 
+                   [F_ampGuess, F_x0Guess, F_y0Guess, F_sxGuess, F_syGuess, F_thetaGuess]]
+    
+    return bins_G, bins_E, bins_F, h_G, h_E, h_F, guessParams
         
 def get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2): 
     
@@ -428,6 +583,89 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
     
     return data_fidelity, fit_fidelity, even_fit, odd_fit
 
+def get_fidelity_from_filepath_3_state(filepath, plot = False, hist_scale = None, records_per_pulsetype = 2562, state_relabel = 0): 
+    
+    bins_G, bins_E, bins_F, h_G, h_E, h_F, guessParam = extract_3pulse_histogram_from_filepath(filepath, 
+                                                                                               odd_only = 0, 
+                                                                                               numRecords = records_per_pulsetype*3, 
+                                                                                               IQ_offset = (0,0), 
+                                                                                               plot = True, 
+                                                                                               hist_scale = hist_scale, 
+                                                                                               state_relabel = state_relabel)
+    h_odd_norm = np.copy(h_E/np.sum(h_E))
+    h_even_norm = np.copy(h_G/np.sum(h_G))
+    
+    G_fit = fit_2D_Gaussian('amp_off_even', bins_G, h_G, 
+                                            guessParam[0],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    E_fit = fit_2D_Gaussian('amp_off_odd', bins_E, h_E,
+                                            guessParam[1],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    F_fit = fit_2D_Gaussian('amp_off_odd', bins_F, h_F,
+                                            guessParam[2],
+                                            max_fev = 1000,
+                                            contour_line = 2)
+    
+    
+    
+    G_fit_h = Gaussian_2D(np.meshgrid(bins_G[:-1], bins_G[:-1]), *G_fit.info_dict['popt'])
+    G_fit_h_norm = np.copy(G_fit_h/np.sum(G_fit_h))
+    
+    E_fit_h = Gaussian_2D(np.meshgrid(bins_E[:-1], bins_E[:-1]), *E_fit.info_dict['popt'])
+    E_fit_h_norm = np.copy(E_fit_h/np.sum(E_fit_h))
+    
+    F_fit_h = Gaussian_2D(np.meshgrid(bins_F[:-1], bins_F[:-1]), *F_fit.info_dict['popt'])
+    F_fit_h_norm = np.copy(F_fit_h/np.sum(F_fit_h))
+    
+    # is_even = hist_discriminant(even_fit_h, odd_fit_h)
+    # is_odd = np.logical_not(is_even)
+    
+    # #debugging
+    # # print(np.sum(h_odd), np.sum(h_even))
+    # # print(np.sum(h_odd_norm), np.sum(h_even_norm))
+    # # print('fid sums', np.sum(h_odd_norm[is_even]), np.sum(h_even_norm[is_odd]))
+    
+    # plt.pcolormesh(bins_odd, bins_odd, h_odd_norm)
+    # plt.colorbar()
+    
+    # data_fidelity = 1-np.sum(h_odd_norm[is_even], dtype = "float64")-np.sum(h_even_norm[is_odd], dtype = "float64")
+    # fit_fidelity = 1-np.sum(odd_fit_h_norm[is_even], dtype = "float64")-np.sum(even_fit_h_norm[is_odd], dtype = "float64")
+    
+    if plot: 
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_G, bins_G, h_G)
+        G_fit.plot_on_ax(ax)
+        ax.add_patch(G_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+        
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_E, bins_E, h_E)
+        E_fit.plot_on_ax(ax)
+        ax.add_patch(E_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+        
+        fig, ax = plt.subplots()
+        pc = ax.pcolormesh(bins_F, bins_F, h_F)
+        F_fit.plot_on_ax(ax)
+        ax.add_patch(F_fit.sigma_contour())
+        ax.set_aspect(1)
+        plt.colorbar(pc)
+        
+        # fig, ax = plt.subplots()
+        # # pc = ax.pcolormesh(bins_odd, bins_odd, is_even, cmap = 'seismic')
+        # amp_off_odd_fit.plot_on_ax(ax)
+        # amp_off_even_fit.plot_on_ax(ax)
+        # ax.add_patch(amp_off_odd_fit.sigma_contour())
+        # ax.add_patch(amp_off_even_fit.sigma_contour())
+        # ax.set_aspect(1)
+        # plt.colorbar(pc)
+    
+    
+    return None #data_fidelity, fit_fidelity, even_fit, odd_fit
 def get_fidelity_vs_records(datapath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2, bin_start = 50, bin_stop = 150): 
     odd_only = 0
     numRecords = records_per_pulsetype

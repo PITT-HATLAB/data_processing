@@ -185,6 +185,7 @@ for ind, loc in enumerate(loc_arr):
     opt_imshow_arr[loc_corrected] = opt_val_arr[ind]
 
 colors = [color.hex2color('#4444FF'), color.hex2color('#FFFFFF'), color.hex2color('#05ff3f'), color.hex2color('#05ff3f'),color.hex2color('#FFFFFF'), color.hex2color('#FF4444')]
+colors = [color.hex2color('#4444FF'), color.hex2color('#05ff3f'), color.hex2color('#05ff3f'), color.hex2color('#FF4444')]
 _cmap = color.LinearSegmentedColormap.from_list('my_cmap', colors)
 
 colors1 = [color.hex2color('#FF4444'),color.hex2color('#FFFFFF'), color.hex2color('#05ff3f')]
@@ -194,7 +195,7 @@ x_ax = range(10)[1:]
 y_ax = range(10)[1:]
 fig = plt.figure(figsize = (16,8))
 ax = fig.add_subplot(121)
-goal_resistance = 35
+goal_resistance = 60
 
 plt.pcolormesh(res_imshow_arr.T-goal_resistance, cmap = _cmap)
 cbar = plt.colorbar()
@@ -207,6 +208,7 @@ ax.set_title(f'Resistance measurements (goal_resistance: {goal_resistance} Ohms)
 plt.clim(-5,5)
 for key, val in locationDict.items(): 
     ax.annotate(key, np.flip(np.array(val)+np.array([-0.5,-1])))
+    
     
 
 ax = fig.add_subplot(122)
