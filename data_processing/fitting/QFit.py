@@ -167,7 +167,7 @@ def plotRes(freq, real, imag, mag, phase, popt):
 
 if __name__ == '__main__':
     # filepath = easygui.fileopenbox()
-    filepath = r'Z:/Data/C1/2021-06-23/2021-06-23_0001_trace_0800_43/2021-06-23_0001_trace_0800_43.ddh5'
+    filepath = r'\\136.142.53.51\data001\Data\SA_1X_C1\2021-07-29\2021-07-29_0002_testtrace_0.11mA_-33dBm\2021-07-29_0002_testtrace_0.11mA_-33dBm.ddh5'
     # filepath = r'PSB_EP1_Copper_Lid'
     # filepath = r'H:\Data\Fridge Texas\Cooldown_20200917\Cavities\RT_msmt\PC_IP_3_5'
     # (freq, real, imag, mag, phase) = getData(filepath, method="vna",plot_data=0)

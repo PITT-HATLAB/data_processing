@@ -11,17 +11,14 @@ import csv
 def ddh5_to_csv(ddh5_filepath, csv_filepath, csv_name): 
     ddh5_file = h5py.File(ddh5_filepath, 'r')
     data = ddh5_file['data']
-    freqs = data['base_resonant_frequency']
-    currents = data['current']
-    qext = data['base_Qext']
-    qexterror = np.sqrt(data['base_Qext_error'])
-    qint = data['base_Qint']
-    qinterror = np.sqrt(data['base_Qint_error'])
+    phase = data['phase']
+    power = data['power']
+    freqs = data['frequency']
     with open(csv_filepath+'\\'+csv_name, 'w', newline = '') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames = ['Current', 'Resonant Frequency', 'Qext', 'Qext Error', 'Qint', 'Qint Error'])
+        writer = csv.DictWriter(csvfile, fieldnames = ['VNA Frequency (Hz)', 'VNA Power (dB)', 'VNA phase'])
         writer.writeheader()
-        for i, c in enumerate(currents): 
-            writer.writerow({'Current': currents[i], 'Resonant Frequency': freqs[i], 'Qext': qext[i], 'Qext Error': qexterror[i], 'Qext Error': qexterror[i], 'Qint': qint[i], 'Qint Error': qinterror[i]})
+        for i, f in enumerate(freqs): 
+            writer.writerow({'VNA Frequency (Hz)': freqs[i], 'VNA Power (dB)': power[i], 'VNA phase': phase[i]})
     ddh5_file.close()
     
         
