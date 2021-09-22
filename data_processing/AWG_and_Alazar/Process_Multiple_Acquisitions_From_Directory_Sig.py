@@ -114,6 +114,7 @@ with dds.DDH5Writer(savedir, data, name=savename) as writer:
                                             guessParam[1],
                                             max_fev = 1000, 
                                             contour_line = 2)
+        
         histogram_data_product = 1-1/2*np.sum(np.sqrt((h_odd/records_per_pulsetype)*(h_even/records_per_pulsetype)))
         
         bins_fine = np.arange(np.min([bins_even, bins_odd]), np.max([bins_even, bins_odd]), 1e4)
