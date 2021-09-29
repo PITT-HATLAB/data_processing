@@ -406,7 +406,7 @@ class SnailAmp():
         
         return numPumpPhotonsDev, g3_arr, numPumpPhotons
     
-    def process_ref_HFSS_sweep(self, HFSS_filepath, ref_port_name = 'B', lumped_port_name = 'sl', ind_name = 'Ls'): 
+    def process_ref_HFSS_sweep(self, HFSS_filepath, ref_port_name = 'B', lumped_port_name = 'sl', ind_name = 'Ls', trans_port_name = 'U'): 
         data = pd.read_csv(HFSS_filepath)
         HFSS_dicts = []
         for inductance in np.unique(data[f'{ind_name} [pH]'].to_numpy()):
@@ -422,7 +422,9 @@ class SnailAmp():
                 real = data[f'mag(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*np.cos(data[f'cang_deg_val(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*2*np.pi/360),
                 imag = data[f'mag(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*np.sin(data[f'cang_deg_val(S({ref_port_name},{ref_port_name})) []'].to_numpy()[filt]*2*np.pi/360),
                 imY = data[f'im(Y({lumped_port_name},{lumped_port_name})) []'].to_numpy()[filt],
+                leakage = data[f'dB(S({ref_port_name},{trans_port_name})) []'].to_numpy()[filt]
                 ))
+                
         return HFSS_dicts
         
     def fit_modes(self, *args, bounds = None, f0Guess_arr = None, Qguess = (1e2, 1e4), window_size = 600e6, plot = False):
