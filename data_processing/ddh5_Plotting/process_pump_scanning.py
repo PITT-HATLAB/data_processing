@@ -8,7 +8,7 @@ from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import numpy as np
 import matplotlib.pyplot as plt
 
-filepath = r'Z:/Data/SH_5B1_4141/pump_scanning/2021-09-21/2021-09-21_0008_First_test/2021-09-21_0008_First_test.ddh5'
+filepath = r'Z:/Data/SH_5B1_4141/pump_scanning/2021-09-22/2021-09-22_0003_A_mode_10dB_att/2021-09-22_0003_A_mode_10dB_att.ddh5'
 
 Data = all_datadicts_from_hdf5(filepath)['data']
 current = Data.extract('vna_return_power')['current']['values']
@@ -36,3 +36,4 @@ for bias_current in np.unique(current)[1:]:
     ax.set_title(f'Current value: {bias_current*1000}mA')
     plt.colorbar(img, ax = ax)
     plt.show()
+

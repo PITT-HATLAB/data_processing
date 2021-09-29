@@ -406,7 +406,7 @@ class SnailAmp():
         
         return numPumpPhotonsDev, g3_arr, numPumpPhotons
     
-    def process_HFSS_sweep(self, HFSS_filepath, ref_port_name = 'B', lumped_port_name = 'sl', ind_name = 'Ls'): 
+    def process_ref_HFSS_sweep(self, HFSS_filepath, ref_port_name = 'B', lumped_port_name = 'sl', ind_name = 'Ls'): 
         data = pd.read_csv(HFSS_filepath)
         HFSS_dicts = []
         for inductance in np.unique(data[f'{ind_name} [pH]'].to_numpy()):
@@ -441,7 +441,7 @@ class SnailAmp():
                 filt = np.ones(np.size(md['freqrad'])).astype(bool)
                 # print(np.diff(md['phaserad']))
                 # plt.plot(md['freq'][:-1]/1e9, np.diff(md['phaserad']))
-                f0Guess = md['freq'][np.argmin(np.diff(md['phaserad']))]*2*np.pi
+                f0Guess = md['freq'][np.argmin(savgol_filter(np.gradient(md['phaserad']), 15,3))]*2*np.pi
                 filt = (md['freqrad']>f0Guess-window_size/2)*(md['freqrad']<f0Guess+window_size/2)
                 
             if bounds == None: 
@@ -450,7 +450,8 @@ class SnailAmp():
             
             popt, pcov = fit(md['freqrad'][filt], md['real'][filt], md['imag'][filt], md['mag'][filt], md['phaserad'][filt], Qguess = Qguess, f0Guess = f0Guess, phaseGuess = 0)
             if plot: 
-                plotRes(md['freqrad'], md['real'], md['imag'], md['mag'], md['phaserad'], popt)
+                print("inductance: ", md['SNAIL_inductance'])
+                plotRes(md['freqrad'][filt], md['real'][filt], md['imag'][filt], md['mag'][filt], md['phaserad'][filt], popt)
                 
             Qtot = popt[0] * popt[1] / (popt[0] + popt[1])
             kappa = popt[2]/2/np.pi/Qtot
@@ -461,15 +462,51 @@ class SnailAmp():
             HFSS_res_freqs.append(f0)
             HFSS_kappas.append(kappa)
             
+            md['res_freq_rad'] = f0*2*np.pi
+            md['kappa'] = kappa
+            
         return HFSS_inductances, HFSS_res_freqs, HFSS_kappas
     
-    def find_res_from_admittance(freq, admittance): 
-        pass
+    def g3_from_admittance(self, Ej_large, c3_val, mds):
+        phi_zpf_arr = []
+        g3 = Ej_large*c3_val/6*(2*np.pi/self.phi0)**3
+        for md in mds: 
+            res_omega = md['res_freq_rad']
+            # print("res_omega/2pi", res_omega/2/np.pi)
+            omegas = md['freqrad']
+            imY = md['imY']
+            
+            f_res_loc = np.argmin(np.abs(omegas-res_omega))
+            slope = np.gradient(imY)[f_res_loc]/np.gradient(omegas)[f_res_loc]
+            Zpeff = 2/(res_omega*slope)
     
-    def g3_from_admittance(self, Ej_large, omegas, Imy, res_omega, res_phi, c3_func): 
-        f_res_loc = np.argmin(np.abs(omegas-res_omega))
-        Zpeff = 2/(res_omega*np.gradient(Imy)[f_res_loc])
-        return Ej_large*c3_func(res_phi)*(2*np.pi/self.phi0*np.sqrt(self.hbar/2*Zpeff))**3
+    #         print("omega/2pi: ", res_omega/2/np.pi)
+    #         print("slope: ", slope)
+    #         print("Impedance: ", Zpeff)
+            g3 *= np.sqrt(self.hbar/2*Zpeff)
+            phi_zpf_arr.append(Zpeff)
+        
+        return g3
+    
+    def g3_from_admittance_raw(self, Ej_large, c3_val, res_omega):
+        phi_zpf_arr = []
+        g3 = Ej_large*c3_val/6*(2*np.pi/self.phi0)**3
+        for res_omega in res_omegas: 
+            res_omega = md['res_freq_rad']
+            omegas = md['freqrad']
+            imY = md['imY']
+            
+            f_res_loc = np.argmin(np.abs(omegas-res_omega))
+            slope = np.gradient(imY)[f_res_loc]/np.gradient(omegas)[f_res_loc]
+            Zpeff = 2/(res_omega*slope)
+    
+    #         print("omega/2pi: ", res_omega/2/np.pi)
+    #         print("slope: ", slope)
+    #         print("Impedance: ", Zpeff)
+            g3 *= np.sqrt(self.hbar/2*Zpeff)
+            phi_zpf_arr.append(Zpeff)
+        
+        return g3
         
     
 if __name__ == '__main__': 
