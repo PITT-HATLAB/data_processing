@@ -117,13 +117,14 @@ def getData(filename, method='hfss', freq_unit = 'GHz', plot_data=1):
         
 
 
-def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi):
+def fit(freq, real, imag, mag, phase, Qguess=(2e4, 1e5),real_only = 0, bounds = None, f0Guess = None, magBackGuess = None, phaseGuess = np.pi, debug = False):
     # f0Guess = 2*np.pi*5.45e9
     # f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
     if f0Guess == None:
         f0Guess = freq[int(np.floor(np.size(freq)/2))] #dumb guess of "it's probably in the middle"
         # f0Guess = freq[np.argmin(mag)] #smart guess of "it's probably the lowest point"
-    print("Guess freq: "+str(f0Guess/(2*np.pi*1e9)))
+    if debug: 
+        print("Guess freq: "+str(f0Guess/(2*np.pi*1e9)))
     lin = 10**(mag / 20.0)
     if magBackGuess == None: 
         magBackGuess = np.average(lin[:int(len(freq) / 5)])

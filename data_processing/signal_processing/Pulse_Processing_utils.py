@@ -583,7 +583,7 @@ def get_fidelity_from_filepath(filepath, plot = False, hist_scale = None, record
     
     return data_fidelity, fit_fidelity, even_fit, odd_fit
 
-def get_fidelity_from_filepath_3_state(filepath, plot = False, hist_scale = None, records_per_pulsetype = 2562, state_relabel = 0): 
+def get_fidelity_from_filepath_3_state(filepath, plot = False, hist_scale = None, records_per_pulsetype = 2562, state_relabel = 0, bin_start = 50, bin_stop = 150): 
     
     bins_G, bins_E, bins_F, h_G, h_E, h_F, guessParam = extract_3pulse_histogram_from_filepath(filepath, 
                                                                                                odd_only = 0, 
@@ -591,7 +591,9 @@ def get_fidelity_from_filepath_3_state(filepath, plot = False, hist_scale = None
                                                                                                IQ_offset = (0,0), 
                                                                                                plot = True, 
                                                                                                hist_scale = hist_scale, 
-                                                                                               state_relabel = state_relabel)
+                                                                                               state_relabel = state_relabel, 
+                                                                                               bin_start = bin_start, 
+                                                                                               bin_stop = bin_stop)
     h_odd_norm = np.copy(h_E/np.sum(h_E))
     h_even_norm = np.copy(h_G/np.sum(h_G))
     

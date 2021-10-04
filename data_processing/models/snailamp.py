@@ -452,7 +452,7 @@ class SnailAmp():
             
             popt, pcov = fit(md['freqrad'][filt], md['real'][filt], md['imag'][filt], md['mag'][filt], md['phaserad'][filt], Qguess = Qguess, f0Guess = f0Guess, phaseGuess = 0)
             if plot: 
-                print("inductance: ", md['SNAIL_inductance'])
+                # print("inductance: ", md['SNAIL_inductance'])
                 plotRes(md['freqrad'][filt], md['real'][filt], md['imag'][filt], md['mag'][filt], md['phaserad'][filt], popt)
                 
             Qtot = popt[0] * popt[1] / (popt[0] + popt[1])
