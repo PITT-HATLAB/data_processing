@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>amplifier_g3 &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">amplifier_g3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for amplifier_g3</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu May 13 09:44:27 2021</span>
+
+<span class="sd">@author: Hatlab_3</span>
+<span class="sd">purpose: calculate qmplifier g3 from applied pump power and resonant frequency</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#import tools for processing taco data</span>
+<span class="kn">import</span> <span class="nn">easygui</span>
+<span class="kn">import</span> <span class="nn">os</span> 
+<span class="kn">from</span> <span class="nn">plottr.apps.autoplot</span> <span class="kn">import</span> <span class="n">autoplotDDH5</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">main</span>
+<span class="kn">from</span> <span class="nn">plottr.data.datadict_storage</span> <span class="kn">import</span> <span class="n">all_datadicts_from_hdf5</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">measurement_modules.Helper_Functions</span> <span class="kn">import</span> <span class="n">get_name_from_path</span><span class="p">,</span> <span class="n">shift_array_relative_to_middle</span><span class="p">,</span> <span class="n">log_normalize_to_row</span><span class="p">,</span> <span class="n">select_closest_to_target</span><span class="p">,</span> <span class="n">log_normalize_up_to_row</span><span class="p">,</span> <span class="n">find_all_ddh5</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">gaussian_filter</span>
+<span class="kn">import</span> <span class="nn">matplotlib.colors</span> <span class="k">as</span> <span class="nn">color</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">data_processing.ddh5_Plotting.TACO_multiplot_b1</span> <span class="kn">import</span> <span class="n">superTACO_Bars</span>
+
+<div class="viewcode-block" id="g3_from_pump_power"><a class="viewcode-back" href="../amplifier_g3.html#amplifier_g3.g3_from_pump_power">[docs]</a><span class="k">def</span> <span class="nf">g3_from_pump_power</span><span class="p">(</span><span class="n">gains</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+                       <span class="n">pump_powers</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+                       <span class="n">mode_kappas</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+                       <span class="n">pump_omegas</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                       <span class="n">pump_detunings_from_res</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+                       <span class="p">):</span> 
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Source for calculation: https://arxiv.org/abs/1605.00539</span>
+<span class="sd">    &quot;Introduction to Quantum-limited Parametric Amplification of Quantum Signals with Josephson Circuits&quot;</span>
+<span class="sd">    by Michelle Devoret and Ananda Roy</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gains : np.ndarray</span>
+<span class="sd">        gain in dB, whose positions correspond to the powers given in the pump_powers section</span>
+<span class="sd">    pump_powers : np.ndarray</span>
+<span class="sd">        pump power in dBm that the amplifier sees. This must include all attenuation in the entire line</span>
+<span class="sd">    mode_kappas : np.ndarray</span>
+<span class="sd">        mode kappa in 2pi*Hz</span>
+<span class="sd">    pump_omegas : np.ndarray</span>
+<span class="sd">        pump frequency in 2pi*Hz</span>
+<span class="sd">    pump_detunings_from_res : np.ndarray</span>
+<span class="sd">        pump detuning in 2pi(f-f0) where f0 is the resonator frequency in hz</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numPumpPhotons : np.ndarray</span>
+<span class="sd">        The sqrt of the number of pump photons expected in the pumping resonator.</span>
+<span class="sd">    g3_arr : np.ndarray</span>
+<span class="sd">        The third order coupling in Hz for each combination of inputs</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">hbar</span> <span class="o">=</span> <span class="mf">1.0545718e-34</span>
+    <span class="n">lin_pump_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="n">pump_powers</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span><span class="o">*</span><span class="mf">0.001</span>
+    <span class="c1">#get the expected value of pump photons present in the resonator</span>
+    <span class="n">numPumpPhotons</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="n">mode_kappas</span><span class="o">*</span><span class="n">lin_pump_powers</span><span class="o">/</span><span class="p">(</span><span class="n">pump_omegas</span><span class="o">*</span><span class="n">hbar</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">mode_kappas</span><span class="o">-</span><span class="mi">2</span><span class="n">j</span><span class="o">*</span><span class="n">pump_detunings_from_res</span><span class="p">)</span>
+    <span class="n">Lin_Power_gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="n">gains</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">lpg</span> <span class="o">=</span> <span class="n">Lin_Power_gains</span>
+    <span class="n">g3_arr</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">mode_kappas</span><span class="o">/</span><span class="n">numPumpPhotons</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lpg</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lpg</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">numPumpPhotons</span><span class="p">,</span> <span class="n">g3_arr</span></div>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">g3_from_pump_power</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">17e6</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="mf">6e9</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">6e9</span><span class="p">))</span>
+
+<span class="c1">#%%</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1">#make a function to convert bias currents into flux in radians</span>
+    <span class="n">quanta_offset</span> <span class="o">=</span> <span class="o">-</span><span class="mf">8.98e-5</span>
+    <span class="n">quanta_size</span> <span class="o">=</span> <span class="mf">220.6e-6</span>
+    
+    <span class="n">conv_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">quanta_offset</span><span class="p">)</span><span class="o">/</span><span class="n">quanta_size</span>
+    
+    <span class="n">gain_cwd</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;E:\Data\Cooldown_20210408\SNAIL_Amps\C1\Best_Tacos\Gain&#39;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">find_all_ddh5</span><span class="p">(</span><span class="n">gain_cwd</span><span class="p">)</span>
+    <span class="n">info_dict</span><span class="p">,</span> <span class="n">bias_currents</span><span class="p">,</span> <span class="n">best_gen_freqs</span><span class="p">,</span> <span class="n">best_gen_powers</span><span class="p">,</span> <span class="n">gains</span> <span class="o">=</span> <span class="n">superTACO_Bars</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">angles</span> <span class="o">=</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span><span class="mi">20</span><span class="p">],</span> <span class="n">quanta_size</span> <span class="o">=</span> <span class="n">quanta_size</span><span class="p">,</span> <span class="n">quanta_offset</span> <span class="o">=</span> <span class="n">quanta_offset</span><span class="p">,</span> <span class="n">bardims</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">],</span> <span class="n">barbase</span> <span class="o">=</span> <span class="o">-</span><span class="mi">24</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">best_gen_powers</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_gen_powers</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">10</span>
+    <span class="n">fig2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">131</span><span class="p">)</span>
+    <span class="n">total_line_attenuation</span> <span class="o">=</span> <span class="mi">72</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">conv_func</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">best_gen_powers</span><span class="p">)</span><span class="o">-</span><span class="n">total_line_attenuation</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Lowest 20dB Power (dBm) vs. Flux ($\Phi_0$)&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Flux Quanta ($\Phi/\Phi_0)$&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Generator Power @20dB Gain (dBm)&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+    
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">)</span>
+    <span class="n">s_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1">#plotting the g3 vs flux</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">132</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">best_gen_powers</span><span class="o">-</span><span class="n">total_line_attenuation</span><span class="p">)</span>
+    <span class="n">num_pump_photons</span><span class="p">,</span> <span class="n">g3_arr</span> <span class="o">=</span> <span class="n">g3_from_pump_power</span><span class="p">(</span><span class="n">gains</span><span class="p">,</span><span class="n">best_gen_powers</span><span class="o">-</span><span class="n">total_line_attenuation</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">30e6</span><span class="o">*</span><span class="n">s_arr</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">best_gen_freqs</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">best_gen_freqs</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">conv_func</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">g3_arr</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Measured g3 (MHz) vs. Flux ($\Phi_0$)&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Flux Quanta ($\Phi/\Phi_0)$&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;g3 coupling (MHz)&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+    
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">133</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">conv_func</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">),</span> <span class="n">num_pump_photons</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Number of Pump Photons in res vs. Flux ($\Phi_0$)&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Flux Quanta ($\Phi/\Phi_0)$&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Number of Pump Photons&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+    
+    
+    <span class="c1"># plt.vlines(conv_func(-0.173e-3), np.min(best_gen_powers-total_line_attenuation), np.max(best_gen_powers-total_line_attenuation), linestyles = &#39;dashed&#39;, colors = [&#39;red&#39;])</span>
+
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">amplifier_g3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

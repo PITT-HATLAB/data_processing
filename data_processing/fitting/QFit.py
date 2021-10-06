@@ -1,3 +1,8 @@
+'''
+Fits VNA trace. Determine over/under coupling regimes.
+'''
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import csv

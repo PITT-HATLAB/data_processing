@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TACO_multiplot_b1 &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TACO_multiplot_b1</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for TACO_multiplot_b1</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Tue Feb 16 12:55:36 2021</span>
+
+<span class="sd">@author: Hatlab_3</span>
+
+<span class="sd">Find all TACOS in a directory, pull out the best powers, and plot them in 3d space to see if it&#39;s actually a TACO or not&#39;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span> 
+<span class="kn">from</span> <span class="nn">plottr.apps.autoplot</span> <span class="kn">import</span> <span class="n">autoplotDDH5</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">main</span>
+<span class="kn">from</span> <span class="nn">plottr.data.datadict_storage</span> <span class="kn">import</span> <span class="n">all_datadicts_from_hdf5</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">data_processing.Helper_Functions</span> <span class="kn">import</span> <span class="n">get_name_from_path</span><span class="p">,</span> <span class="n">shift_array_relative_to_middle</span><span class="p">,</span> <span class="n">log_normalize_to_row</span><span class="p">,</span> <span class="n">select_closest_to_target</span><span class="p">,</span> <span class="n">log_normalize_up_to_row</span><span class="p">,</span> <span class="n">find_all_ddh5</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+<span class="kn">from</span> <span class="nn">data_processing.ddh5_Plotting.utility_modules.TACO_utility_functions</span> <span class="kn">import</span> <span class="n">make_tacos</span><span class="p">,</span> <span class="n">make_sat_img_plot</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">gaussian_filter</span>
+<span class="kn">import</span> <span class="nn">matplotlib.colors</span> <span class="k">as</span> <span class="nn">color</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;font.weight&#39;</span><span class="p">:</span> <span class="s1">&#39;bold&#39;</span><span class="p">})</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;axes&#39;</span><span class="p">,</span> <span class="n">titlesize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>  <span class="c1"># fontsize of the axes titles</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;axes&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>    <span class="c1"># fontsize of the x and y labels</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;xtick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>    <span class="c1"># fontsize of the tick labels</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;ytick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>    <span class="c1"># fontsize of the tick labels</span>
+
+<div class="viewcode-block" id="get_sat_info"><a class="viewcode-back" href="../TACO_multiplot_b1.html#TACO_multiplot_b1.get_sat_info">[docs]</a><span class="k">def</span> <span class="nf">get_sat_info</span><span class="p">(</span><span class="n">sat_bias_current</span><span class="p">,</span> <span class="n">sat_gen_freq</span><span class="p">,</span> <span class="n">sat_gen_power</span><span class="p">,</span> <span class="n">sat_vna_freq</span><span class="p">,</span> <span class="n">sat_vna_powers</span><span class="p">,</span> <span class="n">sat_gain</span><span class="p">,</span> <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="n">norm_power</span> <span class="o">=</span> <span class="o">-</span><span class="mi">40</span><span class="p">,</span> <span class="n">x_val</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">filter_window</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">xlim</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ylim</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> 
+    <span class="n">y_norm_val</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">norm_power</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">sat_vna_powers</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">])</span> <span class="c1">#Signal power at which to normalize the rest of the plot to</span>
+    <span class="c1"># print(f&#39;Normalizing saturation to {y_norm_val} VNA power&#39;)</span>
+    <span class="c1"># print(f&#39;lowest VNA power: {np.min(sat_vna_powers)}&#39;)</span>
+    <span class="c1"># print(f&#39;filter_window: {filter_window}&#39;)</span>
+    <span class="c1"># print(f&#39;Size of gen freqs: {np.size(sat_gen_freq)}&#39;)</span>
+    <span class="c1"># print(f&#39;Size of gen pows: {np.size(sat_gen_power)}&#39;)</span>
+    <span class="c1"># print(f&#39;shape of saturation data: {np.shape(sat_gain)}&#39;)</span>
+    
+    <span class="n">zero_freq_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">sat_gen_power</span><span class="p">)</span>
+    <span class="n">zero_freq</span> <span class="o">=</span> <span class="n">sat_gen_freq</span><span class="p">[</span><span class="n">zero_freq_loc</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">plot</span><span class="p">:</span> 
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">img</span> <span class="o">=</span> <span class="n">make_sat_img_plot</span><span class="p">(</span><span class="n">sat_bias_current</span><span class="p">,</span> <span class="n">sat_vna_freq</span><span class="p">,</span> <span class="n">sat_vna_powers</span><span class="p">,</span> <span class="n">sat_gain</span><span class="p">,</span> <span class="n">norm_power</span> <span class="o">=</span> <span class="n">y_norm_val</span><span class="p">,</span> <span class="n">levels</span> <span class="o">=</span> <span class="n">levels</span><span class="p">,</span> <span class="n">filter_window</span> <span class="o">=</span> <span class="n">filter_window</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">vmax</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">sat_bias_current</span><span class="p">)</span>
+        <span class="n">cb</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Generator Frequency(GHz)&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Signal Power (dBm)&#39;</span><span class="p">)</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s2">&quot;S21 change from 20dB (dB)&quot;</span><span class="p">)</span>
+
+    <span class="n">smoothed_normed_data</span> <span class="o">=</span> <span class="n">log_normalize_to_row</span><span class="p">(</span><span class="n">sat_gen_freq</span><span class="p">,</span> <span class="n">sat_vna_powers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">sat_gain</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">filter_window</span><span class="p">,</span><span class="mi">0</span><span class="p">)),</span> <span class="n">y_norm_val</span><span class="o">=</span> <span class="n">y_norm_val</span><span class="p">)</span>
+    <span class="c1">#getting saturation points</span>
+    <span class="n">sat_powers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sat_gen_powers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">detunings</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sat_center_freqs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">smoothed_normed_data</span><span class="o">.</span><span class="n">T</span><span class="p">):</span> 
+        <span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="n">sat_vna_powers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;=</span> <span class="n">y_norm_val</span><span class="p">])</span>
+        <span class="c1">#append locations of +1dB and -1dB points</span>
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="n">pos_loc</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="n">sat_vna_powers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="n">y_norm_val</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">atol</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> 
+            <span class="n">pos_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">col</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="n">neg_loc</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="n">sat_vna_powers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="n">y_norm_val</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">atol</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> 
+            <span class="n">neg_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">col</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+
+        <span class="n">loc_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">pos_loc</span><span class="p">,</span> <span class="n">neg_loc</span><span class="p">])</span>
+        <span class="n">loc_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">loc_arr</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">loc_arr</span><span class="p">))])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">loc_arr</span><span class="p">)</span>
+        <span class="n">sat_powers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sat_vna_powers</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">loc</span><span class="p">])</span>
+        <span class="c1"># print(sat_gen_power)</span>
+        <span class="n">sat_gen_powers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sat_gen_power</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        
+        <span class="n">detunings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sat_gen_freq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">zero_freq</span><span class="p">)</span>
+        <span class="n">sat_center_freqs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sat_gen_freq</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        
+    <span class="n">max_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sat_powers</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">sat_powers</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_gen_freq</span><span class="o">+</span><span class="p">(</span><span class="n">sat_gen_freq</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">sat_gen_freq</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="p">)[</span><span class="n">max_loc</span><span class="p">],</span> <span class="n">sat_vna_freq</span><span class="p">[</span><span class="n">max_loc</span><span class="p">],</span> <span class="n">sat_powers</span><span class="p">[</span><span class="n">max_loc</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_powers</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_gen_powers</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">detunings</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_center_freqs</span><span class="p">),</span> <span class="n">sat_bias_current</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">detunings</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="superSat"><a class="viewcode-back" href="../TACO_multiplot_b1.html#TACO_multiplot_b1.superSat">[docs]</a><span class="k">def</span> <span class="nf">superSat</span><span class="p">(</span><span class="n">filepaths</span><span class="p">,</span> 
+             <span class="n">y_norm_val</span> <span class="o">=</span> <span class="o">-</span><span class="mi">70</span><span class="p">,</span> 
+             <span class="n">filter_window</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> 
+             <span class="n">conv</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+             <span class="n">conv_func</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+             <span class="n">tla_signal</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> 
+             <span class="n">tla_pump</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> 
+             <span class="n">plot_individual</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+             <span class="n">cscale</span> <span class="o">=</span> <span class="mf">10e6</span><span class="p">,</span> 
+             <span class="n">kerr</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+             <span class="n">kerr_null</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+             <span class="n">kerr_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+             <span class="n">scale_flip</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+             <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> 
+             <span class="n">quanta_flip</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+             <span class="n">xlim</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+             <span class="n">ylim</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> 
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    assemble all of the saturation sweeps, extract the best (highest) </span>
+<span class="sd">    saturation power in (gen_freqs, gen_powers) space, plot vs current</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># plt.rcParams.update({&#39;font.weight&#39;: &#39;bold&#39;})</span>
+    <span class="c1"># plt.rc(&#39;axes&#39;, titlesize=15)  # fontsize of the axes titles</span>
+    <span class="c1"># plt.rc(&#39;axes&#39;, labelsize=15)    # fontsize of the x and y labels</span>
+    <span class="c1"># plt.rc(&#39;xtick&#39;, labelsize=12)    # fontsize of the tick labels</span>
+    <span class="c1"># plt.rc(&#39;ytick&#39;, labelsize=12)    # fontsize of the tick labels</span>
+    <span class="c1"># fig = plt.figure()</span>
+    <span class="c1"># ax = fig.add_subplot(111)</span>
+    
+    <span class="n">filenames</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">sat_powers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sat_gen_powers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sat_detunings</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sat_bias_arr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sat_center_freqs_arr</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">best_sat_powers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">best_sat_gen_frequencies</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">best_sat_gen_powers</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">best_sat_vna_frequencies</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">plot_currents</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">sat_filepath</span> <span class="ow">in</span> <span class="n">filepaths</span><span class="p">:</span> 
+        <span class="c1">#extract the best gen powers</span>
+        <span class="n">sat_dicts</span> <span class="o">=</span> <span class="n">all_datadicts_from_hdf5</span><span class="p">(</span><span class="n">sat_filepath</span><span class="p">)</span>
+        <span class="n">satDict</span> <span class="o">=</span> <span class="n">sat_dicts</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="n">sat_data</span> <span class="o">=</span> <span class="n">satDict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;sat_gain&#39;</span><span class="p">)</span>
+        <span class="p">[</span><span class="n">bias_current</span><span class="p">,</span> <span class="n">sat_gen_freq</span><span class="p">,</span> <span class="n">sat_gen_power</span><span class="p">,</span> <span class="n">sat_vna_powers</span><span class="p">,</span> <span class="n">sat_gain</span><span class="p">,</span> <span class="n">sat_vna_freq</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sat_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;sat_bias_current&#39;</span><span class="p">),</span> 
+                                                                                    <span class="n">sat_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;sat_gen_freq&#39;</span><span class="p">),</span>
+                                                                                    <span class="n">sat_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;sat_gen_power&#39;</span><span class="p">),</span> 
+                                                                                    <span class="n">sat_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;sat_vna_powers&#39;</span><span class="p">),</span> 
+                                                                                    <span class="n">sat_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;sat_gain&#39;</span><span class="p">),</span> 
+                                                                                    <span class="n">sat_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;sat_vna_freq&#39;</span><span class="p">)</span>
+                                                                                    <span class="p">]</span>
+        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_current</span><span class="p">):</span> <span class="c1">#could be multiple bias currents in one single TACO datafile</span>
+            <span class="n">plot_currents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+            <span class="n">bp1</span> <span class="o">=</span> <span class="n">bias_current</span> <span class="o">==</span> <span class="n">current</span>
+            <span class="c1"># make_sat_contour_plot(b1_val, sf1, svp1, sg1, norm_power = -60, levels = [-2, -1, -0.05,0.05, 1, 2], x_val = 10.687e3)</span>
+            <span class="n">sf1</span><span class="p">,</span> <span class="n">sgp1</span><span class="p">,</span> <span class="n">svp1</span><span class="p">,</span> <span class="n">sgp1</span><span class="p">,</span> <span class="n">sg1</span><span class="p">,</span> <span class="n">svf1</span> <span class="o">=</span> <span class="n">sat_gen_freq</span><span class="p">[</span><span class="n">bp1</span><span class="p">],</span> <span class="n">sat_gen_power</span><span class="p">[</span><span class="n">bp1</span><span class="p">],</span> <span class="n">sat_vna_powers</span><span class="p">[</span><span class="n">bp1</span><span class="p">],</span> <span class="n">sat_gen_power</span><span class="p">[</span><span class="n">bp1</span><span class="p">],</span> <span class="n">sat_gain</span><span class="p">[</span><span class="n">bp1</span><span class="p">],</span> <span class="n">sat_vna_freq</span><span class="p">[</span><span class="n">bp1</span><span class="p">]</span>
+            
+            <span class="n">best_sat_gen_freq</span><span class="p">,</span> <span class="n">best_sat_vna_freq</span><span class="p">,</span> <span class="n">best_sat_pow</span><span class="p">,</span> <span class="n">sat_power_arr</span><span class="p">,</span> <span class="n">sat_gen_power_arr</span><span class="p">,</span> <span class="n">sat_detuning_arr</span><span class="p">,</span> <span class="n">sat_center_freqs</span><span class="p">,</span> <span class="n">bias_arr</span> <span class="o">=</span> <span class="n">get_sat_info</span><span class="p">(</span>
+                <span class="n">current</span><span class="p">,</span> 
+                <span class="n">sf1</span><span class="p">,</span> 
+                <span class="n">sgp1</span><span class="p">,</span> 
+                <span class="n">svf1</span><span class="p">,</span> 
+                <span class="n">svp1</span><span class="p">,</span> 
+                <span class="n">sg1</span><span class="p">,</span> 
+                <span class="n">norm_power</span> <span class="o">=</span> <span class="n">y_norm_val</span><span class="p">,</span> 
+                <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> 
+                <span class="n">x_val</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+                <span class="n">filter_window</span> <span class="o">=</span> <span class="n">filter_window</span><span class="p">,</span> 
+                <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.7</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">1.7</span><span class="p">,</span> 
+                <span class="n">plot</span> <span class="o">=</span> <span class="n">plot_individual</span><span class="p">)</span>
+            
+            <span class="n">best_sat_gen_frequencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_sat_gen_freq</span><span class="p">)</span>
+            <span class="n">best_sat_vna_frequencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_sat_vna_freq</span><span class="p">)</span>
+            <span class="n">best_sat_powers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_sat_pow</span><span class="p">)</span>
+            
+            <span class="n">sat_powers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sat_power_arr</span><span class="p">)</span>
+            <span class="n">sat_gen_powers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sat_gen_power_arr</span><span class="p">)</span>
+            <span class="n">sat_detunings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sat_detuning_arr</span><span class="p">)</span>
+            <span class="n">sat_bias_arr</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">bias_arr</span><span class="p">)</span>
+            <span class="n">sat_center_freqs_arr</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sat_center_freqs</span><span class="p">)</span>
+            
+    <span class="c1"># print(list(zip(plot_currents, best_sat_powers, best_sat_frequencies)))</span>
+    
+
+    <span class="k">if</span> <span class="n">conv</span><span class="p">:</span> <span class="c1">#requires fluxsweep_fitting file to already have been run in the same kernel</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">plt_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">best_sat_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_signal</span>
+        <span class="c1"># print(conv)</span>
+        <span class="k">if</span> <span class="n">quanta_flip</span><span class="p">:</span>     
+            <span class="n">p1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">conv_func</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">plot_currents</span><span class="p">)),</span> <span class="n">plt_powers</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">p1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">conv_func</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">plot_currents</span><span class="p">)),</span> <span class="n">plt_powers</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s1">Best Saturation Power vs. Flux&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Flux Quanta ($\Phi/\Phi_0$)&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Saturation Power (dBm)&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ylim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        
+        <span class="n">fig2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">colors2</span> <span class="o">=</span> <span class="n">conv_func</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_bias_arr</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">cscale</span><span class="p">)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_gen_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_pump</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_signal</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">colors2</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">colors2</span><span class="p">),</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">colors2</span><span class="p">),</span> <span class="n">zorder</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">cb2</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">ax2</span><span class="p">)</span>
+        <span class="n">cb2</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s2">&quot;Bias Flux ($\Phi/\Phi_0$)&quot;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s1">Saturation Power vs. Pump power&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Generator Power (dBm Cryo)&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Saturation Power (dBm Cryo)&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">xlim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ylim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">kerr</span><span class="p">:</span> 
+            <span class="n">colors_arr</span> <span class="o">=</span> <span class="p">[</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#000066&#39;</span><span class="p">),</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#444488&#39;</span><span class="p">),</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#4444FF&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#03fc41&#39;</span><span class="p">),</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#03fc41&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#FF4444&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#884444&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#660000&#39;</span><span class="p">)]</span>
+            <span class="n">tick_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;- 1&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;+ 1&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">scale_flip</span><span class="p">:</span> 
+                <span class="n">colors_arr</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+                <span class="n">tick_labels</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+            <span class="n">_cmap</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">LinearSegmentedColormap</span><span class="o">.</span><span class="n">from_list</span><span class="p">(</span><span class="s1">&#39;my_cmap&#39;</span><span class="p">,</span> <span class="n">colors_arr</span><span class="p">)</span>
+            <span class="n">fig1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+            <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig1</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+            <span class="c1"># print(conv)</span>
+            <span class="n">cscale</span> <span class="o">/=</span> <span class="mf">1e6</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">cscale</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_gen_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_pump</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_signal</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">colors2</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="n">_cmap</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="n">kerr_null</span><span class="o">-</span><span class="n">kerr_scale</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">kerr_null</span><span class="o">+</span><span class="n">kerr_scale</span><span class="p">,</span> <span class="n">zorder</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">cb1</span> <span class="o">=</span> <span class="n">fig1</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">ax1</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="p">[</span><span class="n">kerr_null</span><span class="o">-</span><span class="n">kerr_scale</span><span class="p">,</span> <span class="n">kerr_null</span><span class="p">,</span> <span class="n">kerr_null</span><span class="o">+</span><span class="n">kerr_scale</span><span class="p">])</span>
+            <span class="n">cb1</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s2">&quot;Self-Kerr (arb. units)&quot;</span><span class="p">)</span>
+            <span class="n">cb1</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">tick_labels</span><span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s1">Saturation Power vs. Pump power&#39;</span><span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Generator Power (dBm Cryo)&#39;</span><span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Saturation Power (dBm Cryo)&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">xlim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+                <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">ylim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+                <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+            
+            
+        <span class="c1">#plot best saturation wrt signal frequency. ie for all vna frequencies, plot the best saturation. Generally this is the generator freq/2</span>
+        
+        <span class="n">fig3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig3</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ax3</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_center_freqs_arr</span><span class="p">)</span><span class="o">/</span><span class="mf">1e9</span><span class="p">,</span> <span class="n">sat_gen_powers</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Signal Frequency (GHz)&quot;</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Saturation Power (dBm Cryo)&quot;</span><span class="p">)</span>
+        
+        <span class="n">colors2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_bias_arr</span><span class="p">)</span><span class="o">*</span><span class="mf">1e6</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_gen_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_pump</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_signal</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">colors2</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="s1">&#39;magma&#39;</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">colors2</span><span class="p">),</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">colors2</span><span class="p">),</span> <span class="n">zorder</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">cb2</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">ax3</span><span class="p">)</span>
+        <span class="n">cb2</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s2">&quot;Bias Current ($\mu A$)&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># ax1.vlines(conv_func(-0.173e-3), np.min(plt_powers), np.max(plt_powers), linestyles = &#39;dashed&#39;, colors = [&#39;red&#39;])</span>
+        
+        <span class="c1"># plt.figure(2)</span>
+        <span class="c1"># p1 = plt.plot(conv_func(np.array(plot_currents)), np.array(best_sat_gen_frequencies)/1000, &#39;b.&#39;, markersize = 15, label = &#39;Generator Frequencies&#39;)</span>
+        <span class="c1"># plt.plot(conv_func(currents)[filt], 2*res_freqs[filt]/1e9, &#39;r-&#39;, markersize = 5, label = &#39;2x SNAIL Frequency&#39;)</span>
+        <span class="c1"># plt.xlabel(&#39;Flux Quanta ($\Phi/\Phi_0)$&#39;)</span>
+        <span class="c1"># plt.ylabel(&#39;Generator Frequency (GHz)&#39;)</span>
+        <span class="c1"># plt.title(&#39;Generator Frequency at Best Saturation Point vs. Flux&#39;)</span>
+        <span class="c1"># plt.vlines(conv_func(-0.173e-3), np.min(np.array(best_sat_gen_frequencies)/1000), np.max(np.array(best_sat_gen_frequencies)/1000), linestyles = &#39;dashed&#39;, colors = [&#39;red&#39;])</span>
+        <span class="c1"># plt.grid()</span>
+        <span class="c1"># plt.legend()</span>
+        
+        <span class="c1"># plt.figure(3)</span>
+        <span class="c1"># p0 = plt.plot(conv_func(np.array(plot_currents)), np.array(best_sat_vna_frequencies)/1e9, &#39;b.&#39;, markersize = 15, label = &#39;Signal Frequencies&#39;)</span>
+        <span class="c1"># p1 = plt.plot(conv_func(currents)[filt], res_freqs[filt]/1e9, &#39;r-&#39;, markersize = 5, label = &#39;SNAIL Frequency&#39;)</span>
+        <span class="c1"># plt.xlabel(&#39;Flux Quanta ($\Phi/\Phi_0)$&#39;)</span>
+        <span class="c1"># plt.ylabel(&#39;VNA CW Frequency (GHz)&#39;)</span>
+        <span class="c1"># plt.title(&#39;Signal Frequency at Best Saturation Point vs. Flux&#39;)</span>
+        <span class="c1"># plt.vlines(conv_func(-0.173e-3), np.min(np.array(best_sat_vna_frequencies)/1e9), np.max(np.array(best_sat_vna_frequencies)/1e9), linestyles = &#39;dashed&#39;, colors = [&#39;red&#39;])</span>
+        <span class="c1"># plt.grid()</span>
+        <span class="c1"># plt.legend()</span>
+        
+        <span class="c1"># plt.figure(4)</span>
+        <span class="c1"># plt.plot(np.array(best_sat_vna_frequencies)/1e9, best_sat_powers, &#39;k.&#39;, label = &#39;VNA Frequencies&#39;, markersize = 15)</span>
+        <span class="c1"># plt.plot(np.array(best_sat_gen_frequencies)/2000, best_sat_powers, &#39;b.&#39;, label = &#39;Generator Frequencies/2&#39;, markersize = 15)</span>
+        <span class="c1"># plt.ylabel(&#39;Saturation Power (dBm)&#39;)</span>
+        <span class="c1"># plt.xlabel(&#39;Generator/VNA Frequency (GHz)&#39;)</span>
+        <span class="c1"># plt.title(&quot;Best Saturation Power vs. Signal Frequency&quot;)</span>
+        <span class="c1"># plt.grid()</span>
+        <span class="c1"># plt.legend()</span>
+    
+    <span class="n">fig1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig1</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+    <span class="c1"># print(conv)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">cscale</span>
+    
+    <span class="n">colors_arr</span> <span class="o">=</span> <span class="p">[</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#000066&#39;</span><span class="p">),</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#444488&#39;</span><span class="p">),</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#4444FF&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#03fc41&#39;</span><span class="p">),</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#03fc41&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#FF4444&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#884444&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#660000&#39;</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">scale_flip</span><span class="p">:</span> 
+        <span class="n">colors_arr</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+        <span class="n">tick_labels</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+    <span class="n">_cmap</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">LinearSegmentedColormap</span><span class="o">.</span><span class="n">from_list</span><span class="p">(</span><span class="s1">&#39;my_cmap&#39;</span><span class="p">,</span> <span class="n">colors_arr</span><span class="p">)</span>
+    
+    <span class="n">img</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_gen_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_pump</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_signal</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sat_detunings</span><span class="p">)</span><span class="o">/</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="n">_cmap</span><span class="p">,</span> <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="n">cscale</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">cscale</span><span class="p">,</span> <span class="n">zorder</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">cb1</span> <span class="o">=</span> <span class="n">fig1</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">ax1</span><span class="p">)</span>
+    <span class="n">cb1</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s2">&quot;Detuning (MHz)&quot;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s1">Saturation Power vs. Pump power&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Generator Power (dBm Cryo)&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Saturation Power (dBm Cryo)&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xlim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">ylim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+    <span class="n">fig1</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;G:\My Drive\old files\WRITE - Presentations\mpl_figures\test.pdf&#39;</span><span class="p">,</span> <span class="nb">format</span> <span class="o">=</span> <span class="s1">&#39;pdf&#39;</span><span class="p">)</span></div>
+    
+    
+    
+    
+<div class="viewcode-block" id="superTACO_Bars"><a class="viewcode-back" href="../TACO_multiplot_b1.html#TACO_multiplot_b1.superTACO_Bars">[docs]</a><span class="k">def</span> <span class="nf">superTACO_Bars</span><span class="p">(</span><span class="n">filepaths</span><span class="p">,</span> <span class="n">angles</span> <span class="o">=</span> <span class="p">[</span><span class="mi">45</span><span class="p">,</span><span class="mi">45</span><span class="p">],</span> <span class="n">quanta_size</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">quanta_offset</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">bardims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">barbase</span> <span class="o">=</span> <span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="c1">#step 1: assemble best powers into bias_currents vs. (gen_freq vs. best_powers) array</span>
+    <span class="c1">#ie for each n bias current there is a gen_freq array</span>
+    <span class="c1">#and for each m(n) gen_freq there is one gen_power that is best (could be NaN if garbage)</span>
+    <span class="c1">#feed this into n mplot3d commands each with their own oclor and legend label</span>
+
+    
+    <span class="n">bias_currents</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">best_gen_frequencies</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">best_gen_powers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">gains</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">info_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">for</span> <span class="n">gain_filepath</span> <span class="ow">in</span> <span class="n">filepaths</span><span class="p">:</span> 
+        <span class="c1">#extract the best gen powers</span>
+        <span class="n">gain_dicts</span> <span class="o">=</span> <span class="n">all_datadicts_from_hdf5</span><span class="p">(</span><span class="n">gain_filepath</span><span class="p">)</span>
+        <span class="n">gainDict</span> <span class="o">=</span> <span class="n">gain_dicts</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="n">gain_data</span> <span class="o">=</span> <span class="n">gainDict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;calculated_gain&#39;</span><span class="p">)</span>
+        <span class="p">[</span><span class="n">bias_current</span><span class="p">,</span> <span class="n">gen_frequency</span><span class="p">,</span> <span class="n">gen_power</span><span class="p">,</span> <span class="n">calc_gain</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">gain_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;bias_current&#39;</span><span class="p">),</span>
+                                                               <span class="n">gain_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;gen_frequency&#39;</span><span class="p">),</span> 
+                                                               <span class="n">gain_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;gen_power&#39;</span><span class="p">),</span> 
+                                                               <span class="n">gain_data</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;calculated_gain&#39;</span><span class="p">)</span>
+                                                               <span class="p">]</span>
+        
+        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_current</span><span class="p">):</span> <span class="c1">#could be multiple bias currents in one single TACO datafile</span>
+            <span class="n">bias_currents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CURRENT: </span><span class="si">{</span><span class="n">current</span><span class="o">*</span><span class="mi">1000</span><span class="si">}</span><span class="s2">mA&quot;</span><span class="p">)</span>
+            <span class="n">filt</span> <span class="o">=</span> <span class="n">bias_current</span> <span class="o">==</span> <span class="n">current</span>
+            <span class="n">cfreqs</span> <span class="o">=</span> <span class="n">gen_frequency</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span>
+            <span class="n">cpowers</span> <span class="o">=</span> <span class="n">gen_power</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span>
+            <span class="n">unique_freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cfreqs</span><span class="p">)</span>
+            <span class="n">cgain</span> <span class="o">=</span> <span class="n">calc_gain</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span>
+            
+            <span class="n">best_powers</span> <span class="o">=</span> <span class="p">[</span><span class="n">select_closest_to_target</span><span class="p">(</span><span class="n">cpowers</span><span class="p">[</span><span class="n">cfreqs</span> <span class="o">==</span> <span class="n">f</span><span class="p">],</span> <span class="n">cgain</span><span class="p">[</span><span class="n">cfreqs</span> <span class="o">==</span> <span class="n">f</span><span class="p">],</span> <span class="mi">20</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">unique_freqs</span><span class="p">]</span>
+            <span class="n">best_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">best_powers</span><span class="p">)</span>
+            <span class="n">best_gen_powers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_power</span><span class="p">)</span>
+            
+            <span class="n">best_gains</span> <span class="o">=</span> <span class="p">[</span><span class="n">select_closest_to_target</span><span class="p">(</span><span class="n">cgain</span><span class="p">[</span><span class="n">cfreqs</span> <span class="o">==</span> <span class="n">f</span><span class="p">],</span> <span class="n">cgain</span><span class="p">[</span><span class="n">cfreqs</span> <span class="o">==</span> <span class="n">f</span><span class="p">],</span> <span class="mi">20</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">unique_freqs</span><span class="p">]</span>
+            <span class="n">best_gain</span> <span class="o">=</span> <span class="n">best_gains</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">best_gains</span><span class="p">)</span><span class="o">-</span><span class="mi">20</span><span class="p">))]</span>
+            <span class="n">gains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_gain</span><span class="p">)</span>
+
+            <span class="c1">#convert freqs to detuning from best power</span>
+            <span class="n">best_freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">unique_freqs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">best_powers</span> <span class="o">==</span> <span class="n">best_power</span><span class="p">)])</span>
+            <span class="n">best_gen_frequencies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_freq</span><span class="p">)</span>
+            
+            
+            <span class="n">adjusted_freqs</span> <span class="o">=</span> <span class="n">unique_freqs</span> <span class="o">-</span> <span class="n">best_freq</span>
+            
+            <span class="n">info_dict</span><span class="p">[</span><span class="n">current</span><span class="p">]</span> <span class="o">=</span> <span class="n">adjusted_freqs</span><span class="p">,</span> <span class="n">best_powers</span>
+    <span class="k">if</span> <span class="n">plot</span><span class="p">:</span> 
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span> <span class="o">=</span> <span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">azim</span> <span class="o">=</span> <span class="n">angles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">elev</span> <span class="o">=</span> <span class="n">angles</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   
+        <span class="c1">#plotting in sorted order of bias currents for rendering reasons</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">current</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">info_dict</span><span class="p">)):</span> 
+            <span class="c1"># print(f&quot;CURRENTS: {current}&quot;)</span>
+            <span class="n">adjusted_freqs</span> <span class="o">=</span> <span class="n">info_dict</span><span class="p">[</span><span class="n">current</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">best_powers</span> <span class="o">=</span> <span class="n">info_dict</span><span class="p">[</span><span class="n">current</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># print(f&quot;FREQS: {adjusted_freqs}&quot;)</span>
+            <span class="c1"># print(f&quot;POWERS: {best_powers}&quot;)</span>
+            <span class="k">if</span> <span class="n">quanta_size</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">quant_frac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">current</span><span class="o">-</span><span class="n">quanta_offset</span><span class="p">)</span><span class="o">/</span><span class="n">quanta_size</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                <span class="n">base_of_bars</span> <span class="o">=</span> <span class="n">barbase</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">best_powers</span><span class="p">))</span>
+                <span class="n">height_of_bars</span> <span class="o">=</span> <span class="n">best_powers</span><span class="o">-</span><span class="n">base_of_bars</span>
+                <span class="c1"># print(list(zip(base_of_bars, height_of_bars)))</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">bar3d</span><span class="p">(</span><span class="n">current</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">adjusted_freqs</span><span class="p">))</span><span class="o">*</span><span class="mi">1000</span><span class="p">,</span> <span class="n">adjusted_freqs</span><span class="o">/</span><span class="mf">1e6</span><span class="p">,</span> <span class="n">base_of_bars</span> <span class="p">,</span> <span class="n">bardims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bardims</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">height_of_bars</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shade</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">quant_frac</span><span class="si">}</span><span class="s1"> quanta&#39;</span><span class="p">,</span> <span class="n">zsort</span> <span class="o">=</span> <span class="s1">&#39;average&#39;</span><span class="p">)</span>
+    
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Bias Current (mA)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Generator Detuning (MHz)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s2">&quot;Generator Power (dBm)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;20dB Gain Power vs. Flux Bias and Generator Detuning&quot;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">[</span><span class="n">info_dict</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">best_gen_frequencies</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">best_gen_powers</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gains</span><span class="p">)]</span></div>
+
+<span class="c1">#%%</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span> 
+    <span class="c1"># total_line_attenuation_signal = 0</span>
+    <span class="c1"># total_line_attenuation_pump = 0 #does not include VNA attenuation</span>
+    <span class="c1"># gain_cwd = r&#39;Z:\Data\SA_1X_C1\Best_Tacos\Gain&#39;</span>
+    <span class="c1"># res = find_all_ddh5(gain_cwd)</span>
+    <span class="c1"># [info_dict, bias_currents, best_gen_freqs, best_gen_powers, gains] = superTACO_Bars(res, angles = [60,20], quanta_size = 0.35e-3, quanta_offset = -0.071e-3, bardims = [0.001, 0.7], barbase = -24)</span>
+    
+    <span class="c1"># best_gen_powers -= total_line_attenuation_pump</span>
+    
+    <span class="c1"># fig2 = plt.figure(2)</span>
+    <span class="c1"># conv = False</span>
+    <span class="c1"># if conv: </span>
+    <span class="c1">#     # plt.plot(conv_func(bias_currents), np.array(best_gen_powers)-total_line_attenuation_signal, &#39;b.&#39;, markersize = 15)</span>
+    <span class="c1">#     plt.title(r&#39;Lowest 20dB Power (dBm) vs. Flux ($\Phi_0$)&#39;)</span>
+    <span class="c1">#     plt.xlabel(&#39;Flux Quanta ($\Phi/\Phi_0)$&#39;)</span>
+    <span class="c1">#     plt.ylabel(&#39;Generator Power @20dB Gain (dBm)&#39;)</span>
+    <span class="c1">#     plt.grid()</span>
+    <span class="c1">#     # plt.vlines(conv_func(-0.173e-3), np.min(best_gen_powers-total_line_attenuation_pump), np.max(best_gen_powers-total_line_attenuation_pump), linestyles = &#39;dashed&#39;, colors = [&#39;red&#39;])</span>
+    <span class="c1"># else: </span>
+    <span class="c1">#     plt.plot(bias_currents*1000, best_gen_powers, &#39;b.&#39;, markersize = 15)</span>
+    <span class="c1">#     plt.title(&#39;Lowest 20dB Power (dBm RT) vs. Bias Current (mA)&#39;)</span>
+    <span class="c1">#     plt.xlabel(&#39;Bias Current (mA)&#39;)</span>
+    <span class="c1">#     plt.ylabel(&#39;Generator Power @20dB Gain (dBm)&#39;)</span>
+    <span class="c1">#     plt.grid()</span>
+    
+    
+    <span class="n">sat_cwd</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;Z:\Data\SA_2X_B1\best_tacos\sat&#39;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">find_all_ddh5</span><span class="p">(</span><span class="n">sat_cwd</span><span class="p">)</span>
+    <span class="n">superSat</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">y_norm_val</span> <span class="o">=</span> <span class="o">-</span><span class="mi">92</span><span class="p">,</span> <span class="n">filter_window</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">conv</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">plot_individual</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tla_signal</span> <span class="o">=</span> <span class="mi">61</span><span class="p">,</span> <span class="n">tla_pump</span> <span class="o">=</span> <span class="mf">71.5</span><span class="p">,</span> <span class="n">cscale</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">TACO_multiplot_b1</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

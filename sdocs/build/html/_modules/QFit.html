@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QFit &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">QFit</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for QFit</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Fits VNA trace. Determine over/under coupling regimes.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">curve_fit</span>
+<span class="c1"># import easygui</span>
+<span class="kn">from</span> <span class="nn">plottr.data</span> <span class="kn">import</span> <span class="n">datadict_storage</span> <span class="k">as</span> <span class="n">dds</span><span class="p">,</span> <span class="n">datadict</span> <span class="k">as</span> <span class="n">dd</span>
+<span class="kn">from</span> <span class="nn">plottr.data.datadict_storage</span> <span class="kn">import</span> <span class="n">all_datadicts_from_hdf5</span>
+
+<span class="n">FREQ_UNIT</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;GHz&#39;</span> <span class="p">:</span> <span class="mf">1e9</span><span class="p">,</span>
+             <span class="s1">&#39;MHz&#39;</span> <span class="p">:</span> <span class="mf">1e6</span><span class="p">,</span>
+             <span class="s1">&#39;KHz&#39;</span> <span class="p">:</span> <span class="mf">1e3</span><span class="p">,</span>
+             <span class="s1">&#39;Hz&#39;</span> <span class="p">:</span> <span class="mf">1.0</span>
+             <span class="p">}</span>
+
+
+<div class="viewcode-block" id="rounder"><a class="viewcode-back" href="../QFit.html#QFit.rounder">[docs]</a><span class="k">def</span> <span class="nf">rounder</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:.4e}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="reflectionFunc"><a class="viewcode-back" href="../QFit.html#QFit.reflectionFunc">[docs]</a><span class="k">def</span> <span class="nf">reflectionFunc</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">Qext</span><span class="p">,</span> <span class="n">Qint</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">magBack</span><span class="p">,</span> <span class="n">phaseCorrect</span><span class="p">):</span>
+    <span class="n">omega0</span> <span class="o">=</span> <span class="n">f0</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">freq</span> <span class="o">-</span> <span class="n">omega0</span>
+    <span class="n">S_11_up</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">omega0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">omega0</span><span class="p">)</span> <span class="o">+</span> <span class="n">omega0</span> <span class="o">/</span> <span class="n">Qint</span><span class="p">)</span> <span class="o">-</span> <span class="n">Qext</span> <span class="o">/</span> <span class="n">omega0</span>
+    <span class="n">S_11_down</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">omega0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">omega0</span><span class="p">)</span> <span class="o">+</span> <span class="n">omega0</span> <span class="o">/</span> <span class="n">Qint</span><span class="p">)</span> <span class="o">+</span> <span class="n">Qext</span> <span class="o">/</span> <span class="n">omega0</span>
+    <span class="n">S11</span> <span class="o">=</span> <span class="n">magBack</span> <span class="o">*</span> <span class="p">(</span><span class="n">S_11_up</span> <span class="o">/</span> <span class="n">S_11_down</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">phaseCorrect</span><span class="p">))</span>
+    <span class="n">realPart</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">S11</span><span class="p">)</span>
+    <span class="n">imagPart</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">S11</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">realPart</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">imagPart</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span></div>
+    <span class="c1"># return realPart </span>
+    <span class="c1"># return imagPart </span>
+    
+<div class="viewcode-block" id="reflectionFunc_re"><a class="viewcode-back" href="../QFit.html#QFit.reflectionFunc_re">[docs]</a><span class="k">def</span> <span class="nf">reflectionFunc_re</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">Qext</span><span class="p">,</span> <span class="n">Qint</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">magBack</span><span class="p">,</span> <span class="n">phaseCorrect</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">reflectionFunc</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">Qext</span><span class="p">,</span> <span class="n">Qint</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">magBack</span><span class="p">,</span> <span class="n">phaseCorrect</span><span class="p">)[::</span><span class="mi">2</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="getData_from_datadict"><a class="viewcode-back" href="../QFit.html#QFit.getData_from_datadict">[docs]</a><span class="k">def</span> <span class="nf">getData_from_datadict</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">plot_data</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> 
+    <span class="n">datadict</span> <span class="o">=</span> <span class="n">all_datadicts_from_hdf5</span><span class="p">(</span><span class="n">filepath</span><span class="p">)[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+    <span class="n">powers_dB</span> <span class="o">=</span> <span class="n">datadict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;power&#39;</span><span class="p">)[</span><span class="s1">&#39;power&#39;</span><span class="p">][</span><span class="s1">&#39;values&#39;</span><span class="p">]</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">datadict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;power&#39;</span><span class="p">)[</span><span class="s1">&#39;frequency&#39;</span><span class="p">][</span><span class="s1">&#39;values&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">phase_rad</span> <span class="o">=</span> <span class="n">datadict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">)[</span><span class="s1">&#39;phase&#39;</span><span class="p">][</span><span class="s1">&#39;values&#39;</span><span class="p">]</span>
+    
+    <span class="n">lin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">powers_dB</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">real</span> <span class="o">=</span> <span class="n">lin</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phase_rad</span><span class="p">)</span>
+    <span class="n">imag</span> <span class="o">=</span> <span class="n">lin</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phase_rad</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">phase_rad</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">phase_rad</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">plot_data</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s1">&#39;mag&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">freqs</span><span class="p">,</span> <span class="n">powers_dB</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">freqs</span><span class="p">,</span> <span class="n">phase_rad</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="p">(</span><span class="n">freqs</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">powers_dB</span><span class="p">,</span> <span class="n">phase_rad</span><span class="p">)</span></div>
+    
+    
+<div class="viewcode-block" id="getData"><a class="viewcode-back" href="../QFit.html#QFit.getData">[docs]</a><span class="k">def</span> <span class="nf">getData</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;hfss&#39;</span><span class="p">,</span> <span class="n">freq_unit</span> <span class="o">=</span> <span class="s1">&#39;GHz&#39;</span><span class="p">,</span> <span class="n">plot_data</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;hfss&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The csv file must be inthe format of:</span>
+<span class="sd">            freq  mag(dB)  phase(cang_deg)  </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+            <span class="n">csvData</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">csvfile</span><span class="p">))</span>
+            <span class="n">csvData</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Remove the header</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">csvData</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">csvData</span><span class="p">)))</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">csvData</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">csvData</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">csvData</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span>
+
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">FREQ_UNIT</span><span class="p">[</span><span class="n">freq_unit</span><span class="p">]</span> <span class="c1">#omega</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mf">180.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">mag</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">lin</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">mag</span> <span class="o">/</span> <span class="mf">20.0</span><span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;vna&#39;</span><span class="p">:</span>  
+        <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;VNA Frequency (Hz)&#39;</span><span class="p">][()]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;Phase (deg)&#39;</span><span class="p">][()]</span>
+        <span class="n">mag</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;Power (dB)&#39;</span><span class="p">][()]</span>
+        <span class="n">lin</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">mag</span><span class="o">/</span><span class="mf">20.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;vna_old&#39;</span><span class="p">:</span> 
+        <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;Freq&#39;</span><span class="p">][()]</span><span class="o">*</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;S21&#39;</span><span class="p">][()][</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mf">180.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">mag</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;S21&#39;</span><span class="p">][()][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lin</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">mag</span> <span class="o">/</span> <span class="mf">20.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;method not supported&#39;</span><span class="p">)</span>
+        
+    <span class="n">imag</span> <span class="o">=</span> <span class="n">lin</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+    <span class="n">real</span> <span class="o">=</span> <span class="n">lin</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">plot_data</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s1">&#39;mag&#39;</span><span class="p">)</span>        
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">freq</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">mag</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">freq</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span></div>
+    
+    <span class="c1"># if method == &#39;vna&#39;:  </span>
+    <span class="c1">#     f = h5py.File(filename,&#39;r&#39;)</span>
+    <span class="c1">#     freq = f[&#39;VNA Frequency (Hz)&#39;][()]</span>
+    <span class="c1">#     phase = f[&#39;Phase (deg)&#39;][()] / 180. * np.pi</span>
+    <span class="c1">#     lin = 10**(f[&#39;Power (dB)&#39;][()] / 20.0)</span>
+    <span class="c1"># if method == &#39;vna_old&#39;: </span>
+    <span class="c1">#     f = h5py.File(filename,&#39;r&#39;)</span>
+    <span class="c1">#     freq = f[&#39;Freq&#39;][()]</span>
+    <span class="c1">#     phase = f[&#39;S21&#39;][()][0] / 180. * np.pi</span>
+    <span class="c1">#     lin = 10**(f[&#39;S21&#39;][()][1] / 20.0)</span>
+        
+
+
+<div class="viewcode-block" id="fit"><a class="viewcode-back" href="../QFit.html#QFit.fit">[docs]</a><span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">Qguess</span><span class="o">=</span><span class="p">(</span><span class="mf">2e4</span><span class="p">,</span> <span class="mf">1e5</span><span class="p">),</span><span class="n">real_only</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">f0Guess</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">phaseGuess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># f0Guess = 2*np.pi*5.45e9</span>
+    <span class="c1"># f0Guess = freq[np.argmin(mag)] #smart guess of &quot;it&#39;s probably the lowest point&quot;</span>
+    <span class="k">if</span> <span class="n">f0Guess</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">freq</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">))]</span> <span class="c1">#dumb guess of &quot;it&#39;s probably in the middle&quot;</span>
+        <span class="c1"># f0Guess = freq[np.argmin(mag)] #smart guess of &quot;it&#39;s probably the lowest point&quot;</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Guess freq: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">f0Guess</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">1e9</span><span class="p">)))</span>
+    <span class="n">lin</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">mag</span> <span class="o">/</span> <span class="mf">20.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">magBackGuess</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">magBackGuess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">lin</span><span class="p">[:</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)])</span>
+    <span class="c1"># print(f&quot;MAGBACKGUESS: {magBackGuess}&quot;)</span>
+    <span class="n">QextGuess</span> <span class="o">=</span> <span class="n">Qguess</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">QintGuess</span> <span class="o">=</span> <span class="n">Qguess</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">bounds</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">bounds</span><span class="o">=</span><span class="p">([</span><span class="n">QextGuess</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="n">f0Guess</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">QextGuess</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">f0Guess</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">*</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">])</span>
+    
+    <span class="n">target_func</span> <span class="o">=</span> <span class="n">reflectionFunc</span>
+    <span class="n">data_to_fit</span> <span class="o">=</span> <span class="p">(</span><span class="n">real</span>  <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">imag</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">real_only</span><span class="p">:</span>
+        <span class="n">target_func</span> <span class="o">=</span> <span class="n">reflectionFunc_re</span>
+        <span class="n">data_to_fit</span> <span class="o">=</span> <span class="n">real</span>
+    <span class="n">popt</span><span class="p">,</span> <span class="n">pcov</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span><span class="n">target_func</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">data_to_fit</span><span class="p">,</span> 
+                            <span class="n">p0</span><span class="o">=</span><span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span> <span class="n">QintGuess</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">magBackGuess</span><span class="p">,</span> <span class="n">phaseGuess</span><span class="p">),</span>
+                            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                            <span class="n">maxfev</span><span class="o">=</span><span class="mf">1e4</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">2.3e-16</span><span class="p">,</span> <span class="n">xtol</span><span class="o">=</span><span class="mf">2.3e-16</span><span class="p">)</span>
+    
+
+    <span class="k">return</span> <span class="n">popt</span><span class="p">,</span> <span class="n">pcov</span></div>
+
+
+<div class="viewcode-block" id="plotRes"><a class="viewcode-back" href="../QFit.html#QFit.plotRes">[docs]</a><span class="k">def</span> <span class="nf">plotRes</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">popt</span><span class="p">):</span>
+    <span class="n">xdata</span> <span class="o">=</span> <span class="n">freq</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">realRes</span> <span class="o">=</span> <span class="n">reflectionFunc</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="o">*</span><span class="n">popt</span><span class="p">)[::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">imagRes</span> <span class="o">=</span> <span class="n">reflectionFunc</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="o">*</span><span class="n">popt</span><span class="p">)[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="c1"># realRes = reflectionFunc(freq, *popt)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;real&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">realRes</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;imag&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">imagRes</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># filepath = easygui.fileopenbox()</span>
+    <span class="n">filepath</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;Z:/Data/C1/2021-06-23/2021-06-23_0001_trace_0800_43/2021-06-23_0001_trace_0800_43.ddh5&#39;</span>
+    <span class="c1"># filepath = r&#39;PSB_EP1_Copper_Lid&#39;</span>
+    <span class="c1"># filepath = r&#39;H:\Data\Fridge Texas\Cooldown_20200917\Cavities\RT_msmt\PC_IP_3_5&#39;</span>
+    <span class="c1"># (freq, real, imag, mag, phase) = getData(filepath, method=&quot;vna&quot;,plot_data=0)</span>
+    <span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span> <span class="o">=</span> <span class="n">getData_from_datadict</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">plot_data</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ltrim</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">rtrim</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">freq</span><span class="p">[</span><span class="n">ltrim</span><span class="p">:</span><span class="o">-</span><span class="n">rtrim</span><span class="p">]</span>
+    <span class="n">real</span> <span class="o">=</span> <span class="n">real</span><span class="p">[</span><span class="n">ltrim</span><span class="p">:</span><span class="o">-</span><span class="n">rtrim</span><span class="p">]</span>
+    <span class="n">imag</span> <span class="o">=</span> <span class="n">imag</span><span class="p">[</span><span class="n">ltrim</span><span class="p">:</span><span class="o">-</span><span class="n">rtrim</span><span class="p">]</span>
+    <span class="n">mag</span> <span class="o">=</span> <span class="n">mag</span><span class="p">[</span><span class="n">ltrim</span><span class="p">:</span><span class="o">-</span><span class="n">rtrim</span><span class="p">]</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">phase</span><span class="p">[</span><span class="n">ltrim</span><span class="p">:</span><span class="o">-</span><span class="n">rtrim</span><span class="p">]</span>
+    
+    <span class="n">popt</span><span class="p">,</span> <span class="n">pcov</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">Qguess</span><span class="o">=</span><span class="p">(</span><span class="mf">3e2</span><span class="p">,</span> <span class="mf">5e3</span><span class="p">),</span> <span class="n">magBackGuess</span><span class="o">=</span><span class="mf">.01</span><span class="p">,</span> <span class="n">phaseGuess</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1">#(ext, int)   </span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;f (Hz): </span><span class="si">{</span><span class="n">rounder</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="p">)</span>
+    <span class="n">fitting_params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">reflectionFunc</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fitting_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">rounder</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="si">}</span><span class="s1"> +- </span><span class="si">{</span><span class="n">rounder</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pcov</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]))</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">Qtot</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Q_tot: &#39;</span><span class="p">,</span> <span class="n">rounder</span><span class="p">(</span><span class="n">Qtot</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">T1 (s):&#39;</span><span class="p">,</span> <span class="n">rounder</span><span class="p">(</span><span class="n">Qtot</span><span class="o">/</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="sa">f</span><span class="s2">&quot;Kappa: </span><span class="si">{</span><span class="n">rounder</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">Qtot</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">)</span>
+    
+
+    <span class="n">plotRes</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">mag</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">popt</span><span class="p">)</span>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">QFit</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

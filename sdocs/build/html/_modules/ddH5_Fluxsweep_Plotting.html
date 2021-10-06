@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ddH5_Fluxsweep_Plotting &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ddH5_Fluxsweep_Plotting</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ddH5_Fluxsweep_Plotting</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Jan 18 16:59:08 2021</span>
+
+<span class="sd">@author: Hatlab_3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">data_processing.ddh5_Plotting.utility_modules.FS_utility_functions</span> <span class="kn">import</span> <span class="n">fit_fluxsweep</span>
+<span class="kn">from</span> <span class="nn">data_processing.Helper_Functions</span> <span class="kn">import</span> <span class="n">find_all_ddh5</span>
+<span class="kn">from</span> <span class="nn">plottr.apps.autoplot</span> <span class="kn">import</span> <span class="n">autoplotDDH5</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">main</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">argrelextrema</span><span class="p">,</span> <span class="n">savgol_filter</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
+
+<div class="viewcode-block" id="find_quanta"><a class="viewcode-back" href="../ddH5_Fluxsweep_Plotting.html#ddH5_Fluxsweep_Plotting.find_quanta">[docs]</a><span class="k">def</span> <span class="nf">find_quanta</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="n">show</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">smooth_window</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span> 
+    <span class="n">ext</span> <span class="o">=</span> <span class="n">argrelextrema</span><span class="p">(</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">res_freqs</span><span class="p">,</span> <span class="n">smooth_window</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">greater</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="n">order</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span> 
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">ext</span><span class="p">:</span> 
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">currents</span><span class="p">[</span><span class="n">pt</span><span class="p">],</span> <span class="n">res_freqs</span><span class="p">[</span><span class="n">pt</span><span class="p">],</span> <span class="s1">&#39;r*&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span> 
+        <span class="n">quanta_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">currents</span><span class="p">[</span><span class="n">ext</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">-</span><span class="n">currents</span><span class="p">[</span><span class="n">ext</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">quanta_offset</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">currents</span><span class="p">[</span><span class="n">ext</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span> 
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Two extrema not found: </span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">current_to_quanta_conversion_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">quanta_offset</span><span class="p">)</span><span class="o">/</span><span class="n">quanta_size</span>
+    <span class="n">quanta_to_current_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">q</span><span class="p">:</span> <span class="n">q</span><span class="o">*</span><span class="n">quanta_size</span><span class="o">+</span><span class="n">quanta_offset</span>
+    <span class="k">return</span> <span class="n">quanta_size</span><span class="p">,</span> <span class="n">quanta_offset</span><span class="p">,</span> <span class="n">current_to_quanta_conversion_function</span><span class="p">,</span> <span class="n">quanta_to_current_function</span></div>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span> 
+    
+<span class="c1">#adapting an old file to a new file</span>
+    <span class="c1">#%%</span>
+    <span class="n">datadir</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;Z:/Data/SA_2X_B1/fluxsweep/2021-07-09/2021-07-09_0001_B1_FS1/2021-07-09_0001_B1_FS1.ddh5&#39;</span>
+    <span class="n">savedir</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;Z:/Data/SA_2X_B1/fluxsweep/fits&#39;</span>
+    <span class="c1"># datadir = r&#39;E:\Data\Cooldown_20210104\fluxsweep\2021-01-04_0003_Recentering_FS.ddh5&#39;</span>
+    <span class="c1"># savedir = r&#39;E:\Data\Cooldown_20210104\fluxsweep&#39;</span>
+    
+    <span class="n">FS</span> <span class="o">=</span> <span class="n">fit_fluxsweep</span><span class="p">(</span><span class="n">datadir</span><span class="p">,</span> <span class="n">savedir</span><span class="p">,</span> <span class="s1">&#39;SA_2X_B1&#39;</span><span class="p">)</span>
+    <span class="c1">#%%</span>
+    <span class="n">FS</span><span class="o">.</span><span class="n">initial_fit</span><span class="p">(</span><span class="mf">8.25e9</span><span class="p">,</span> <span class="n">QextGuess</span> <span class="o">=</span> <span class="mf">1e2</span><span class="p">,</span> <span class="n">QintGuess</span><span class="o">=</span><span class="mf">20e4</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">phaseOffGuess</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smooth</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smooth_win</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="n">adaptive_window</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="mf">100e6</span><span class="p">)</span>
+    <span class="c1">#%% Automatic Fitting (be sure initial fit is good!)</span>
+    <span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="n">Qints</span><span class="p">,</span> <span class="n">Qexts</span><span class="p">,</span> <span class="n">magBacks</span> <span class="o">=</span> <span class="n">FS</span><span class="o">.</span><span class="n">semiauto_fit</span><span class="p">(</span><span class="n">FS</span><span class="o">.</span><span class="n">currents</span><span class="p">,</span> <span class="n">FS</span><span class="o">.</span><span class="n">vna_freqs</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">FS</span><span class="o">.</span><span class="n">undriven_vna_power</span><span class="p">,</span> <span class="n">FS</span><span class="o">.</span><span class="n">undriven_vna_phase</span><span class="p">,</span> <span class="n">FS</span><span class="o">.</span><span class="n">initial_popt</span><span class="p">,</span> <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">savedata</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">smooth</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smooth_win</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">adaptive_window</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="mf">300e6</span><span class="p">,</span> <span class="n">fourier_filter</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">pconv_tol</span> <span class="o">=</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="c1">#%%reloading an old file</span>
+    <span class="c1">#%%plotting the resonant frequency</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">currents</span><span class="o">*</span><span class="mi">1000</span><span class="p">,</span> <span class="n">res_freqs</span><span class="o">/</span><span class="mf">1e6</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Bias Currents (mA)&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Resonant Frequencies (MHz)&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s1">&#39;ChemPot Resonant Frequency vs. Bias Current&#39;</span><span class="p">)</span>
+    <span class="c1">#%%Finding and plotting flux quanta and flux variables, interpolating resonance frequencies to generate resonance functions wrt bias current and flux</span>
+    <span class="n">quanta_size</span><span class="p">,</span> <span class="n">quanta_offset</span><span class="p">,</span> <span class="n">conv_func</span><span class="p">,</span> <span class="n">conv_func_inverse</span> <span class="o">=</span> <span class="n">find_quanta</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="n">show</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smooth_window</span> <span class="o">=</span> <span class="mi">221</span><span class="p">)</span>
+    <span class="n">res_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Quanta size: </span><span class="si">{</span><span class="n">quanta_size</span><span class="si">}</span><span class="se">\n</span><span class="s2">Quanta_offset: </span><span class="si">{</span><span class="n">quanta_offset</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">filt</span> <span class="o">=</span> <span class="p">(</span><span class="n">conv_func</span><span class="p">(</span><span class="n">currents</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">conv_func</span><span class="p">(</span><span class="n">currents</span><span class="p">)</span><span class="o">&gt;-</span><span class="mf">0.52</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">conv_func</span><span class="p">(</span><span class="n">currents</span><span class="p">)[</span><span class="n">filt</span><span class="p">],</span> <span class="n">res_freqs</span><span class="p">[</span><span class="n">filt</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;fitted data&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_func</span><span class="p">(</span><span class="n">currents</span><span class="p">),</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;quadratic interpolation&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="c1">#%%</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_func1</span><span class="p">(</span><span class="n">currents</span><span class="p">)</span><span class="o">-</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">res_func</span><span class="p">(</span><span class="n">currents</span><span class="p">),</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ddH5_Fluxsweep_Plotting</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

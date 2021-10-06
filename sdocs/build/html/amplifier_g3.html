@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>amplifier_g3 &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Bifurcation fitter" href="Bifurcation%20fitter.html" />
+    <link rel="prev" title="4th_Order_Fitter" href="4th_Order_Fitter.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Bifurcation%20fitter.html" title="Bifurcation fitter"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="4th_Order_Fitter.html" title="4th_Order_Fitter"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">amplifier_g3</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-amplifier_g3">
+<span id="amplifier-g3"></span><h1>amplifier_g3<a class="headerlink" href="#module-amplifier_g3" title="Permalink to this headline">¶</a></h1>
+<p>Created on Thu May 13 09:44:27 2021</p>
+<p>&#64;author: Hatlab_3
+purpose: calculate qmplifier g3 from applied pump power and resonant frequency</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="amplifier_g3.g3_from_pump_power">
+<span class="sig-prename descclassname"><span class="pre">amplifier_g3.</span></span><span class="sig-name descname"><span class="pre">g3_from_pump_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gains</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pump_powers</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode_kappas</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pump_omegas</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pump_detunings_from_res</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amplifier_g3.html#g3_from_pump_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#amplifier_g3.g3_from_pump_power" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source for calculation: <a class="reference external" href="https://arxiv.org/abs/1605.00539">https://arxiv.org/abs/1605.00539</a>
+“Introduction to Quantum-limited Parametric Amplification of Quantum Signals with Josephson Circuits”
+by Michelle Devoret and Ananda Roy</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gains</strong> (<em>np.ndarray</em>) – gain in dB, whose positions correspond to the powers given in the pump_powers section</p></li>
+<li><p><strong>pump_powers</strong> (<em>np.ndarray</em>) – pump power in dBm that the amplifier sees. This must include all attenuation in the entire line</p></li>
+<li><p><strong>mode_kappas</strong> (<em>np.ndarray</em>) – mode kappa in 2pi*Hz</p></li>
+<li><p><strong>pump_omegas</strong> (<em>np.ndarray</em>) – pump frequency in 2pi*Hz</p></li>
+<li><p><strong>pump_detunings_from_res</strong> (<em>np.ndarray</em>) – pump detuning in 2pi(f-f0) where f0 is the resonator frequency in hz</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>numPumpPhotons</strong> (<em>np.ndarray</em>) – The sqrt of the number of pump photons expected in the pumping resonator.</p></li>
+<li><p><strong>g3_arr</strong> (<em>np.ndarray</em>) – The third order coupling in Hz for each combination of inputs</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="4th_Order_Fitter.html"
+                        title="previous chapter">4th_Order_Fitter</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Bifurcation%20fitter.html"
+                        title="next chapter">Bifurcation fitter</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/amplifier_g3.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Bifurcation%20fitter.html" title="Bifurcation fitter"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="4th_Order_Fitter.html" title="4th_Order_Fitter"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">amplifier_g3</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

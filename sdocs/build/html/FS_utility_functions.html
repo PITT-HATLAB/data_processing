@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>FS_utility_functions &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="multiplot" href="multiplot.html" />
+    <link rel="prev" title="Mixer_calibration_plotting" href="Mixer_calibration_plotting.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="multiplot.html" title="multiplot"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Mixer_calibration_plotting.html" title="Mixer_calibration_plotting"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">FS_utility_functions</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-FS_utility_functions">
+<span id="fs-utility-functions"></span><h1>FS_utility_functions<a class="headerlink" href="#module-FS_utility_functions" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="FS_utility_functions.fit_fluxsweep">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">FS_utility_functions.</span></span><span class="sig-name descname"><span class="pre">fit_fluxsweep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Flux_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FS_utility_functions.html#fit_fluxsweep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FS_utility_functions.fit_fluxsweep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="FS_utility_functions.fit_fluxsweep.default_bounds">
+<span class="sig-name descname"><span class="pre">default_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">QextGuess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QintGuess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0Guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBackGuess</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FS_utility_functions.html#fit_fluxsweep.default_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FS_utility_functions.fit_fluxsweep.default_bounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="FS_utility_functions.fit_fluxsweep.initial_fit">
+<span class="sig-name descname"><span class="pre">initial_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f0Guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QextGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QintGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBackGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phaseOffGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptive_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adapt_win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_current_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FS_utility_functions.html#fit_fluxsweep.initial_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FS_utility_functions.fit_fluxsweep.initial_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="FS_utility_functions.fit_fluxsweep.save_fit">
+<span class="sig-name descname"><span class="pre">save_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_popt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_pconv</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FS_utility_functions.html#fit_fluxsweep.save_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FS_utility_functions.fit_fluxsweep.save_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="FS_utility_functions.fit_fluxsweep.semiauto_fit">
+<span class="sig-name descname"><span class="pre">semiauto_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bias_currents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vna_freqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vna_mags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vna_phases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">popt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptive_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adapt_win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fourier_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fourier_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pconv_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/FS_utility_functions.html#fit_fluxsweep.semiauto_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#FS_utility_functions.fit_fluxsweep.semiauto_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Mixer_calibration_plotting.html"
+                        title="previous chapter">Mixer_calibration_plotting</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="multiplot.html"
+                        title="next chapter">multiplot</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/FS_utility_functions.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="multiplot.html" title="multiplot"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Mixer_calibration_plotting.html" title="Mixer_calibration_plotting"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">FS_utility_functions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

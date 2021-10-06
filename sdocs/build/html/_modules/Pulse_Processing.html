@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pulse_Processing &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pulse_Processing</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for Pulse_Processing</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Tue Apr 27 10:17:43 2021</span>
+
+<span class="sd">@author: Hatlab_3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+    
+<div class="viewcode-block" id="demod"><a class="viewcode-back" href="../Pulse_Processing.html#Pulse_Processing.demod">[docs]</a><span class="k">def</span> <span class="nf">demod</span><span class="p">(</span><span class="n">signal_data</span><span class="p">,</span> <span class="n">reference_data</span><span class="p">,</span> <span class="n">mod_freq</span> <span class="o">=</span> <span class="mf">50e6</span><span class="p">,</span> <span class="n">sampling_rate</span> <span class="o">=</span> <span class="mf">1e9</span><span class="p">):</span> 
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    #TODO: </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    signal_data : np 1D array - float64</span>
+<span class="sd">        signal datapoints</span>
+<span class="sd">    reference_data : np 1D array - float64</span>
+<span class="sd">        reference datapoints</span>
+<span class="sd">    mod_freq : float64, optional</span>
+<span class="sd">        Modulation frequency in Hz. The default is 50e6.</span>
+<span class="sd">    sampling_rate : float64, optional</span>
+<span class="sd">        sampling rate in samples per second. The default is 1e9.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sig_I_summed : np 1D array - float64</span>
+<span class="sd">        Signal multiplied by Sine and integrated over each period.</span>
+<span class="sd">    sig_Q_summed : np 1D array - float64</span>
+<span class="sd">        Signal multiplied by Cosine and integrated over each period.</span>
+<span class="sd">    ref_I_summed : np 1D array - float64</span>
+<span class="sd">        reference multiplied by sine and integrated over each period.</span>
+<span class="sd">    ref_Q_summed : np 1D array - float64</span>
+<span class="sd">        Reference multiplied by Cosine and integrated over each period.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="sd">&#39;&#39;&#39;first pad the arrays to get a multiple of the number of samples in a </span>
+<span class="sd">    demodulation period, this will make the last record technically inaccurate </span>
+<span class="sd">    but there are thousands being </span>
+<span class="sd">    averaged so who cares</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1">#first demodulate both channels</span>
+    <span class="c1"># print(&quot;Signal Data Shape: &quot;,np.shape(signal_data))</span>
+    <span class="c1"># print(&quot;Reference Data Shape: &quot;,np.shape(reference_data))</span>
+    <span class="n">period</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sampling_rate</span><span class="o">/</span><span class="n">mod_freq</span><span class="p">)</span>
+    <span class="n">signal_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">signal_data</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">period</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">signal_data</span><span class="p">)</span><span class="o">%</span><span class="n">period</span><span class="p">)))</span>
+    <span class="n">reference_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">reference_data</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">period</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">reference_data</span><span class="p">)</span><span class="o">%</span><span class="n">period</span><span class="p">)))</span>
+    <span class="c1"># print(&quot;Signal Data Shape: &quot;,np.shape(signal_data))</span>
+    <span class="c1"># print(&quot;Reference Data Shape: &quot;,np.shape(reference_data))</span>
+    <span class="n">point_number</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">reference_data</span><span class="p">))</span>
+    <span class="c1"># print(&#39;Modulation period: &#39;, period)</span>
+    <span class="n">SinArray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">period</span><span class="o">*</span><span class="n">point_number</span><span class="p">)</span>
+    <span class="n">CosArray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">period</span><span class="o">*</span><span class="n">point_number</span><span class="p">)</span>
+    
+    <span class="n">sig_I</span> <span class="o">=</span> <span class="n">signal_data</span><span class="o">*</span><span class="n">SinArray</span>
+    <span class="n">sig_Q</span> <span class="o">=</span> <span class="n">signal_data</span><span class="o">*</span><span class="n">CosArray</span>
+    <span class="n">ref_I</span> <span class="o">=</span> <span class="n">reference_data</span><span class="o">*</span><span class="n">SinArray</span>
+    <span class="n">ref_Q</span> <span class="o">=</span> <span class="n">reference_data</span><span class="o">*</span><span class="n">CosArray</span>
+    
+    <span class="c1">#now you cut the array up into periods of the sin and cosine modulation, then sum within one period</span>
+    <span class="c1">#the sqrt 2 is the RMS value of sin and cosine squared, period is to get rid of units of time</span>
+    
+    <span class="n">sig_I_summed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sig_I</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">sig_I</span><span class="p">)</span><span class="o">//</span><span class="n">period</span><span class="p">,</span> <span class="n">period</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">period</span><span class="p">)</span>
+    <span class="n">sig_Q_summed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sig_Q</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">sig_I</span><span class="p">)</span><span class="o">//</span><span class="n">period</span><span class="p">,</span> <span class="n">period</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">period</span><span class="p">)</span>
+    <span class="n">ref_I_summed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ref_I</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">sig_I</span><span class="p">)</span><span class="o">//</span><span class="n">period</span><span class="p">,</span> <span class="n">period</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">period</span><span class="p">)</span>
+    <span class="n">ref_Q_summed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ref_Q</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">sig_I</span><span class="p">)</span><span class="o">//</span><span class="n">period</span><span class="p">,</span> <span class="n">period</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">period</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">(</span><span class="n">sig_I_summed</span><span class="p">,</span> <span class="n">sig_Q_summed</span><span class="p">,</span> <span class="n">ref_I_summed</span><span class="p">,</span> <span class="n">ref_Q_summed</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="phase_correction"><a class="viewcode-back" href="../Pulse_Processing.html#Pulse_Processing.phase_correction">[docs]</a><span class="k">def</span> <span class="nf">phase_correction</span><span class="p">(</span><span class="n">sigI</span><span class="p">,</span> <span class="n">sigQ</span><span class="p">,</span> <span class="n">refI</span><span class="p">,</span> <span class="n">refQ</span><span class="p">):</span> 
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sigI : np 2D array - (records,samples) float64</span>
+<span class="sd">        demodulated signal - In-phase</span>
+<span class="sd">    sigQ : np 2D array - (records,samples) float64</span>
+<span class="sd">        demodulated signal - Quadrature phase</span>
+<span class="sd">    refI : np 2D array - (records,samples) float64</span>
+<span class="sd">        demodulated reference - In-phase</span>
+<span class="sd">    refQ : np 2D array - (records,samples) float64</span>
+<span class="sd">        demodulated reference - quadrature-phase</span>
+<span class="sd">        </span>
+<span class="sd">    Note: reference and signal arrays must all be of the same length</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sigI_corrected : np 2D array - float64</span>
+<span class="sd">        Signal I rotated by reference phase averaged over each record</span>
+<span class="sd">    sigQ_corrected : np 2D array - float64</span>
+<span class="sd">        Signal Q rotated by reference phase averaged over each record</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">sigI_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">sigI</span><span class="p">))</span>
+    <span class="n">sigQ_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">sigQ</span><span class="p">))</span>
+    <span class="n">rI_trace</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">sigI</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">rQ_trace</span> <span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">sigI</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">sI_rec</span><span class="p">,</span> <span class="n">sQ_rec</span><span class="p">,</span> <span class="n">rI_rec</span><span class="p">,</span> <span class="n">rQ_rec</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">sigI</span><span class="p">,</span><span class="n">sigQ</span><span class="p">,</span><span class="n">refI</span><span class="p">,</span><span class="n">refQ</span><span class="p">)):</span>
+        
+        <span class="n">rI_avg</span><span class="p">,</span> <span class="n">rQ_avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">rI_rec</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">rQ_rec</span><span class="p">)</span>
+        
+        <span class="n">rI_trace</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">rQ_trace</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rI_avg</span><span class="p">,</span> <span class="n">rQ_avg</span>
+        
+        <span class="n">Ref_mag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rI_avg</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">rQ_avg</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        
+        <span class="n">sigI_corrected</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">sI_rec</span><span class="o">*</span><span class="n">rI_avg</span> <span class="o">+</span> <span class="n">sQ_rec</span><span class="o">*</span><span class="n">rQ_avg</span><span class="p">)</span><span class="o">/</span><span class="n">Ref_mag</span>
+        <span class="n">sigQ_corrected</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">sI_rec</span><span class="o">*</span><span class="n">rQ_avg</span> <span class="o">+</span> <span class="n">sQ_rec</span><span class="o">*</span><span class="n">rI_avg</span><span class="p">)</span><span class="o">/</span><span class="n">Ref_mag</span>
+    
+    <span class="k">return</span> <span class="n">sigI_corrected</span><span class="p">,</span> <span class="n">sigQ_corrected</span><span class="p">,</span> <span class="n">rI_trace</span><span class="p">,</span> <span class="n">rQ_trace</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pulse_Processing</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

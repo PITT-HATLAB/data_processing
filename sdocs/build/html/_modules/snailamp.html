@@ -1,0 +1,631 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snailamp &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">snailamp</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for snailamp</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu May 13 13:43:45 2021</span>
+
+<span class="sd">@author: Hatlab_3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span> 
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">sympy</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="kn">from</span> <span class="nn">data_processing.models.SNAIL_supporting_modules.Participation_and_Alpha_Fitter</span> <span class="kn">import</span> <span class="n">slider_fit</span>
+<span class="kn">from</span> <span class="nn">data_processing.fitting.QFit</span> <span class="kn">import</span> <span class="n">fit</span><span class="p">,</span> <span class="n">plotRes</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">fsolve</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">from</span> <span class="nn">timeit</span> <span class="kn">import</span> <span class="n">default_timer</span> <span class="k">as</span> <span class="n">timer</span>
+<span class="kn">from</span> <span class="nn">data_processing.Helper_Functions</span> <span class="kn">import</span> <span class="n">find_all_ddh5</span>
+<span class="kn">from</span> <span class="nn">data_processing.ddh5_Plotting.TACO_multiplot_b1</span> <span class="kn">import</span> <span class="n">superTACO_Bars</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">curve_fit</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">savgol_filter</span>
+
+
+<div class="viewcode-block" id="find_quanta"><a class="viewcode-back" href="../snailamp.html#snailamp.find_quanta">[docs]</a><span class="k">def</span> <span class="nf">find_quanta</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="n">smooth_window</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">smooth_window</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> 
+        <span class="n">res_freqs</span> <span class="o">=</span> <span class="n">savgol_filter</span><span class="p">(</span><span class="n">res_freqs</span><span class="p">,</span> <span class="n">smooth_window</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">max_res_current</span> <span class="o">=</span> <span class="n">currents</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">res_freqs</span><span class="p">)]</span>
+    <span class="n">min_res_current</span> <span class="o">=</span> <span class="n">currents</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">res_freqs</span><span class="p">)]</span>
+    <span class="n">quanta_size</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">min_res_current</span> <span class="o">-</span> <span class="n">max_res_current</span><span class="p">)</span>
+    <span class="n">quanta_offset</span> <span class="o">=</span> <span class="n">max_res_current</span>
+    <span class="n">current_to_quanta_conversion_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">quanta_offset</span><span class="p">)</span><span class="o">/</span><span class="n">quanta_size</span>
+    <span class="n">quanta_to_current_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">q</span><span class="p">:</span> <span class="n">q</span><span class="o">*</span><span class="n">quanta_size</span><span class="o">+</span><span class="n">quanta_offset</span>
+    
+    <span class="k">return</span> <span class="n">quanta_size</span><span class="p">,</span> <span class="n">quanta_offset</span><span class="p">,</span> <span class="n">current_to_quanta_conversion_function</span><span class="p">,</span> <span class="n">quanta_to_current_function</span></div>
+
+<div class="viewcode-block" id="parallel"><a class="viewcode-back" href="../snailamp.html#snailamp.parallel">[docs]</a><span class="k">def</span> <span class="nf">parallel</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">):</span> 
+    <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">v1</span><span class="o">+</span><span class="mi">1</span><span class="o">/</span><span class="n">v2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_phi_min_funcs"><a class="viewcode-back" href="../snailamp.html#snailamp.get_phi_min_funcs">[docs]</a><span class="k">def</span> <span class="nf">get_phi_min_funcs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">phi_ext_arr</span><span class="p">):</span> 
+    <span class="n">a</span><span class="p">,</span> <span class="n">Ej</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_m</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="s1">&#39;alpha,E_j,phi_s,phi_e, phi_min&#39;</span><span class="p">)</span>
+    <span class="n">U_snail_norm</span> <span class="o">=</span> <span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi_s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="n">phi_e</span><span class="o">-</span><span class="n">phi_s</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">series</span><span class="p">(</span><span class="n">U_snail_norm</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">phi_m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">removeO</span><span class="p">()</span><span class="o">.</span><span class="n">coeff</span><span class="p">((</span><span class="n">phi_s</span><span class="o">-</span><span class="n">phi_m</span><span class="p">))</span>
+    <span class="c1">#generate a lambda function that outputs another lambda function for a given phi_ext</span>
+    <span class="c1">#which then depends on phi_m only</span>
+    <span class="n">func_arr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">phi_ext</span> <span class="ow">in</span> <span class="n">phi_ext_arr</span><span class="p">:</span> 
+        <span class="n">c1_num</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">lambdify</span><span class="p">(</span><span class="n">phi_m</span><span class="p">,</span> <span class="n">c1</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">),</span> <span class="s2">&quot;numpy&quot;</span><span class="p">)</span>
+        <span class="n">func_arr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c1_num</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">func_arr</span></div>
+<div class="viewcode-block" id="get_phi_min_fsolve"><a class="viewcode-back" href="../snailamp.html#snailamp.get_phi_min_fsolve">[docs]</a><span class="k">def</span> <span class="nf">get_phi_min_fsolve</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">phi_ext_arr</span><span class="p">):</span>
+    <span class="n">funcs</span> <span class="o">=</span> <span class="n">get_phi_min_funcs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">phi_ext_arr</span><span class="p">)</span>
+    <span class="n">sol_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">funcs</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">funcs</span><span class="p">):</span> 
+        <span class="n">sol_arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fsolve</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">phi_ext_arr</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">sol_arr</span></div>
+<div class="viewcode-block" id="get_phi_min"><a class="viewcode-back" href="../snailamp.html#snailamp.get_phi_min">[docs]</a><span class="k">def</span> <span class="nf">get_phi_min</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">):</span> 
+    <span class="n">func</span> <span class="o">=</span> <span class="n">get_phi_min_funcs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="p">[</span><span class="n">phi_ext</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">fsolve</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="c4_func_gen_vectorize"><a class="viewcode-back" href="../snailamp.html#snailamp.c4_func_gen_vectorize">[docs]</a><span class="k">def</span> <span class="nf">c4_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">):</span> <span class="c1">#can be fed an array</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">Ej</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_m</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="s1">&#39;alpha,E_j,phi_s,phi_e, phi_min&#39;</span><span class="p">)</span>
+    <span class="n">U_snail</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi_s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="n">phi_e</span><span class="o">-</span><span class="n">phi_s</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">expansion</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">series</span><span class="p">(</span><span class="n">U_snail</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">phi_m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">coeff</span> <span class="o">=</span> <span class="n">expansion</span><span class="o">.</span><span class="n">removeO</span><span class="p">()</span><span class="o">.</span><span class="n">coeff</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">Pow</span><span class="p">(</span><span class="n">phi_s</span><span class="o">-</span><span class="n">phi_m</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span><span class="o">*</span><span class="mi">24</span>
+    <span class="n">c4exp</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">phi_ext</span><span class="p">:</span> <span class="n">coeff</span><span class="o">.</span><span class="n">subs</span><span class="p">([(</span><span class="n">a</span><span class="p">,</span> <span class="n">alpha_val</span><span class="p">),</span> <span class="p">(</span><span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">),</span> <span class="p">(</span><span class="n">phi_m</span><span class="p">,</span> <span class="n">get_phi_min</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">))])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">c4exp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="c3_func_gen_vectorize"><a class="viewcode-back" href="../snailamp.html#snailamp.c3_func_gen_vectorize">[docs]</a><span class="k">def</span> <span class="nf">c3_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">):</span> <span class="c1">#can be fed an array</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">Ej</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_m</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="s1">&#39;alpha,E_j,phi_s,phi_e, phi_min&#39;</span><span class="p">)</span>
+    <span class="n">U_snail</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi_s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="n">phi_e</span><span class="o">-</span><span class="n">phi_s</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">expansion</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">series</span><span class="p">(</span><span class="n">U_snail</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">phi_m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">coeff</span> <span class="o">=</span> <span class="n">expansion</span><span class="o">.</span><span class="n">removeO</span><span class="p">()</span><span class="o">.</span><span class="n">coeff</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">Pow</span><span class="p">(</span><span class="n">phi_s</span><span class="o">-</span><span class="n">phi_m</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span><span class="o">*</span><span class="mi">6</span>
+    <span class="n">c3exp</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">phi_ext</span><span class="p">:</span> <span class="n">coeff</span><span class="o">.</span><span class="n">subs</span><span class="p">([(</span><span class="n">a</span><span class="p">,</span> <span class="n">alpha_val</span><span class="p">),</span> <span class="p">(</span><span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">),</span> <span class="p">(</span><span class="n">phi_m</span><span class="p">,</span> <span class="n">get_phi_min</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">))])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">c3exp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="c2_func_gen_vectorize"><a class="viewcode-back" href="../snailamp.html#snailamp.c2_func_gen_vectorize">[docs]</a><span class="k">def</span> <span class="nf">c2_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">):</span> 
+    <span class="n">a</span><span class="p">,</span> <span class="n">Ej</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_m</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">symbols</span><span class="p">(</span><span class="s1">&#39;alpha,E_j,phi_s,phi_e, phi_min&#39;</span><span class="p">)</span>
+    <span class="n">U_snail</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi_s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">sp</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="n">phi_e</span><span class="o">-</span><span class="n">phi_s</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">expansion</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">series</span><span class="p">(</span><span class="n">U_snail</span><span class="p">,</span> <span class="n">phi_s</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">phi_m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">coeff</span> <span class="o">=</span> <span class="n">expansion</span><span class="o">.</span><span class="n">removeO</span><span class="p">()</span><span class="o">.</span><span class="n">coeff</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">Pow</span><span class="p">(</span><span class="n">phi_s</span><span class="o">-</span><span class="n">phi_m</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="mi">2</span>
+    <span class="n">c2exp</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">phi_ext</span><span class="p">:</span> <span class="n">coeff</span><span class="o">.</span><span class="n">subs</span><span class="p">([(</span><span class="n">a</span><span class="p">,</span> <span class="n">alpha_val</span><span class="p">),</span> <span class="p">(</span><span class="n">phi_e</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">),</span> <span class="p">(</span><span class="n">phi_m</span><span class="p">,</span> <span class="n">get_phi_min</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">,</span> <span class="n">phi_ext</span><span class="p">))])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">c2exp</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SnailAmp"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp">[docs]</a><span class="k">class</span> <span class="nc">SnailAmp</span><span class="p">():</span> 
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1">#uA/um^2</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        junction_sizes : tuple</span>
+<span class="sd">            (small_size, large_size) in micrometers squared</span>
+<span class="sd">        quanta_start : float</span>
+<span class="sd">            0-flux point in Amps </span>
+<span class="sd">        quanta_size : float</span>
+<span class="sd">            quanta ize in Amps</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">hbar</span> <span class="o">=</span> <span class="mf">1.0545718e-34</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e</span> <span class="o">=</span> <span class="mf">1.60218e-19</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi0</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">hbar</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">e</span><span class="p">)</span>
+        
+<div class="viewcode-block" id="SnailAmp.generate_quanta_function"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.generate_quanta_function">[docs]</a>    <span class="k">def</span> <span class="nf">generate_quanta_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quanta_offset</span><span class="p">,</span> <span class="n">quanta_size</span><span class="p">):</span> 
+        <span class="c1">#function for converting bias currents to quanta fractions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quanta_offset</span> <span class="o">=</span> <span class="n">quanta_offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quanta_size</span> <span class="o">=</span> <span class="n">quanta_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">quanta_offset</span><span class="p">)</span><span class="o">/</span><span class="n">quanta_size</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.info_from_junction_sizes"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.info_from_junction_sizes">[docs]</a>    <span class="k">def</span> <span class="nf">info_from_junction_sizes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">junction_sizes</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">Jc</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">s_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_size</span> <span class="o">=</span> <span class="n">junction_sizes</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_from_sizes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s_size</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">l_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I0s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">I0l</span> <span class="o">=</span> <span class="n">Jc</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">s_size</span><span class="o">*</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">Jc</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">l_size</span><span class="o">*</span><span class="mf">1e-6</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">Lss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Lsl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Lj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0s</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Lj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0l</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ejs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ejl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Ej</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0s</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Ej</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0l</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ls0</span> <span class="o">=</span> <span class="n">parallel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Lss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Lsl</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">c2_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c3_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c4_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_coefficient_functions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_from_sizes</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">c2_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c3_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c4_func</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.info_from_junction_i0"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.info_from_junction_i0">[docs]</a>    <span class="k">def</span> <span class="nf">info_from_junction_i0</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">junction_i0_small</span><span class="p">,</span> <span class="n">junction_i0_large</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">Jc</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        junction_i0_small: junction critical current in A</span>
+<span class="sd">        junction_i0_large: junction critical current in A</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">I0s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">I0l</span> <span class="o">=</span> <span class="n">junction_i0_small</span><span class="p">,</span> <span class="n">junction_i0_large</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">Lss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Lsl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Lj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0s</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Lj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0l</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ejs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ejl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Ej</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0s</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ic_to_Ej</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I0l</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_from_i0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ejs</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">Ejl</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">c2_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c3_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c4_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_coefficient_functions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_from_i0</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">c2_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c3_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c4_func</span></div>
+
+<div class="viewcode-block" id="SnailAmp.Ic_to_Ej"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.Ic_to_Ej">[docs]</a>    <span class="k">def</span> <span class="nf">Ic_to_Ej</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ic</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Ic : float</span>
+<span class="sd">            critical current in amps</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Ej in Joules</span>
+<span class="sd">        src: https://en.wikipedia.org/wiki/Josephson_effect</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">Ic</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">phi0</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.Ic_to_Lj"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.Ic_to_Lj">[docs]</a>    <span class="k">def</span> <span class="nf">Ic_to_Lj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ic</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span> 
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Ic : float</span>
+<span class="sd">            critical current in amps</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Lj in Henries</span>
+<span class="sd">        src: https://en.wikipedia.org/wiki/Josephson_effect</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi0</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">Ic</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.generate_coefficient_functions"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.generate_coefficient_functions">[docs]</a>    <span class="k">def</span> <span class="nf">generate_coefficient_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha_val</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">show_coefficients</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        alpha_val : float</span>
+<span class="sd">            alpha value between 0 and 0.33</span>
+<span class="sd">        res : int, optional</span>
+<span class="sd">            number of points to base interpolation off of. The default is 100.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        c2_func : lambda function</span>
+<span class="sd">            function that will return the value of c2</span>
+<span class="sd">        c3_func : lambda function</span>
+<span class="sd">            DESCRIPTION.</span>
+<span class="sd">        c4_func : lambda function</span>
+<span class="sd">            DESCRIPTION.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calculating expansion coefficients&quot;</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
+        
+        <span class="n">phi_ext_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+        <span class="n">c4_arr</span> <span class="o">=</span> <span class="n">c4_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">)(</span><span class="n">phi_ext_arr</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> 
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Elapsed time: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">end_time</span><span class="o">-</span><span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="n">c4_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">,</span> <span class="n">c4_arr</span><span class="p">,</span> <span class="s1">&#39;quadratic&#39;</span><span class="p">)</span>
+        
+        
+        <span class="c1">#c3: </span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
+        <span class="n">phi_ext_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+        <span class="n">c3_arr</span> <span class="o">=</span> <span class="n">c3_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">)(</span><span class="n">phi_ext_arr</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> 
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Elapsed time: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">end_time</span><span class="o">-</span><span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="n">c3_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">,</span> <span class="n">c3_arr</span><span class="p">,</span> <span class="s1">&#39;quadratic&#39;</span><span class="p">)</span>
+        
+        
+        <span class="c1">#c2: </span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
+        <span class="n">phi_ext_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+        <span class="n">c2_arr</span> <span class="o">=</span> <span class="n">c2_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha_val</span><span class="p">)(</span><span class="n">phi_ext_arr</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> 
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Elapsed time: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">end_time</span><span class="o">-</span><span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+        <span class="n">c2_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">,</span> <span class="n">c2_arr</span><span class="p">,</span> <span class="s1">&#39;quadratic&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">plot</span><span class="p">:</span> 
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c2_func</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">),</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;c2&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c3_func</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">),</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;c3&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c4_func</span><span class="p">(</span><span class="n">phi_ext_arr</span><span class="p">),</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;c4&#39;</span><span class="p">)</span>
+            
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">c2_func</span><span class="p">,</span> <span class="n">c3_func</span><span class="p">,</span> <span class="n">c4_func</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.gradient_descent_participation_fitter"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.gradient_descent_participation_fitter">[docs]</a>    <span class="k">def</span> <span class="nf">gradient_descent_participation_fitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fitted_res_func</span><span class="p">,</span> <span class="n">initial_p_guess</span><span class="p">,</span> <span class="n">initial_alpha_guess</span><span class="p">,</span> <span class="n">init_f0_guess</span><span class="p">,</span> <span class="n">res</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fitted_res_func : function:ndarray-&gt;ndarray</span>
+<span class="sd">            function which takes in flux fraction in [0, 1] and produces the resonant frequency of the experimental device</span>
+<span class="sd">        </span>
+<span class="sd">        initial_p_guess: float</span>
+<span class="sd">            guess for the participation ratio of the SNAIL at 0-flux</span>
+<span class="sd">        </span>
+<span class="sd">        initial_alpha_guess: float</span>
+<span class="sd">            guess for the ratio of large junction inductance to small junciton inductance of the SNAIL</span>
+<span class="sd">        </span>
+<span class="sd">        kwargs: </span>
+<span class="sd">            res - the number of points with which to do the fitting. Fewer is faster, more is better</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fitted alpha</span>
+<span class="sd">        fitted p</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fit_quanta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="o">/</span><span class="mi">4</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span><span class="mf">0.75</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="o">/</span><span class="mi">4</span><span class="p">))),</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.45</span><span class="p">,</span><span class="mf">0.55</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="o">/</span><span class="mi">2</span><span class="p">))))</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        
+        <span class="k">def</span> <span class="nf">fit_func</span><span class="p">(</span><span class="n">quanta_arr</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">p_rat</span><span class="p">,</span> <span class="n">f0</span><span class="p">):</span> 
+            
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;P: </span><span class="si">{</span><span class="n">p_rat</span><span class="si">}</span><span class="s2">, alpha: </span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2">, f0: </span><span class="si">{</span><span class="n">f0</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1">#make the c2 we need from the supplied alpha</span>
+            <span class="n">c2_func</span> <span class="o">=</span> <span class="n">c2_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+            <span class="n">res_freqs</span> <span class="o">=</span> <span class="n">f0</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">p_rat</span><span class="o">/</span><span class="n">c2_func</span><span class="p">(</span><span class="n">quanta_arr</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)))</span>
+            
+            <span class="k">return</span> <span class="n">res_freqs</span>
+        
+        <span class="c1">#fit the data</span>
+        <span class="k">if</span> <span class="n">bounds</span> <span class="o">==</span><span class="kc">None</span><span class="p">:</span> 
+            <span class="n">bounds</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">fitted_res_func</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="mf">0.7</span><span class="p">],</span>
+                      <span class="p">[</span><span class="mf">0.33</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">fitted_res_func</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="mf">1.3</span><span class="p">]]</span>
+            
+        <span class="n">popt</span><span class="p">,</span> <span class="n">pcov</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span><span class="n">fit_func</span><span class="p">,</span> <span class="n">fit_quanta</span><span class="p">,</span> <span class="n">fitted_res_func</span><span class="p">(</span><span class="n">fit_quanta</span><span class="p">),</span> <span class="n">p0</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial_alpha_guess</span><span class="p">,</span> <span class="n">initial_p_guess</span><span class="p">,</span> <span class="n">init_f0_guess</span><span class="p">],</span> 
+                               <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">)</span>
+        
+        <span class="p">[</span><span class="n">fitted_alpha</span><span class="p">,</span> <span class="n">fitted_p</span><span class="p">,</span> <span class="n">fitted_f0</span><span class="p">]</span> <span class="o">=</span> <span class="n">popt</span>
+        <span class="p">[</span><span class="n">d_alpha</span><span class="p">,</span> <span class="n">d_p</span><span class="p">,</span> <span class="n">d_f0</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pcov</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pcov</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pcov</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">])]</span>
+        <span class="k">return</span> <span class="n">fit_func</span><span class="p">,</span> <span class="p">[</span><span class="n">fitted_alpha</span><span class="p">,</span> <span class="n">fitted_p</span><span class="p">,</span> <span class="n">fitted_f0</span><span class="p">],</span> <span class="p">[</span><span class="n">d_alpha</span><span class="p">,</span> <span class="n">d_p</span><span class="p">,</span> <span class="n">d_f0</span><span class="p">]</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.frattini_p_to_part"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.frattini_p_to_part">[docs]</a>    <span class="k">def</span> <span class="nf">frattini_p_to_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">fp</span><span class="o">*</span><span class="n">c2_func_gen_vectorize</span><span class="p">(</span><span class="n">alpha</span><span class="p">)(</span><span class="mi">0</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.slider_participation_fitter"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.slider_participation_fitter">[docs]</a>    <span class="k">def</span> <span class="nf">slider_participation_fitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stored_fits_filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fluxsweep_filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ret_sliders</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">start_freq</span> <span class="o">=</span> <span class="mf">7e9</span><span class="p">):</span> 
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        stored_fits_filepath : str</span>
+<span class="sd">            path to a pickled fit file</span>
+<span class="sd">        fluxsweep_filepath : str</span>
+<span class="sd">            path to a fluxsweep stored in plottr&#39;s datadict format&#39;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        4x matplotlib.widgets.slider objects, call slider.val to get value</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.32</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="c1">#the below function returns the slider fit, which you then have to call .val on</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_slider</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a_slider</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_slider</span> <span class="o">=</span> <span class="n">slider_fit</span><span class="p">(</span><span class="n">fluxsweep_filepath</span><span class="p">,</span> 
+                                                                 <span class="n">stored_fits_filepath</span><span class="p">,</span> 
+                                                                 <span class="bp">self</span><span class="o">.</span><span class="n">quanta_offset</span><span class="p">,</span> 
+                                                                 <span class="bp">self</span><span class="o">.</span><span class="n">quanta_size</span><span class="p">,</span> 
+                                                                 <span class="bp">self</span><span class="o">.</span><span class="n">p_arr</span><span class="p">,</span> 
+                                                                 <span class="bp">self</span><span class="o">.</span><span class="n">alpha_arr</span><span class="p">,</span> 
+                                                                 <span class="n">start_freq</span> <span class="o">=</span> <span class="n">start_freq</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ret_sliders</span><span class="p">:</span> 
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_arr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_arr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_slider</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a_slider</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_slider</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="k">pass</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.vals_from_sliders"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.vals_from_sliders">[docs]</a>    <span class="k">def</span> <span class="nf">vals_from_sliders</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        A supporting function to slider_participation_fitter for extracting</span>
+<span class="sd">        the alpha and p values after the sliders have been used to fit</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_from_FS</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_arr</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">a_slider</span><span class="o">.</span><span class="n">val</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_from_FS</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_arr</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">p_slider</span><span class="o">.</span><span class="n">val</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_from_FS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_from_FS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_slider</span><span class="o">.</span><span class="n">val</span></div>
+        
+
+    
+<div class="viewcode-block" id="SnailAmp.set_linear_inductance"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.set_linear_inductance">[docs]</a>    <span class="k">def</span> <span class="nf">set_linear_inductance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">L0</span><span class="p">):</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">L0</span> <span class="o">=</span> <span class="n">L0</span></div>
+<div class="viewcode-block" id="SnailAmp.set_linear_capacitance"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.set_linear_capacitance">[docs]</a>    <span class="k">def</span> <span class="nf">set_linear_capacitance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">C0</span><span class="p">):</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">C0</span> <span class="o">=</span> <span class="n">C0</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.generate_participation_function"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.generate_participation_function">[docs]</a>    <span class="k">def</span> <span class="nf">generate_participation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">Lfunc</span><span class="p">):</span> 
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">phi</span><span class="p">:</span> <span class="n">Lfunc</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">L0</span><span class="o">+</span><span class="n">Lfunc</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.generate_inductance_function"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.generate_inductance_function">[docs]</a>    <span class="k">def</span> <span class="nf">generate_inductance_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">L_large</span><span class="p">,</span> <span class="n">c2_func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">phi</span><span class="p">:</span> <span class="n">L_large</span><span class="o">/</span><span class="n">c2_func</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.generate_resonance_function_via_LC"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.generate_resonance_function_via_LC">[docs]</a>    <span class="k">def</span> <span class="nf">generate_resonance_function_via_LC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">C0</span><span class="p">,</span> <span class="n">Ls_func</span><span class="p">):</span> 
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">phi</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">L0</span><span class="o">+</span><span class="n">Ls_func</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span><span class="o">*</span><span class="n">C0</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.generate_resonance_function_via_fit"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.generate_resonance_function_via_fit">[docs]</a>    <span class="k">def</span> <span class="nf">generate_resonance_function_via_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">c2_func</span><span class="p">):</span> 
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">phi</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">f0</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="n">p</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">p</span><span class="p">))</span><span class="o">/</span><span class="n">c2_func</span><span class="p">(</span><span class="n">phi</span><span class="p">)))</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.generate_gsss_function"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.generate_gsss_function">[docs]</a>    <span class="k">def</span> <span class="nf">generate_gsss_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">C0</span><span class="p">,</span> <span class="n">p_func</span><span class="p">,</span> <span class="n">res_func</span><span class="p">,</span> <span class="n">c2_func</span><span class="p">,</span> <span class="n">c3_func</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        source: https://arxiv.org/pdf/1806.06093.pdf</span>
+<span class="sd">        (The frattini paper)</span>
+<span class="sd">        calculates the g3 wrt flux given linear capacitance, participation ratio, and alpha</span>
+<span class="sd">        return value is in Joules</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#calculate Ec</span>
+        <span class="n">Ec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">e</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">C0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">phi</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="o">*</span><span class="n">p_func</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">c3_func</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">/</span><span class="n">c2_func</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Ec</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">hbar</span><span class="o">*</span><span class="n">res_func</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.collect_TACO_data"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.collect_TACO_data">[docs]</a>    <span class="k">def</span> <span class="nf">collect_TACO_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain_folder</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tla_pump</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span> 
+        <span class="n">gain_cwd</span> <span class="o">=</span> <span class="n">gain_folder</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">find_all_ddh5</span><span class="p">(</span><span class="n">gain_cwd</span><span class="p">)</span>
+        <span class="n">info_dict</span><span class="p">,</span> <span class="n">bias_currents</span><span class="p">,</span> <span class="n">best_gen_freqs</span><span class="p">,</span> <span class="n">best_gen_powers</span><span class="p">,</span> <span class="n">gains</span> <span class="o">=</span> <span class="n">superTACO_Bars</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">angles</span> <span class="o">=</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span><span class="mi">20</span><span class="p">],</span> <span class="n">quanta_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quanta_size</span><span class="p">,</span> <span class="n">quanta_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quanta_offset</span><span class="p">,</span> <span class="n">bardims</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">],</span> <span class="n">barbase</span> <span class="o">=</span> <span class="o">-</span><span class="mi">24</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">plot</span><span class="p">:</span> 
+            <span class="n">fig2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">131</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv_func</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">best_gen_powers</span><span class="p">)</span><span class="o">-</span><span class="n">tla_pump</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Lowest 20dB Power (dBm) vs. Flux ($\Phi_0$)&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Flux Quanta ($\Phi/\Phi_0)$&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Generator Power @20dB Gain (dBm)&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">bias_currents</span><span class="p">,</span> <span class="n">best_gen_freqs</span><span class="p">,</span> <span class="n">best_gen_powers</span><span class="o">-</span><span class="n">tla_pump</span><span class="p">,</span> <span class="n">gains</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.g3_from_pump_power"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.g3_from_pump_power">[docs]</a>    <span class="k">def</span> <span class="nf">g3_from_pump_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                           <span class="n">dBgains</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+                           <span class="n">pump_powers</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+                           <span class="n">mode_kappas</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
+                           <span class="n">pump_omegas</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                           <span class="n">pump_detunings_from_res</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+                           <span class="p">):</span> 
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Source for calculation: https://arxiv.org/abs/1605.00539</span>
+<span class="sd">        &quot;Introduction to Quantum-limited Parametric Amplification of Quantum Signals with Josephson Circuits&quot;</span>
+<span class="sd">        by Michelle Devoret and Ananda Roy</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gains : np.ndarray</span>
+<span class="sd">            gain in dB, whose positions correspond to the powers given in the pump_powers section</span>
+<span class="sd">        pump_powers : np.ndarray</span>
+<span class="sd">            pump power in dBm that the amplifier sees. This must include all attenuation in the entire line</span>
+<span class="sd">        mode_kappas : np.ndarray</span>
+<span class="sd">            mode kappa in 2pi*Hz</span>
+<span class="sd">        pump_omegas : np.ndarray</span>
+<span class="sd">            pump frequency in 2pi*Hz</span>
+<span class="sd">        pump_detunings_from_res : np.ndarray</span>
+<span class="sd">            pump detuning in 2pi(f-f0) where f0 is the resonator frequency in hz</span>
+<span class="sd">    </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        numPumpPhotons : np.ndarray</span>
+<span class="sd">            The sqrt of the number of pump photons expected in the pumping resonator.</span>
+<span class="sd">        g3_arr : np.ndarray</span>
+<span class="sd">            The third order coupling in Hz for each combination of inputs</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="n">lin_pump_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="n">pump_powers</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span><span class="o">*</span><span class="mf">0.001</span> <span class="c1">#pump power in watts</span>
+        <span class="c1">#get the expected value of pump photons present in the resonator</span>
+        <span class="n">npTZC_arr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">numPumpPhotonsTZC</span> <span class="o">=</span> <span class="n">lin_pump_powers</span><span class="o">/</span><span class="p">(</span><span class="n">pump_omegas</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">hbar</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mode_kappas</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">mode_kappas</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="p">(</span><span class="n">pump_detunings_from_res</span><span class="p">)))</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">numPumpPhotonsTZC</span><span class="p">:</span>
+            <span class="n">npTZC_arr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+        <span class="n">numPumpPhotons</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">npTZC_arr</span><span class="p">)</span>
+        <span class="n">numPumpPhotonsDev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="n">mode_kappas</span><span class="o">*</span><span class="n">lin_pump_powers</span><span class="o">/</span><span class="p">(</span><span class="n">pump_omegas</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">hbar</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">mode_kappas</span><span class="o">-</span><span class="mi">2</span><span class="n">j</span><span class="o">*</span><span class="n">pump_detunings_from_res</span><span class="p">)</span>
+        <span class="n">Lin_Power_gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="n">dBgains</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">lpg</span> <span class="o">=</span> <span class="n">Lin_Power_gains</span>
+        
+        <span class="n">g3_arr</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">mode_kappas</span><span class="o">/</span><span class="n">numPumpPhotons</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lpg</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lpg</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+        
+        
+        <span class="k">return</span> <span class="n">numPumpPhotonsDev</span><span class="p">,</span> <span class="n">g3_arr</span><span class="p">,</span> <span class="n">numPumpPhotons</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.process_ref_HFSS_sweep"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.process_ref_HFSS_sweep">[docs]</a>    <span class="k">def</span> <span class="nf">process_ref_HFSS_sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">HFSS_filepath</span><span class="p">,</span> <span class="n">ref_port_name</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="n">lumped_port_name</span> <span class="o">=</span> <span class="s1">&#39;sl&#39;</span><span class="p">,</span> <span class="n">ind_name</span> <span class="o">=</span> <span class="s1">&#39;Ls&#39;</span><span class="p">,</span> <span class="n">trans_port_name</span> <span class="o">=</span> <span class="s1">&#39;U&#39;</span><span class="p">):</span> 
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">HFSS_filepath</span><span class="p">)</span>
+        <span class="n">HFSS_dicts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">inductance</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ind_name</span><span class="si">}</span><span class="s1"> [pH]&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()):</span>
+            <span class="n">filt</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ind_name</span><span class="si">}</span><span class="s1"> [pH]&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">==</span> <span class="n">inductance</span><span class="p">)</span>
+            <span class="n">HFSS_dicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="n">SNAIL_inductance</span> <span class="o">=</span> <span class="n">inductance</span><span class="p">,</span>
+                <span class="n">freq</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Freq [GHz]&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="mf">1e9</span><span class="p">,</span>
+                <span class="n">freqrad</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Freq [GHz]&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="mf">1e9</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="c1">#fitter takes rad*hz</span>
+                <span class="n">mag</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;mag(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">],</span>
+                <span class="n">phase</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;cang_deg_val(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">],</span> 
+                <span class="n">phaserad</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;cang_deg_val(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">360</span><span class="p">,</span>
+                <span class="n">dBmag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;mag(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">/</span><span class="mi">20</span><span class="p">),</span>
+                <span class="n">real</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;mag(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;cang_deg_val(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">360</span><span class="p">),</span>
+                <span class="n">imag</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;mag(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;cang_deg_val(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">360</span><span class="p">),</span>
+                <span class="n">imY</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;im(Y(</span><span class="si">{</span><span class="n">lumped_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">lumped_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">],</span>
+                <span class="n">leakage</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;dB(S(</span><span class="si">{</span><span class="n">ref_port_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">trans_port_name</span><span class="si">}</span><span class="s1">)) []&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="n">filt</span><span class="p">]</span>
+                <span class="p">))</span>
+                
+        <span class="k">return</span> <span class="n">HFSS_dicts</span></div>
+        
+<div class="viewcode-block" id="SnailAmp.fit_modes"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.fit_modes">[docs]</a>    <span class="k">def</span> <span class="nf">fit_modes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">f0Guess_arr</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Qguess</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1e2</span><span class="p">,</span> <span class="mf">1e4</span><span class="p">),</span> <span class="n">window_size</span> <span class="o">=</span> <span class="mf">600e6</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">QextGuess</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">=</span> <span class="n">Qguess</span>
+        <span class="n">magBackGuess</span> <span class="o">=</span> <span class="mi">1</span>
+        
+        <span class="n">HFSS_inductances</span><span class="p">,</span> <span class="n">HFSS_res_freqs</span><span class="p">,</span> <span class="n">HFSS_kappas</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">md</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span> 
+            <span class="c1"># print(type(f0Guess_arr))</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f0Guess_arr</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span> 
+                <span class="n">f0Guess_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">f0Guess_arr</span><span class="p">)</span>
+                <span class="n">filt</span> <span class="o">=</span> <span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">]</span><span class="o">&gt;</span><span class="n">f0Guess_arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">window_size</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">]</span><span class="o">&lt;</span><span class="n">f0Guess_arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">window_size</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">f0Guess_arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="n">filt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">]))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+                <span class="c1"># print(np.diff(md[&#39;phaserad&#39;]))</span>
+                <span class="c1"># plt.plot(md[&#39;freq&#39;][:-1]/1e9, np.diff(md[&#39;phaserad&#39;]))</span>
+                <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;freq&#39;</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">savgol_filter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;phaserad&#39;</span><span class="p">]),</span> <span class="mi">15</span><span class="p">,</span><span class="mi">3</span><span class="p">))]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+                <span class="n">filt</span> <span class="o">=</span> <span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">]</span><span class="o">&gt;</span><span class="n">f0Guess</span><span class="o">-</span><span class="n">window_size</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">]</span><span class="o">&lt;</span><span class="n">f0Guess</span><span class="o">+</span><span class="n">window_size</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+                
+            <span class="k">if</span> <span class="n">bounds</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> 
+                <span class="n">bounds</span> <span class="o">=</span> <span class="p">([</span><span class="n">QextGuess</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="n">f0Guess</span><span class="o">-</span><span class="mf">500e6</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                          <span class="p">[</span><span class="n">QextGuess</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">f0Guess</span><span class="o">+</span><span class="mf">500e6</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">])</span>
+            
+            <span class="n">popt</span><span class="p">,</span> <span class="n">pcov</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;real&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;imag&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;phaserad&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">Qguess</span> <span class="o">=</span> <span class="n">Qguess</span><span class="p">,</span> <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">phaseGuess</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">plot</span><span class="p">:</span> 
+                <span class="c1"># print(&quot;inductance: &quot;, md[&#39;SNAIL_inductance&#39;])</span>
+                <span class="n">plotRes</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;real&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;imag&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;phaserad&#39;</span><span class="p">][</span><span class="n">filt</span><span class="p">],</span> <span class="n">popt</span><span class="p">)</span>
+                
+            <span class="n">Qtot</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">kappa</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">Qtot</span>
+            <span class="n">f0</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+            <span class="n">inductance</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;SNAIL_inductance&#39;</span><span class="p">]</span>
+            
+            <span class="n">HFSS_inductances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inductance</span><span class="p">)</span>
+            <span class="n">HFSS_res_freqs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f0</span><span class="p">)</span>
+            <span class="n">HFSS_kappas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kappa</span><span class="p">)</span>
+            
+            <span class="n">md</span><span class="p">[</span><span class="s1">&#39;res_freq_rad&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f0</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+            <span class="n">md</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kappa</span>
+            
+        <span class="k">return</span> <span class="n">HFSS_inductances</span><span class="p">,</span> <span class="n">HFSS_res_freqs</span><span class="p">,</span> <span class="n">HFSS_kappas</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.g3_from_admittance"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.g3_from_admittance">[docs]</a>    <span class="k">def</span> <span class="nf">g3_from_admittance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ej_large</span><span class="p">,</span> <span class="n">c3_val</span><span class="p">,</span> <span class="n">mds</span><span class="p">):</span>
+        <span class="n">phi_zpf_arr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">g3</span> <span class="o">=</span> <span class="n">Ej_large</span><span class="o">*</span><span class="n">c3_val</span><span class="o">/</span><span class="mi">6</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">phi0</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="n">mds</span><span class="p">:</span> 
+            <span class="n">res_omega</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;res_freq_rad&#39;</span><span class="p">]</span>
+            <span class="c1"># print(&quot;res_omega/2pi&quot;, res_omega/2/np.pi)</span>
+            <span class="n">omegas</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">]</span>
+            <span class="n">imY</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;imY&#39;</span><span class="p">]</span>
+            
+            <span class="n">f_res_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">omegas</span><span class="o">-</span><span class="n">res_omega</span><span class="p">))</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">imY</span><span class="p">)[</span><span class="n">f_res_loc</span><span class="p">]</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">omegas</span><span class="p">)[</span><span class="n">f_res_loc</span><span class="p">]</span>
+            <span class="n">Zpeff</span> <span class="o">=</span> <span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="n">res_omega</span><span class="o">*</span><span class="n">slope</span><span class="p">)</span>
+    
+    <span class="c1">#         print(&quot;omega/2pi: &quot;, res_omega/2/np.pi)</span>
+    <span class="c1">#         print(&quot;slope: &quot;, slope)</span>
+    <span class="c1">#         print(&quot;Impedance: &quot;, Zpeff)</span>
+            <span class="n">g3</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hbar</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">Zpeff</span><span class="p">)</span>
+            <span class="n">phi_zpf_arr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Zpeff</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">g3</span></div>
+    
+<div class="viewcode-block" id="SnailAmp.g3_from_admittance_raw"><a class="viewcode-back" href="../snailamp.html#snailamp.SnailAmp.g3_from_admittance_raw">[docs]</a>    <span class="k">def</span> <span class="nf">g3_from_admittance_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ej_large</span><span class="p">,</span> <span class="n">c3_val</span><span class="p">,</span> <span class="n">res_omega</span><span class="p">):</span>
+        <span class="n">phi_zpf_arr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">g3</span> <span class="o">=</span> <span class="n">Ej_large</span><span class="o">*</span><span class="n">c3_val</span><span class="o">/</span><span class="mi">6</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">phi0</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        <span class="k">for</span> <span class="n">res_omega</span> <span class="ow">in</span> <span class="n">res_omegas</span><span class="p">:</span> 
+            <span class="n">res_omega</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;res_freq_rad&#39;</span><span class="p">]</span>
+            <span class="n">omegas</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;freqrad&#39;</span><span class="p">]</span>
+            <span class="n">imY</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;imY&#39;</span><span class="p">]</span>
+            
+            <span class="n">f_res_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">omegas</span><span class="o">-</span><span class="n">res_omega</span><span class="p">))</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">imY</span><span class="p">)[</span><span class="n">f_res_loc</span><span class="p">]</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">omegas</span><span class="p">)[</span><span class="n">f_res_loc</span><span class="p">]</span>
+            <span class="n">Zpeff</span> <span class="o">=</span> <span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="n">res_omega</span><span class="o">*</span><span class="n">slope</span><span class="p">)</span>
+    
+    <span class="c1">#         print(&quot;omega/2pi: &quot;, res_omega/2/np.pi)</span>
+    <span class="c1">#         print(&quot;slope: &quot;, slope)</span>
+    <span class="c1">#         print(&quot;Impedance: &quot;, Zpeff)</span>
+            <span class="n">g3</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hbar</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">Zpeff</span><span class="p">)</span>
+            <span class="n">phi_zpf_arr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Zpeff</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">g3</span></div></div>
+        
+    
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span> 
+    <span class="n">SA</span> <span class="o">=</span> <span class="n">SnailAmp</span><span class="p">()</span>
+    <span class="n">HFSS_filepath</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;D:\HFSS_Sims\SA_2X\mode_s.csv&#39;</span>
+    <span class="n">HFSS_dicts</span> <span class="o">=</span> <span class="n">SA</span><span class="o">.</span><span class="n">process_HFSS_sweep</span><span class="p">(</span><span class="n">HFSS_filepath</span><span class="p">)</span>
+    <span class="c1">#fit all of them, try to choose a guess frequency and Q&#39;s that cooperate with all of them</span>
+    <span class="n">HFSS_inductances</span><span class="p">,</span> <span class="n">HFSS_res_freqs</span><span class="p">,</span> <span class="n">HFSS_kappas</span> <span class="o">=</span> <span class="n">SA</span><span class="o">.</span><span class="n">fit_modes</span><span class="p">(</span><span class="o">*</span><span class="n">HFSS_dicts</span><span class="p">,</span> 
+                                                                  <span class="n">Qguess</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5e1</span><span class="p">,</span><span class="mf">1e3</span><span class="p">),</span> 
+                                                                  <span class="n">window_size</span> <span class="o">=</span> <span class="mf">100e6</span><span class="p">,</span> 
+                                                                  <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
+                                                                  <span class="n">f0Guess_arr</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">HFSS_inductances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">HFSS_inductances</span><span class="p">)</span>
+    <span class="n">HFSS_kappas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">HFSS_kappas</span><span class="p">)</span>
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">snailamp</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>
