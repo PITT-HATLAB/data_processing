@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>squidamp &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Participation_and_Alpha_Fitter" href="Participation_and_Alpha_Fitter.html" />
+    <link rel="prev" title="snailamp" href="snailamp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Participation_and_Alpha_Fitter.html" title="Participation_and_Alpha_Fitter"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="snailamp.html" title="snailamp"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">squidamp</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-squidamp">
+<span id="squidamp"></span><h1>squidamp<a class="headerlink" href="#module-squidamp" title="Permalink to this headline">¶</a></h1>
+<p>Created on Thu May 13 13:43:45 2021</p>
+<p>&#64;author: Hatlab_3</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="squidamp.SquidAmp">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">SquidAmp</span></span><a class="reference internal" href="_modules/squidamp.html#SquidAmp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.Ic_to_Ej">
+<span class="sig-name descname"><span class="pre">Ic_to_Ej</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Ic</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.Ic_to_Ej"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.Ic_to_Ej" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Ic</strong> (<em>float</em>) – critical current in amps</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>Ej in Joules</em></p></li>
+<li><p><strong>src</strong> (<em>https://en.wikipedia.org/wiki/Josephson_effect</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.Ic_to_Lj">
+<span class="sig-name descname"><span class="pre">Ic_to_Lj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Ic</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.Ic_to_Lj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.Ic_to_Lj" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Ic</strong> (<em>float</em>) – critical current in amps</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>Lj in Henries</em></p></li>
+<li><p><strong>src</strong> (<em>https://en.wikipedia.org/wiki/Josephson_effect</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.collect_TACO_data">
+<span class="sig-name descname"><span class="pre">collect_TACO_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tla_pump</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.collect_TACO_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.collect_TACO_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.find_res_from_admittance">
+<span class="sig-name descname"><span class="pre">find_res_from_admittance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">admittance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.find_res_from_admittance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.find_res_from_admittance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.fit_modes">
+<span class="sig-name descname"><span class="pre">fit_modes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0Guess_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qguess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(100.0,</span> <span class="pre">10000.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">600000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.fit_modes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.fit_modes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.frattini_p_to_part">
+<span class="sig-name descname"><span class="pre">frattini_p_to_part</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.frattini_p_to_part"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.frattini_p_to_part" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.g3_from_admittance">
+<span class="sig-name descname"><span class="pre">g3_from_admittance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Ej_large</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omegas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Imy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c3_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.g3_from_admittance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.g3_from_admittance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.g3_from_pump_power">
+<span class="sig-name descname"><span class="pre">g3_from_pump_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dBgains</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pump_powers</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode_kappas</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pump_omegas</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pump_detunings_from_res</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.g3_from_pump_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.g3_from_pump_power" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source for calculation: <a class="reference external" href="https://arxiv.org/abs/1605.00539">https://arxiv.org/abs/1605.00539</a>
+“Introduction to Quantum-limited Parametric Amplification of Quantum Signals with Josephson Circuits”
+by Michelle Devoret and Ananda Roy</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gains</strong> (<em>np.ndarray</em>) – gain in dB, whose positions correspond to the powers given in the pump_powers section</p></li>
+<li><p><strong>pump_powers</strong> (<em>np.ndarray</em>) – pump power in dBm that the amplifier sees. This must include all attenuation in the entire line</p></li>
+<li><p><strong>mode_kappas</strong> (<em>np.ndarray</em>) – mode kappa in 2pi*Hz</p></li>
+<li><p><strong>pump_omegas</strong> (<em>np.ndarray</em>) – pump frequency in 2pi*Hz</p></li>
+<li><p><strong>pump_detunings_from_res</strong> (<em>np.ndarray</em>) – pump detuning in 2pi(f-f0) where f0 is the resonator frequency in hz</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>numPumpPhotons</strong> (<em>np.ndarray</em>) – The sqrt of the number of pump photons expected in the pumping resonator.</p></li>
+<li><p><strong>g3_arr</strong> (<em>np.ndarray</em>) – The third order coupling in Hz for each combination of inputs</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.generate_coefficient_functions">
+<span class="sig-name descname"><span class="pre">generate_coefficient_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.generate_coefficient_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.generate_coefficient_functions" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha_val</strong> (<em>float</em>) – alpha value between 0 and 0.33</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – number of points to base interpolation off of. The default is 100.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>c2_func</strong> (<em>lambda function</em>) – function that will return the value of c2</p></li>
+<li><p><strong>c3_func</strong> (<em>lambda function</em>) – DESCRIPTION.</p></li>
+<li><p><strong>c4_func</strong> (<em>lambda function</em>) – DESCRIPTION.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.generate_gsss_function">
+<span class="sig-name descname"><span class="pre">generate_gsss_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">C0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c3_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.generate_gsss_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.generate_gsss_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>source: <a class="reference external" href="https://arxiv.org/pdf/1806.06093.pdf">https://arxiv.org/pdf/1806.06093.pdf</a>
+(The frattini paper)
+calculates the g3 wrt flux given linear capacitance, participation ratio, and alpha
+return value is in Joules</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.generate_inductance_function">
+<span class="sig-name descname"><span class="pre">generate_inductance_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L_large</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.generate_inductance_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.generate_inductance_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.generate_participation_function">
+<span class="sig-name descname"><span class="pre">generate_participation_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lfunc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.generate_participation_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.generate_participation_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.generate_quanta_function">
+<span class="sig-name descname"><span class="pre">generate_quanta_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quanta_offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quanta_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.generate_quanta_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.generate_quanta_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.generate_resonance_function_via_LC">
+<span class="sig-name descname"><span class="pre">generate_resonance_function_via_LC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ls_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.generate_resonance_function_via_LC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.generate_resonance_function_via_LC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.generate_resonance_function_via_fit">
+<span class="sig-name descname"><span class="pre">generate_resonance_function_via_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c2_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.generate_resonance_function_via_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.generate_resonance_function_via_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.gradient_descent_participation_fitter">
+<span class="sig-name descname"><span class="pre">gradient_descent_participation_fitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fitted_res_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_p_guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_alpha_guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_f0_guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.gradient_descent_participation_fitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.gradient_descent_participation_fitter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fitted_res_func</strong> (<em>function:ndarray-&gt;ndarray</em>) – function which takes in flux fraction in [0, 1] and produces the resonant frequency of the experimental device</p></li>
+<li><p><strong>initial_p_guess</strong> (<em>float</em>) – guess for the participation ratio of the SNAIL at 0-flux</p></li>
+<li><p><strong>initial_alpha_guess</strong> (<em>float</em>) – guess for the ratio of large junction inductance to small junciton inductance of the SNAIL</p></li>
+<li><p><strong>kwargs</strong> – res - the number of points with which to do the fitting. Fewer is faster, more is better</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>fitted alpha</em></p></li>
+<li><p><em>fitted p</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.info_from_junction_sizes">
+<span class="sig-name descname"><span class="pre">info_from_junction_sizes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">junction_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Jc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.info_from_junction_sizes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.info_from_junction_sizes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.process_HFSS_sweep">
+<span class="sig-name descname"><span class="pre">process_HFSS_sweep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">HFSS_filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.process_HFSS_sweep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.process_HFSS_sweep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.set_linear_capacitance">
+<span class="sig-name descname"><span class="pre">set_linear_capacitance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">C0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.set_linear_capacitance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.set_linear_capacitance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.set_linear_inductance">
+<span class="sig-name descname"><span class="pre">set_linear_inductance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">L0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.set_linear_inductance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.set_linear_inductance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.slider_participation_fitter">
+<span class="sig-name descname"><span class="pre">slider_participation_fitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stored_fits_filepath</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxsweep_filepath</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ret_sliders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7000000000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.slider_participation_fitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.slider_participation_fitter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stored_fits_filepath</strong> (<em>str</em>) – path to a pickled fit file</p></li>
+<li><p><strong>fluxsweep_filepath</strong> (<em>str</em>) – path to a fluxsweep stored in plottr’s datadict format’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>4x matplotlib.widgets.slider objects, call slider.val to get value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="squidamp.SquidAmp.vals_from_sliders">
+<span class="sig-name descname"><span class="pre">vals_from_sliders</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#SquidAmp.vals_from_sliders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.SquidAmp.vals_from_sliders" title="Permalink to this definition">¶</a></dt>
+<dd><p>A supporting function to slider_participation_fitter for extracting
+the alpha and p values after the sliders have been used to fit</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squidamp.c2_func_gen_vectorize">
+<span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">c2_func_gen_vectorize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#c2_func_gen_vectorize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.c2_func_gen_vectorize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squidamp.c3_func_gen_vectorize">
+<span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">c3_func_gen_vectorize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#c3_func_gen_vectorize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.c3_func_gen_vectorize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squidamp.c4_func_gen_vectorize">
+<span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">c4_func_gen_vectorize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#c4_func_gen_vectorize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.c4_func_gen_vectorize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squidamp.get_phi_min">
+<span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">get_phi_min</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi_ext</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#get_phi_min"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.get_phi_min" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squidamp.get_phi_min_fsolve">
+<span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">get_phi_min_fsolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi_ext_arr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#get_phi_min_fsolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.get_phi_min_fsolve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squidamp.get_phi_min_funcs">
+<span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">get_phi_min_funcs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi_ext_arr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#get_phi_min_funcs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.get_phi_min_funcs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="squidamp.parallel">
+<span class="sig-prename descclassname"><span class="pre">squidamp.</span></span><span class="sig-name descname"><span class="pre">parallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/squidamp.html#parallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#squidamp.parallel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="snailamp.html"
+                        title="previous chapter">snailamp</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Participation_and_Alpha_Fitter.html"
+                        title="next chapter">Participation_and_Alpha_Fitter</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/squidamp.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Participation_and_Alpha_Fitter.html" title="Participation_and_Alpha_Fitter"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="snailamp.html" title="snailamp"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">squidamp</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

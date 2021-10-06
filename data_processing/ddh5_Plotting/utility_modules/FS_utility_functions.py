@@ -156,8 +156,9 @@ class fit_fluxsweep():
                 filt = np.ones(np.size(first_trace_freqs)).astype(bool)
                 
             bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
+            
             if i>2: 
-                prev_pconv = pconv
+                prev_pconv = self.initial_pconv
             #fit(freq, real, imag, mag, phase, Qguess=(2e3, 1e3),real_only = 0, bounds = None)
             popt, pconv = fit(first_trace_freqs[filt], real[filt], imag[filt], first_trace_mag, first_trace_phase, Qguess = (QextGuess,QintGuess), f0Guess = f0Guess, real_only = 0, bounds = bounds, magBackGuess = magBackGuess)
             

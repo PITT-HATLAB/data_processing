@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>ddH5_Duff_Plotting &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ddH5_Fluxsweep_Plotting" href="ddH5_Fluxsweep_Plotting.html" />
+    <link rel="prev" title="ddh5_autoplotting" href="ddh5_autoplotting.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ddH5_Fluxsweep_Plotting.html" title="ddH5_Fluxsweep_Plotting"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ddh5_autoplotting.html" title="ddh5_autoplotting"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ddH5_Duff_Plotting</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-ddH5_Duff_Plotting">
+<span id="ddh5-duff-plotting"></span><h1>ddH5_Duff_Plotting<a class="headerlink" href="#module-ddH5_Duff_Plotting" title="Permalink to this headline">¶</a></h1>
+<p>Created on Wed Jan 13 10:14:25 2021</p>
+<p>&#64;author: Hatlab_3</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ddH5_Duff_Plotting.</span></span><span class="sig-name descname"><span class="pre">fit_Duff_Measurement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="simple">
+<dt>outline:</dt><dd><ul class="simple">
+<li><p>Take in an existing Wolfie-format duffing file and manual fit popt</p></li>
+<li><p>run semiauto_fit for each generator power, return an array of popts in an N_currents x M_gen_powers array</p></li>
+<li><p>use plotRes to debug fitter</p></li>
+<li><p>generate duffing graph</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.create_file">
+<span class="sig-name descname"><span class="pre">create_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.create_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.create_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.default_bounds">
+<span class="sig-name descname"><span class="pre">default_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">QextGuess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QintGuess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0Guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBackGuess</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.default_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.default_bounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_gen_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptive_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adapt_win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fourier_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fourier_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pconv_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.initial_fit">
+<span class="sig-name descname"><span class="pre">initial_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f0Guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QextGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QintGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBackGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phaseOffGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptive_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adapt_win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300000000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.initial_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.initial_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Duff_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FS_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_filt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.load_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.read_fs_data">
+<span class="sig-name descname"><span class="pre">read_fs_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.read_fs_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.read_fs_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.save_fit">
+<span class="sig-name descname"><span class="pre">save_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">currents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driven_popts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driven_pconvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_power_res_fit_func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.save_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.save_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.semiauto_fit">
+<span class="sig-name descname"><span class="pre">semiauto_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bias_currents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vna_freqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vna_mags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vna_phases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">popt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptive_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adapt_win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fourier_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fourier_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pconv_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.semiauto_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.semiauto_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ddH5_Duff_Plotting.fit_Duff_Measurement.single_fit">
+<span class="sig-name descname"><span class="pre">single_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vna_freqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pow_trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0Guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QextGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">QintGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBackGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_win</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phaseOffGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptive_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adapt_win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300000000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ddH5_Duff_Plotting.html#fit_Duff_Measurement.single_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ddH5_Duff_Plotting.fit_Duff_Measurement.single_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ddh5_autoplotting.html"
+                        title="previous chapter">ddh5_autoplotting</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ddH5_Fluxsweep_Plotting.html"
+                        title="next chapter">ddH5_Fluxsweep_Plotting</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ddH5_Duff_Plotting.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ddH5_Fluxsweep_Plotting.html" title="ddH5_Fluxsweep_Plotting"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ddh5_autoplotting.html" title="ddh5_autoplotting"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ddH5_Duff_Plotting</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

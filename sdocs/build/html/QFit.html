@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>QFit &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Q_vs_temp_vs_power" href="Q_vs_temp_vs_power.html" />
+    <link rel="prev" title="Gain vs Pump Power fitter" href="Gain%20vs%20Pump%20Power%20fitter.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Q_vs_temp_vs_power.html" title="Q_vs_temp_vs_power"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Gain%20vs%20Pump%20Power%20fitter.html" title="Gain vs Pump Power fitter"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">QFit</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-QFit">
+<span id="qfit"></span><h1>QFit<a class="headerlink" href="#module-QFit" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="QFit.fit">
+<span class="sig-prename descclassname"><span class="pre">QFit.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">real</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qguess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(20000.0,</span> <span class="pre">100000.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">real_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0Guess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBackGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phaseGuess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.141592653589793</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QFit.html#fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#QFit.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="QFit.getData">
+<span class="sig-prename descclassname"><span class="pre">QFit.</span></span><span class="sig-name descname"><span class="pre">getData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hfss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GHz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QFit.html#getData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#QFit.getData" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="QFit.getData_from_datadict">
+<span class="sig-prename descclassname"><span class="pre">QFit.</span></span><span class="sig-name descname"><span class="pre">getData_from_datadict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QFit.html#getData_from_datadict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#QFit.getData_from_datadict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="QFit.plotRes">
+<span class="sig-prename descclassname"><span class="pre">QFit.</span></span><span class="sig-name descname"><span class="pre">plotRes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">real</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">popt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QFit.html#plotRes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#QFit.plotRes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="QFit.reflectionFunc">
+<span class="sig-prename descclassname"><span class="pre">QFit.</span></span><span class="sig-name descname"><span class="pre">reflectionFunc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phaseCorrect</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QFit.html#reflectionFunc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#QFit.reflectionFunc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="QFit.reflectionFunc_re">
+<span class="sig-prename descclassname"><span class="pre">QFit.</span></span><span class="sig-name descname"><span class="pre">reflectionFunc_re</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magBack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phaseCorrect</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QFit.html#reflectionFunc_re"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#QFit.reflectionFunc_re" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="QFit.rounder">
+<span class="sig-prename descclassname"><span class="pre">QFit.</span></span><span class="sig-name descname"><span class="pre">rounder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/QFit.html#rounder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#QFit.rounder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Gain%20vs%20Pump%20Power%20fitter.html"
+                        title="previous chapter">Gain vs Pump Power fitter</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Q_vs_temp_vs_power.html"
+                        title="next chapter">Q_vs_temp_vs_power</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/QFit.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Q_vs_temp_vs_power.html" title="Q_vs_temp_vs_power"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Gain%20vs%20Pump%20Power%20fitter.html" title="Gain vs Pump Power fitter"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">QFit</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

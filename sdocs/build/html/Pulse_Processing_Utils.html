@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Pulse_Processing_utils &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ddh5_autoplotting" href="ddh5_autoplotting.html" />
+    <link rel="prev" title="Process_One_Acquisition_From_File_with_weights" href="Process_One_Acquisition_From_File_with_weights.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ddh5_autoplotting.html" title="ddh5_autoplotting"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Process_One_Acquisition_From_File_with_weights.html" title="Process_One_Acquisition_From_File_with_weights"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pulse_Processing_utils</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-Pulse_Processing_utils">
+<span id="pulse-processing-utils"></span><h1>Pulse_Processing_utils<a class="headerlink" href="#module-Pulse_Processing_utils" title="Permalink to this headline">¶</a></h1>
+<p>Created on Thu Apr 29 09:40:12 2021</p>
+<p>&#64;author: Ryan Kaufman</p>
+<p>Set up function module that can assist in loading pulse sequences into AWG
+and functionalizing Alazar acquiring</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Gaussian_2D">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">Gaussian_2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Gaussian_2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Gaussian_2D" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Gaussian_info">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">Gaussian_info</span></span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Gaussian_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Gaussian_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Gaussian_info.center_vec">
+<span class="sig-name descname"><span class="pre">center_vec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Gaussian_info.center_vec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Gaussian_info.center_vec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Gaussian_info.plot_array">
+<span class="sig-name descname"><span class="pre">plot_array</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Gaussian_info.plot_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Gaussian_info.plot_array" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Gaussian_info.plot_on_ax">
+<span class="sig-name descname"><span class="pre">plot_on_ax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">displacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([0,</span> <span class="pre">0])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'white'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Gaussian_info.plot_on_ax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Gaussian_info.plot_on_ax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Gaussian_info.print_info">
+<span class="sig-name descname"><span class="pre">print_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Gaussian_info.print_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Gaussian_info.print_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Gaussian_info.sigma_contour">
+<span class="sig-name descname"><span class="pre">sigma_contour</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Gaussian_info.sigma_contour"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Gaussian_info.sigma_contour" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Process_One_Acquisition">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">Process_One_Acquisition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sI_c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sI_c2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sQ_c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sQ_c2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_stop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odd_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">even_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Process_One_Acquisition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Process_One_Acquisition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Process_One_Acquisition_3_state">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">Process_One_Acquisition_3_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sI_c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sI_c2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sI_c3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sQ_c1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sQ_c2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sQ_c3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_stop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odd_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">even_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Process_One_Acquisition_3_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Process_One_Acquisition_3_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.Process_One_Acquisition_np">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">Process_One_Acquisition_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#Process_One_Acquisition_np"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.Process_One_Acquisition_np" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.boxcar_histogram">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">boxcar_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_pt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_pt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sQ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ioffset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qoffset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#boxcar_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.boxcar_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.extract_2pulse_histogram_from_filepath">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">extract_2pulse_histogram_from_filepath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datapath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">55</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">even_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odd_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numRecords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7680</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IQ_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#extract_2pulse_histogram_from_filepath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.extract_2pulse_histogram_from_filepath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.extract_3pulse_histogram_from_filepath">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">extract_3pulse_histogram_from_filepath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datapath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">55</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">even_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odd_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numRecords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7680</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IQ_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_relabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#extract_3pulse_histogram_from_filepath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.extract_3pulse_histogram_from_filepath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.fit_2D_Gaussian">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">fit_2D_Gaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guessParams</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_fev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#fit_2D_Gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.fit_2D_Gaussian" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.get_IQ_offset_from_filepath">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">get_IQ_offset_from_filepath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amp_off_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">records_per_pulsetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7680</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#get_IQ_offset_from_filepath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.get_IQ_offset_from_filepath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.get_contour_line">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">get_contour_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cont_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cont_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour_line</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#get_contour_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.get_contour_line" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.get_fidelity_from_filepath">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">get_fidelity_from_filepath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">records_per_pulsetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7740</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#get_fidelity_from_filepath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.get_fidelity_from_filepath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.get_fidelity_from_filepath_3_state">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">get_fidelity_from_filepath_3_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">records_per_pulsetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2562</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_relabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#get_fidelity_from_filepath_3_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.get_fidelity_from_filepath_3_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.get_fidelity_vs_records">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">get_fidelity_vs_records</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datapath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">records_per_pulsetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7740</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bin_stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#get_fidelity_vs_records"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.get_fidelity_vs_records" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.get_normalizing_voltage_from_filepath">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">get_normalizing_voltage_from_filepath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amp_off_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">records_per_pulsetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7740</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#get_normalizing_voltage_from_filepath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.get_normalizing_voltage_from_filepath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Pulse_Processing_utils.hist_discriminant">
+<span class="sig-prename descclassname"><span class="pre">Pulse_Processing_utils.</span></span><span class="sig-name descname"><span class="pre">hist_discriminant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Pulse_Processing_utils.html#hist_discriminant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Pulse_Processing_utils.hist_discriminant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Process_One_Acquisition_From_File_with_weights.html"
+                        title="previous chapter">Process_One_Acquisition_From_File_with_weights</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ddh5_autoplotting.html"
+                        title="next chapter">ddh5_autoplotting</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Pulse_Processing_Utils.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ddh5_autoplotting.html" title="ddh5_autoplotting"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Process_One_Acquisition_From_File_with_weights.html" title="Process_One_Acquisition_From_File_with_weights"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pulse_Processing_utils</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>

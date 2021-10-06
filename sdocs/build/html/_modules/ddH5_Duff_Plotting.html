@@ -1,0 +1,507 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ddH5_Duff_Plotting &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ddH5_Duff_Plotting</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ddH5_Duff_Plotting</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Wed Jan 13 10:14:25 2021</span>
+
+<span class="sd">@author: Hatlab_3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># import easygui</span>
+<span class="kn">from</span> <span class="nn">plottr.apps.autoplot</span> <span class="kn">import</span> <span class="n">autoplotDDH5</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">main</span>
+<span class="kn">from</span> <span class="nn">plottr.data.datadict_storage</span> <span class="kn">import</span> <span class="n">all_datadicts_from_hdf5</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">data_processing.Helper_Functions</span> <span class="kn">import</span> <span class="n">get_name_from_path</span><span class="p">,</span> <span class="n">shift_array_relative_to_middle</span><span class="p">,</span> <span class="n">log_normalize_to_row</span><span class="p">,</span> <span class="n">select_closest_to_target</span>
+<span class="kn">from</span> <span class="nn">data_processing.fitting.QFit</span> <span class="kn">import</span> <span class="n">fit</span><span class="p">,</span> <span class="n">plotRes</span><span class="p">,</span> <span class="n">reflectionFunc</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">plottr.data</span> <span class="kn">import</span> <span class="n">datadict_storage</span> <span class="k">as</span> <span class="n">dds</span><span class="p">,</span> <span class="n">datadict</span> <span class="k">as</span> <span class="n">dd</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">savgol_filter</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">from</span> <span class="nn">scipy.fftpack</span> <span class="kn">import</span> <span class="n">dct</span><span class="p">,</span> <span class="n">idct</span>
+
+<span class="c1"># FS_filepath = r&#39;Z:/Data/SA_2X_B1/fluxsweep/fits/2021-07-22/2021-07-22_0024_SA_2X_B1/2021-07-22_0024_SA_2X_B1.ddh5&#39;</span>
+<span class="c1"># Duff_filepath = r&#39;Z:/Data/SA_2X_B1/duffing/2021-07-23/2021-07-23_0004_SA_2X_B1_duffing/2021-07-23_0004_SA_2X_B1_duffing.ddh5&#39;</span>
+<span class="c1"># save_filepath = r&#39;Z:\Data\SA_2X_B1\duffing\fits&#39;</span>
+<span class="c1">#create a custom exception that handles fit errors in a more transparent way </span>
+
+<span class="c1">#%%Create measurement-based saver for the fit data. </span>
+
+<div class="viewcode-block" id="fit_Duff_Measurement"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement">[docs]</a><span class="k">class</span> <span class="nc">fit_Duff_Measurement</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    outline: </span>
+<span class="sd">        - Take in an existing Wolfie-format duffing file and manual fit popt</span>
+<span class="sd">        - run semiauto_fit for each generator power, return an array of popts in an N_currents x M_gen_powers array</span>
+<span class="sd">        - use plotRes to debug fitter</span>
+<span class="sd">        - generate duffing graph</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c1">#setup files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        
+<div class="viewcode-block" id="fit_Duff_Measurement.create_file"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.create_file">[docs]</a>    <span class="k">def</span> <span class="nf">create_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_filepath</span><span class="p">):</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">datadict</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">DataDict</span><span class="p">(</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">),</span>
+            <span class="n">gen_power</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;dBm&#39;</span><span class="p">),</span>
+            
+            <span class="n">base_resonant_frequency</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">]),</span>
+            <span class="n">low_power_res_frequency</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">]),</span>
+            
+            <span class="n">driven_resonant_frequency</span><span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">]),</span> 
+            <span class="n">driven_Qint</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">]),</span> 
+            <span class="n">driven_Qext</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">]),</span>
+            
+            <span class="n">driven_resonant_frequency_error</span><span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">]),</span> 
+            <span class="n">driven_Qint_error</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">]),</span> 
+            <span class="n">driven_Qext_error</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">]),</span>
+            
+            <span class="n">res_shift_ref_undriven</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">]),</span> 
+            <span class="n">res_shift_ref_low</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_power&#39;</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datadir</span> <span class="o">=</span> <span class="n">save_filepath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writer</span> <span class="o">=</span> <span class="n">dds</span><span class="o">.</span><span class="n">DDH5Writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datadir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datadict</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writer</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+    
+<div class="viewcode-block" id="fit_Duff_Measurement.load_data"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.load_data">[docs]</a>    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Duff_filepath</span><span class="p">,</span> <span class="n">FS_filepath</span><span class="p">,</span> <span class="n">current_filt</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> 
+        <span class="c1">#Duffing Data Extraction</span>
+        <span class="n">duff_dicts</span> <span class="o">=</span> <span class="n">all_datadicts_from_hdf5</span><span class="p">(</span><span class="n">Duff_filepath</span><span class="p">)</span>
+        <span class="n">duffDict</span> <span class="o">=</span> <span class="n">duff_dicts</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="n">uvphDict</span> <span class="o">=</span> <span class="n">duffDict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;undriven_vna_phase&#39;</span><span class="p">)</span>
+        <span class="n">uvpoDict</span> <span class="o">=</span> <span class="n">duffDict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;undriven_vna_power&#39;</span><span class="p">)</span>
+        <span class="n">dvphDict</span> <span class="o">=</span> <span class="n">duffDict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;driven_vna_phase&#39;</span><span class="p">)</span>
+        <span class="n">dvpoDict</span> <span class="o">=</span> <span class="n">duffDict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;driven_vna_power&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">current_filt</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">uvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">))</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">uvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="p">[</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_filt</span>
+            <span class="c1">#get the arrays back out</span>
+            
+        <span class="n">filt</span> <span class="o">=</span> <span class="p">(</span><span class="n">uvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span><span class="o">&lt;</span><span class="n">upper</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">uvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span><span class="o">&gt;</span><span class="n">lower</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">undriven_vna_phase</span> <span class="o">=</span> <span class="n">uvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;undriven_vna_phase&#39;</span><span class="p">)[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">undriven_vna_power</span> <span class="o">=</span> <span class="n">uvpoDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;undriven_vna_power&#39;</span><span class="p">)[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">driven_vna_phase</span> <span class="o">=</span> <span class="n">dvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;driven_vna_phase&#39;</span><span class="p">)[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">driven_vna_power</span><span class="o">=</span> <span class="n">dvpoDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;driven_vna_power&#39;</span><span class="p">)[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vna_freqs</span> <span class="o">=</span> <span class="n">uvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;vna_frequency&#39;</span><span class="p">)[</span><span class="n">filt</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">currents</span> <span class="o">=</span> <span class="n">uvphDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span> <span class="o">=</span> <span class="n">dvpoDict</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;gen_power&#39;</span><span class="p">)[</span><span class="n">filt</span><span class="p">]</span>
+
+                        
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">res_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qint_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qext_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_fs_data</span><span class="p">(</span><span class="n">FS_filepath</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+        
+<div class="viewcode-block" id="fit_Duff_Measurement.read_fs_data"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.read_fs_data">[docs]</a>    <span class="k">def</span> <span class="nf">read_fs_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs_filepath</span><span class="p">,</span> <span class="n">interpolation</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">all_datadicts_from_hdf5</span><span class="p">(</span><span class="n">fs_filepath</span><span class="p">)</span>
+        <span class="n">res_freqs</span> <span class="o">=</span> <span class="n">ret</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;base_resonant_frequency&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;base_resonant_frequency&#39;</span><span class="p">)</span>
+        <span class="n">currents</span> <span class="o">=</span> <span class="n">ret</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;base_resonant_frequency&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+        <span class="n">Qexts</span> <span class="o">=</span> <span class="n">ret</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;base_Qext&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;base_Qext&#39;</span><span class="p">)</span>
+        <span class="n">Qints</span> <span class="o">=</span> <span class="n">ret</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;base_Qint&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;base_Qint&#39;</span><span class="p">)</span>
+        <span class="n">fs_res_fit_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">)</span>
+        <span class="n">fs_Qint_fit_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">Qints</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">)</span>
+        <span class="n">fs_Qext_fit_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">Qexts</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fs_res_fit_func</span><span class="p">,</span> <span class="n">fs_Qint_fit_func</span><span class="p">,</span> <span class="n">fs_Qext_fit_func</span></div>
+    
+<div class="viewcode-block" id="fit_Duff_Measurement.save_fit"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.save_fit">[docs]</a>    <span class="k">def</span> <span class="nf">save_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">currents</span><span class="p">,</span> <span class="n">gen_power</span><span class="p">,</span><span class="n">driven_popts</span><span class="p">,</span> <span class="n">driven_pconvs</span><span class="p">,</span> <span class="n">low_power_res_fit_func</span><span class="p">):</span> 
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">current</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">currents</span><span class="p">)):</span> 
+            <span class="n">driven_popt</span> <span class="o">=</span> <span class="n">driven_popts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">driven_pconv</span> <span class="o">=</span> <span class="n">driven_pconvs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">res_freq_ref</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">res_func</span><span class="p">(</span><span class="n">current</span><span class="p">))</span>    
+            <span class="n">res_freq_low_power</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">low_power_res_fit_func</span><span class="p">(</span><span class="n">current</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">writer</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span>
+                <span class="n">current</span> <span class="o">=</span> <span class="n">current</span><span class="p">,</span> 
+                <span class="n">gen_power</span> <span class="o">=</span> <span class="n">gen_power</span><span class="p">,</span>
+                
+                <span class="n">base_resonant_frequency</span> <span class="o">=</span> <span class="n">res_freq_ref</span><span class="p">,</span> 
+                <span class="n">low_power_res_frequency</span> <span class="o">=</span> <span class="n">res_freq_low_power</span><span class="p">,</span>
+                
+                <span class="n">driven_resonant_frequency</span> <span class="o">=</span> <span class="n">driven_popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> 
+                <span class="n">driven_Qint</span> <span class="o">=</span> <span class="n">driven_popt</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">driven_Qext</span> <span class="o">=</span> <span class="n">driven_popt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                
+                <span class="n">driven_resonant_frequency_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">driven_pconv</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+                <span class="n">driven_Qint_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">driven_pconv</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="n">driven_Qext_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">driven_pconv</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span>
+                
+                <span class="n">res_shift_ref_undriven</span> <span class="o">=</span> <span class="p">(</span><span class="n">driven_popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">-</span><span class="n">res_freq_ref</span><span class="p">),</span>
+                <span class="n">res_shift_ref_low</span> <span class="o">=</span> <span class="p">(</span><span class="n">driven_popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">-</span><span class="n">res_freq_low_power</span><span class="p">)</span>
+                
+                <span class="p">)</span></div>
+            
+<div class="viewcode-block" id="fit_Duff_Measurement.single_fit"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.single_fit">[docs]</a>    <span class="k">def</span> <span class="nf">single_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vna_freqs</span><span class="p">,</span> <span class="n">phase_trace</span><span class="p">,</span> <span class="n">pow_trace</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">QextGuess</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">smooth</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smooth_win</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="n">phaseOffGuess</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">adaptive_window</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="mf">300e6</span><span class="p">):</span> 
+        <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">f0Guess</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="k">if</span> <span class="n">bounds</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_bounds</span><span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span> <span class="n">QintGuess</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">magBackGuess</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">adaptive_window</span><span class="p">:</span> 
+            <span class="n">filt1</span> <span class="o">=</span> <span class="n">vna_freqs</span> <span class="o">&lt;</span> <span class="n">f0Guess</span> <span class="o">+</span> <span class="n">adapt_win_size</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+            <span class="n">filt2</span> <span class="o">=</span> <span class="n">vna_freqs</span> <span class="o">&gt;</span> <span class="n">f0Guess</span> <span class="o">-</span> <span class="n">adapt_win_size</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+            <span class="n">filt</span> <span class="o">=</span> <span class="n">filt1</span><span class="o">*</span><span class="n">filt2</span>
+            <span class="n">vna_freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">vna_freqs</span><span class="p">[</span><span class="n">filt</span><span class="p">])</span>
+            
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">vna_freqs</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">phase_trace</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Debug1: phase&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">vna_freqs</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">pow_trace</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Debug1: power&quot;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">smooth</span><span class="p">:</span> 
+            <span class="n">phase_trace</span> <span class="o">=</span> <span class="n">savgol_filter</span><span class="p">(</span><span class="n">phase_trace</span><span class="p">,</span> <span class="n">smooth_win</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">pow_trace</span> <span class="o">=</span> <span class="n">savgol_filter</span><span class="p">(</span><span class="n">pow_trace</span><span class="p">,</span> <span class="n">smooth_win</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            
+        <span class="n">lin</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">pow_trace</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+        
+        <span class="n">imag</span> <span class="o">=</span> <span class="n">lin</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phase_trace</span><span class="p">)</span>
+        <span class="n">real</span> <span class="o">=</span> <span class="n">lin</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phase_trace</span><span class="p">)</span>
+
+        <span class="n">popt</span><span class="p">,</span> <span class="n">pconv</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">vna_freqs</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">pow_trace</span><span class="p">,</span> <span class="n">phase_trace</span><span class="p">,</span> <span class="n">Qguess</span> <span class="o">=</span> <span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span><span class="n">QintGuess</span><span class="p">),</span> <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">real_only</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="n">magBackGuess</span><span class="p">,</span> <span class="n">phaseGuess</span> <span class="o">=</span> <span class="n">phaseOffGuess</span><span class="p">)</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;f (Hz): </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="p">)</span>
+        <span class="n">fitting_params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">reflectionFunc</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fitting_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1"> +- </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pconv</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">Qtot</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Q_tot: &#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">Qtot</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">T1 (s):&#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">Qtot</span><span class="o">/</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="sa">f</span><span class="s2">&quot;Kappa: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">Qtot</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_popt</span> <span class="o">=</span> <span class="n">popt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_pconv</span> <span class="o">=</span> <span class="n">pconv</span>
+        
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+            <span class="n">plotRes</span><span class="p">(</span><span class="n">vna_freqs</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">pow_trace</span><span class="p">,</span> <span class="n">phase_trace</span><span class="p">,</span> <span class="n">popt</span><span class="p">)</span>
+            
+        <span class="k">return</span><span class="p">(</span><span class="n">popt</span><span class="p">,</span> <span class="n">pconv</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="fit_Duff_Measurement.initial_fit"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.initial_fit">[docs]</a>    <span class="k">def</span> <span class="nf">initial_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">QextGuess</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">smooth</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smooth_win</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="n">phaseOffGuess</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">adaptive_window</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="mf">300e6</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">bounds</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_bounds</span><span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span> <span class="n">QintGuess</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">magBackGuess</span><span class="p">)</span>
+            
+        <span class="n">filt</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currents</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currents</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">filt</span><span class="p">))</span>
+
+        <span class="n">init_vna_freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vna_freqs</span><span class="p">[</span><span class="n">filt</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">init_vna_freqs</span><span class="p">))</span>
+        <span class="n">init_phase_trace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">undriven_vna_phase</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">init_phase_trace</span><span class="p">))</span>
+        <span class="n">init_pow_trace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">undriven_vna_power</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">init_pow_trace</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">init_vna_freqs</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">init_phase_trace</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Debug1: phase&quot;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">init_vna_freqs</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">init_pow_trace</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Debug1: power&quot;</span><span class="p">)</span>
+            
+        <span class="n">lin</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">init_pow_trace</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+        
+        <span class="n">imag</span> <span class="o">=</span> <span class="n">lin</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">init_phase_trace</span><span class="p">)</span>
+        <span class="n">real</span> <span class="o">=</span> <span class="n">lin</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">init_phase_trace</span><span class="p">)</span>
+
+        <span class="n">popt</span><span class="p">,</span> <span class="n">pconv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_fit</span><span class="p">(</span><span class="n">init_vna_freqs</span><span class="p">,</span> <span class="n">init_phase_trace</span><span class="p">,</span> <span class="n">init_pow_trace</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">=</span> <span class="n">QintGuess</span><span class="p">,</span> <span class="n">QextGuess</span> <span class="o">=</span> <span class="n">QextGuess</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="n">magBackGuess</span><span class="p">,</span> <span class="n">phaseOffGuess</span> <span class="o">=</span> <span class="n">phaseOffGuess</span><span class="p">,</span> <span class="n">adaptive_window</span> <span class="o">=</span> <span class="n">adaptive_window</span><span class="p">,</span> <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="n">adapt_win_size</span><span class="p">,</span> <span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_popt</span> <span class="o">=</span> <span class="n">popt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_pconv</span> <span class="o">=</span> <span class="n">pconv</span>
+        
+        <span class="n">plotRes</span><span class="p">(</span><span class="n">init_vna_freqs</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">imag</span><span class="p">,</span> <span class="n">init_pow_trace</span><span class="p">,</span> <span class="n">init_phase_trace</span><span class="p">,</span> <span class="n">popt</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="fit_Duff_Measurement.default_bounds"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.default_bounds">[docs]</a>    <span class="k">def</span> <span class="nf">default_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">QextGuess</span><span class="p">,</span> <span class="n">QintGuess</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">magBackGuess</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">([</span><span class="n">QextGuess</span> <span class="o">/</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">/</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">f0Guess</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">QextGuess</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">,</span> <span class="n">QintGuess</span> <span class="o">+</span><span class="mi">200</span><span class="p">,</span> <span class="n">f0Guess</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">])</span></div>
+    
+<div class="viewcode-block" id="fit_Duff_Measurement.semiauto_fit"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.semiauto_fit">[docs]</a>    <span class="k">def</span> <span class="nf">semiauto_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bias_currents</span><span class="p">,</span> <span class="n">vna_freqs</span><span class="p">,</span> <span class="n">vna_mags</span><span class="p">,</span> <span class="n">vna_phases</span><span class="p">,</span> <span class="n">popt</span><span class="p">,</span> 
+                     <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                     <span class="n">smooth</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                     <span class="n">smooth_win</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> 
+                     <span class="n">adaptive_window</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                     <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="mf">300e6</span><span class="p">,</span> 
+                     <span class="n">fourier_filter</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                     <span class="n">fourier_cutoff</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> 
+                     <span class="n">pconv_tol</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> 
+                     <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">res_freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">)))</span>
+        <span class="n">Qints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">)))</span>
+        <span class="n">Qexts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">)))</span>
+        <span class="n">magBacks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">)))</span>
+        <span class="n">popts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pconvs</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="n">init_f0</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">init_Qint</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">init_Qext</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">init_magBack</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">current</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">))):</span> 
+            <span class="n">first_condn</span> <span class="o">=</span> <span class="n">bias_currents</span> <span class="o">==</span> <span class="n">current</span>
+            <span class="p">[</span><span class="n">first_trace_freqs</span><span class="p">,</span> <span class="n">first_trace_phase</span><span class="p">,</span> <span class="n">first_trace_mag</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">vna_freqs</span><span class="p">[</span><span class="n">first_condn</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">vna_phases</span><span class="p">[</span><span class="n">first_condn</span><span class="p">],</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">vna_mags</span><span class="p">[</span><span class="n">first_condn</span><span class="p">]</span><span class="o">/</span><span class="mi">20</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">smooth</span><span class="p">:</span> 
+                <span class="n">first_trace_phase</span> <span class="o">=</span> <span class="n">savgol_filter</span><span class="p">(</span><span class="n">first_trace_phase</span><span class="p">,</span> <span class="n">smooth_win</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                <span class="n">first_trace_mag</span> <span class="o">=</span> <span class="n">savgol_filter</span><span class="p">(</span><span class="n">first_trace_mag</span><span class="p">,</span> <span class="n">smooth_win</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                
+            <span class="n">imag</span> <span class="o">=</span> <span class="n">first_trace_mag</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">first_trace_phase</span><span class="p">)</span>
+            <span class="n">real</span> <span class="o">=</span> <span class="n">first_trace_mag</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">first_trace_phase</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fourier_filter</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span> 
+                <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+                    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">first_trace_freqs</span><span class="p">,</span> <span class="n">real</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">first_trace_freqs</span><span class="p">,</span> <span class="n">imag</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;before filter&#39;</span><span class="p">)</span>
+                <span class="n">imag</span> <span class="o">=</span> <span class="n">idct</span><span class="p">(</span><span class="n">dct</span><span class="p">(</span><span class="n">imag</span><span class="p">)[</span><span class="n">fourier_cutoff</span><span class="p">:])</span>  
+                <span class="n">real</span> <span class="o">=</span> <span class="n">idct</span><span class="p">(</span><span class="n">dct</span><span class="p">(</span><span class="n">real</span><span class="p">)[</span><span class="n">fourier_cutoff</span><span class="p">:])</span>
+                <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+                    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">real</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">imag</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;after filter&#39;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Bias current: </span><span class="si">{current}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generator Power: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span> 
+                <span class="k">if</span> <span class="n">adaptive_window</span><span class="p">:</span> 
+                    <span class="n">filt1</span> <span class="o">=</span> <span class="n">first_trace_freqs</span><span class="o">&lt;</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">res_freqs</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">+</span><span class="n">adapt_win_size</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
+                    <span class="n">filt2</span> <span class="o">=</span> <span class="n">first_trace_freqs</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">res_freqs</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">-</span><span class="n">adapt_win_size</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span>
+                    <span class="n">filt</span><span class="o">=</span> <span class="n">filt1</span><span class="o">*</span><span class="n">filt2</span>
+                <span class="k">else</span><span class="p">:</span> 
+                    <span class="n">filt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">first_trace_freqs</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+                <span class="c1">#start averaging the previous fits for prior information to increase robustness to bad fits</span>
+                <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">res_freqs</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+                <span class="n">magBackGuess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">magBacks</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="p">])</span>
+                <span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span><span class="n">QintGuess</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">Qexts</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="p">]),</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">Qints</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">init_f0</span>
+                <span class="n">magBackGuess</span> <span class="o">=</span> <span class="n">init_magBack</span>
+                <span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span> <span class="n">QintGuess</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_Qext</span><span class="p">,</span> <span class="n">init_Qint</span><span class="p">)</span>
+                <span class="n">filt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">first_trace_freqs</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">bounds</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> 
+                <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_bounds</span><span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span> <span class="n">QintGuess</span><span class="p">,</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">magBackGuess</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">&gt;</span><span class="mi">2</span><span class="p">:</span> 
+                <span class="n">prev_pconv</span> <span class="o">=</span> <span class="n">pconv</span>
+            <span class="c1">#fit(freq, real, imag, mag, phase, Qguess=(2e3, 1e3),real_only = 0, bounds = None)</span>
+            <span class="n">popt</span><span class="p">,</span> <span class="n">pconv</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">first_trace_freqs</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">real</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">imag</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">first_trace_mag</span><span class="p">,</span> <span class="n">first_trace_phase</span><span class="p">,</span> <span class="n">Qguess</span> <span class="o">=</span> <span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span><span class="n">QintGuess</span><span class="p">),</span> <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">f0Guess</span><span class="p">,</span> <span class="n">real_only</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="n">magBackGuess</span><span class="p">)</span>
+            <span class="c1">#catch a sudden change in convergence and try again until it&#39;s back in range: </span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">&gt;</span><span class="mi">2</span><span class="p">:</span> 
+                <span class="n">pconv_diff_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pconv</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">pconv</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">prev_pconv</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">prev_pconv</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">prev_pconv</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">prev_pconv</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pconv ratio: </span><span class="si">{</span><span class="n">pconv_diff_ratio</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">alt_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e6</span><span class="p">,</span><span class="o">-</span><span class="mf">1e6</span><span class="p">,</span><span class="mf">5e6</span><span class="p">,</span><span class="o">-</span><span class="mf">5e6</span><span class="p">,</span> <span class="mf">10e6</span><span class="p">,</span><span class="o">-</span><span class="mf">10e6</span><span class="p">,</span><span class="mf">15e6</span><span class="p">,</span><span class="o">-</span><span class="mf">15e6</span><span class="p">,</span> <span class="mf">20e6</span><span class="p">,</span> <span class="o">-</span><span class="mf">20e6</span><span class="p">,</span> <span class="mf">30e6</span><span class="p">,</span> <span class="o">-</span><span class="mf">30e6</span><span class="p">,</span> <span class="mf">50e6</span><span class="p">,</span> <span class="o">-</span><span class="mf">50e6</span><span class="p">,</span> <span class="mf">100e6</span><span class="p">,</span> <span class="o">-</span><span class="mf">100e6</span><span class="p">])</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+                <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pconv_diff_ratio</span><span class="p">)</span><span class="o">&gt;</span><span class="n">pconv_tol</span><span class="p">):</span> 
+                    <span class="k">if</span> <span class="n">j</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">alt_array</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span> 
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No good fit at this point: (Bias: </span><span class="si">{</span><span class="n">current</span><span class="si">}</span><span class="s2">, Power: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">latest_power</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sudden change in Q detected (pconv_diff_ratio: </span><span class="si">{</span><span class="n">pconv_diff_ratio</span><span class="si">}</span><span class="s2">), trying resonant guess + </span><span class="si">{</span><span class="n">alt_array</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="c1">#try above</span>
+                    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+                        <span class="k">if</span> <span class="n">j</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span> 
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trying above&quot;</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span> 
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trying_below&quot;</span><span class="p">)</span>
+                    <span class="n">popt</span><span class="p">,</span> <span class="n">pconv</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">first_trace_freqs</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">real</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">imag</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">first_trace_mag</span><span class="p">,</span> <span class="n">first_trace_phase</span><span class="p">,</span> <span class="n">Qguess</span> <span class="o">=</span> <span class="p">(</span><span class="n">QextGuess</span><span class="p">,</span><span class="n">QintGuess</span><span class="p">),</span> <span class="n">f0Guess</span> <span class="o">=</span> <span class="n">f0Guess</span><span class="o">+</span><span class="n">alt_array</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">real_only</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">magBackGuess</span> <span class="o">=</span> <span class="n">magBackGuess</span><span class="p">)</span>
+                    
+                    <span class="n">pconv_diff_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pconv</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">pconv</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">prev_pconv</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">prev_pconv</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">prev_pconv</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">prev_pconv</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">j</span><span class="o">+=</span><span class="mi">1</span>
+                
+            
+            <span class="k">if</span> <span class="n">debug</span><span class="p">:</span> 
+                <span class="kn">import</span> <span class="nn">time</span>
+                <span class="n">plotRes</span><span class="p">(</span><span class="n">first_trace_freqs</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">real</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">imag</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">first_trace_mag</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">first_trace_phase</span><span class="p">[</span><span class="n">filt</span><span class="p">],</span> <span class="n">popt</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="n">res_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+            <span class="n">Qints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">Qexts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">magBacks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">popts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">popt</span><span class="p">)</span>
+            <span class="n">pconvs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pconv</span><span class="p">)</span>
+            
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;f (Hz): </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="p">)</span>
+            <span class="n">fitting_params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">reflectionFunc</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fitting_params</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1"> +- </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pconv</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">Qtot</span> <span class="o">=</span> <span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Q_tot: &#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">Qtot</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">T1 (s):&#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">Qtot</span><span class="o">/</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="sa">f</span><span class="s2">&quot;Kappa: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">Qtot</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">)</span>
+            
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">),</span> <span class="n">res_freqs</span><span class="p">,</span> <span class="n">Qints</span><span class="p">,</span> <span class="n">Qexts</span><span class="p">,</span> <span class="n">magBacks</span><span class="p">,</span> <span class="n">popts</span><span class="p">,</span> <span class="n">pconvs</span></div>
+                                          
+<div class="viewcode-block" id="fit_Duff_Measurement.fit"><a class="viewcode-back" href="../ddH5_Duff_Plotting.html#ddH5_Duff_Plotting.fit_Duff_Measurement.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+            <span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">save_data</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">max_gen_power</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+            <span class="n">savedata</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">smooth</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">smooth_win</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> 
+            <span class="n">adaptive_window</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="mf">300e6</span><span class="p">,</span>  
+            <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">fourier_filter</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">fourier_cutoff</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> 
+            <span class="n">pconv_tol</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+        
+        <span class="k">if</span> <span class="n">max_gen_power</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>     
+            <span class="n">fitted_gen_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_gen_power</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">fitted_gen_powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span><span class="p">))</span>
+            
+            
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gen_power</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span><span class="p">)[</span><span class="n">fitted_gen_powers</span><span class="p">]):</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">latest_power</span> <span class="o">=</span> <span class="n">gen_power</span>
+            <span class="n">pow_condn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_powers</span> <span class="o">==</span> <span class="n">gen_power</span>
+            
+            <span class="n">bias_currents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currents</span><span class="p">[</span><span class="n">pow_condn</span><span class="p">]</span>
+            <span class="n">vna_freqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vna_freqs</span><span class="p">[</span><span class="n">pow_condn</span><span class="p">]</span>
+            <span class="n">vna_phases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">driven_vna_phase</span><span class="p">[</span><span class="n">pow_condn</span><span class="p">]</span>
+            <span class="n">vna_mags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">driven_vna_power</span><span class="p">[</span><span class="n">pow_condn</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generator Power: </span><span class="si">{gen_power}</span><span class="s2"> dBm&quot;</span><span class="p">)</span>
+            <span class="n">fit_currents</span><span class="p">,</span> <span class="n">fit_freqs</span><span class="p">,</span> <span class="n">fit_Qints</span><span class="p">,</span> <span class="n">fit_Qexts</span><span class="p">,</span> <span class="n">fit_magBacks</span><span class="p">,</span> <span class="n">popts</span><span class="p">,</span> <span class="n">pconvs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">semiauto_fit</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">,</span> 
+                                                                                                           <span class="n">vna_freqs</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> 
+                                                                                                           <span class="n">vna_mags</span><span class="p">,</span> 
+                                                                                                           <span class="n">vna_phases</span><span class="p">,</span> 
+                                                                                                           <span class="bp">self</span><span class="o">.</span><span class="n">initial_popt</span><span class="p">,</span> 
+                                                                                                           <span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span><span class="p">,</span> 
+                                                                                                           <span class="n">smooth</span> <span class="o">=</span> <span class="n">smooth</span><span class="p">,</span> 
+                                                                                                           <span class="n">smooth_win</span> <span class="o">=</span> <span class="n">smooth_win</span><span class="p">,</span> 
+                                                                                                           <span class="n">adaptive_window</span> <span class="o">=</span> <span class="n">adaptive_window</span><span class="p">,</span> 
+                                                                                                           <span class="n">adapt_win_size</span> <span class="o">=</span> <span class="n">adapt_win_size</span><span class="p">,</span> 
+                                                                                                           <span class="n">fourier_filter</span> <span class="o">=</span> <span class="n">fourier_filter</span><span class="p">,</span> 
+                                                                                                           <span class="n">fourier_cutoff</span> <span class="o">=</span> <span class="n">fourier_cutoff</span><span class="p">,</span> 
+                                                                                                           <span class="n">pconv_tol</span> <span class="o">=</span> <span class="n">pconv_tol</span><span class="p">,</span> 
+                                                                                                           <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">low_power_res_fit_func</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">fit_currents</span><span class="p">,</span> <span class="n">fit_freqs</span><span class="p">,</span> <span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">save_data</span><span class="p">:</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">save_fit</span><span class="p">(</span><span class="n">bias_currents</span><span class="p">,</span> <span class="n">gen_power</span><span class="p">,</span> <span class="n">popts</span><span class="p">,</span> <span class="n">pconvs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">low_power_res_fit_func</span><span class="p">)</span></div></div>
+    
+
+<span class="c1">#%%</span>
+
+<span class="c1"># #Duffing Autoplot</span>
+<span class="c1"># #main(Duff_filepath, &#39;data&#39;)</span>
+
+
+<span class="c1"># FS_filepath = r&#39;Z:/Data/SA_2X_B1/fluxsweep/fits/2021-07-22/2021-07-22_0024_SA_2X_B1/2021-07-22_0024_SA_2X_B1.ddh5&#39;</span>
+<span class="c1"># Duff_filepath = r&#39;Z:/Data/SA_2X_B1/duffing/2021-07-23/2021-07-23_0010_SA_2X_B1_duffing_fine/2021-07-23_0010_SA_2X_B1_duffing_fine.ddh5&#39;</span>
+<span class="c1"># save_filepath = r&#39;Z:\Data\SA_2X_B1\duffing\fits&#39;</span>
+
+<span class="c1"># DFit = fit_Duff_Measurement(Duff_filepath, FS_filepath, save_filepath, &#39;SA_B1_Duff_fine&#39;)</span>
+<span class="c1"># #%%</span>
+<span class="c1"># DFit.initial_fit(8.0e9, </span>
+<span class="c1">#                   QextGuess = 50, </span>
+<span class="c1">#                   QintGuess = 1000, </span>
+<span class="c1">#                   magBackGuess = 0.01, </span>
+<span class="c1">#                   bounds = None, </span>
+<span class="c1">#                   smooth = False, </span>
+<span class="c1">#                   smooth_win = 11,</span>
+<span class="c1">#                   phaseOffGuess = 0, </span>
+<span class="c1">#                   debug = False, </span>
+<span class="c1">#                   adaptive_window = False, </span>
+<span class="c1">#                   adapt_win_size = 300e6</span>
+<span class="c1">#                 )</span>
+<span class="c1"># #%%</span>
+<span class="c1"># print(np.min(DFit.gen_powers))</span>
+<span class="c1"># #%%</span>
+<span class="c1"># DFit.fit(</span>
+<span class="c1">#         debug = False, </span>
+<span class="c1">#         save_data = True, </span>
+<span class="c1">#         max_gen_power = -20, </span>
+<span class="c1">#         savedata = True, </span>
+<span class="c1">#         smooth = False, </span>
+<span class="c1">#         smooth_win = 11, </span>
+<span class="c1">#         adaptive_window = True,  </span>
+<span class="c1">#         adapt_win_size = 400e6,  </span>
+<span class="c1">#         fourier_filter = False, </span>
+<span class="c1">#         fourier_cutoff = 40, </span>
+<span class="c1">#         pconv_tol = 10)</span>
+<span class="c1"># #%%</span>
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ddH5_Duff_Plotting</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>
