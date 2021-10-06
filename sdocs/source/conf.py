@@ -12,13 +12,12 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..\\..\\data_processing'))
-sys.path.insert(0, os.path.abspath('..\\..\\data_processing\\AWG_and_Alazar'))
-sys.path.insert(0, os.path.abspath('..\\..\\data_processing\\ddh5_Plotting'))
-sys.path.insert(0, os.path.abspath('..\\..\\data_processing\\fabrication'))
-sys.path.insert(0, os.path.abspath('..\\..\\data_processing\\fitting'))
-sys.path.insert(0, os.path.abspath('..\\..\\data_processing\\models'))
-sys.path.insert(0, os.path.abspath('..\\..\\data_processing\\signal_processing'))
+
+dirs = [x[0] for x in os.walk(os.path.abspath('..\\..\\data_processing'))]
+
+for dirr in dirs:
+
+    sys.path.insert(0, dirr)
 
 # -- Project information -----------------------------------------------------
 

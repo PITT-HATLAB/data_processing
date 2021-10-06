@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Participation_and_Alpha_Fitter &#8212; Hatlab Data Processing 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Participation_and_Alpha_Fitter</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for Participation_and_Alpha_Fitter</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Spyder Editor</span>
+
+<span class="sd">This is a temporary script file.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#bring in actual SNAIL data</span>
+<span class="kn">from</span> <span class="nn">plottr.data.datadict_storage</span> <span class="kn">import</span> <span class="n">all_datadicts_from_hdf5</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">matplotlib.colors</span> <span class="k">as</span> <span class="nn">color</span>
+<span class="kn">from</span> <span class="nn">matplotlib.widgets</span> <span class="kn">import</span> <span class="n">Slider</span><span class="p">,</span> <span class="n">TextBox</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+
+
+<span class="c1">#%% Use slider to select modulation curve</span>
+<div class="viewcode-block" id="get_fs_data"><a class="viewcode-back" href="../Participation_and_Alpha_Fitter.html#Participation_and_Alpha_Fitter.get_fs_data">[docs]</a><span class="k">def</span> <span class="nf">get_fs_data</span><span class="p">(</span><span class="n">path</span><span class="p">):</span> 
+    <span class="n">datadict</span> <span class="o">=</span> <span class="n">all_datadicts_from_hdf5</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+    <span class="n">currents</span> <span class="o">=</span> <span class="n">datadict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">datadict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;frequency&#39;</span><span class="p">)</span>
+    <span class="n">phases</span> <span class="o">=</span> <span class="n">datadict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;phase&#39;</span><span class="p">)</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="n">datadict</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">&#39;power&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data_vals</span><span class="p">(</span><span class="s1">&#39;power&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">currents</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">phases</span></div>
+<div class="viewcode-block" id="convert_to_2D"><a class="viewcode-back" href="../Participation_and_Alpha_Fitter.html#Participation_and_Alpha_Fitter.convert_to_2D">[docs]</a><span class="k">def</span> <span class="nf">convert_to_2D</span><span class="p">(</span><span class="n">filt_arr</span><span class="p">,</span> <span class="n">to_be_2d</span><span class="p">):</span>
+    <span class="n">d2_arr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">filt_arr</span><span class="p">):</span>
+        <span class="n">d2_arr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_be_2d</span><span class="p">[</span><span class="n">filt_arr</span> <span class="o">==</span> <span class="n">val</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d2_arr</span><span class="p">)</span></div>
+<div class="viewcode-block" id="slider_fit"><a class="viewcode-back" href="../Participation_and_Alpha_Fitter.html#Participation_and_Alpha_Fitter.slider_fit">[docs]</a><span class="k">def</span> <span class="nf">slider_fit</span><span class="p">(</span><span class="n">fs_filepath</span><span class="p">,</span> <span class="n">fit_filepath</span><span class="p">,</span> <span class="n">quanta_start</span><span class="p">,</span> <span class="n">quanta_size</span><span class="p">,</span> <span class="n">p_arr</span><span class="p">,</span> <span class="n">alpha_arr</span><span class="p">,</span> <span class="n">start_freq</span> <span class="o">=</span> <span class="mf">7e9</span><span class="p">):</span>
+    <span class="n">currents</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">mags</span><span class="p">,</span> <span class="n">phases</span> <span class="o">=</span> <span class="n">get_fs_data</span><span class="p">(</span><span class="n">fs_filepath</span><span class="p">)</span>
+    
+    <span class="n">snail_freqs_fits</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">fit_filepath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+
+    <span class="c1">#reformat the data into a 2d array by iterating through current values</span>
+    <span class="n">phases_2D</span> <span class="o">=</span> <span class="n">convert_to_2D</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">phases</span><span class="p">)</span>
+    <span class="n">mags_2D</span> <span class="o">=</span> <span class="n">convert_to_2D</span><span class="p">(</span><span class="n">currents</span><span class="p">,</span> <span class="n">mags</span><span class="p">)</span>
+    <span class="n">ind_vars</span><span class="p">,</span> <span class="n">dep_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">currents</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">freqs</span><span class="p">)],</span> <span class="p">[</span><span class="n">mags_2D</span><span class="p">,</span> <span class="n">phases_2D</span><span class="p">]</span>
+    
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="n">startpoint</span> <span class="o">=</span> <span class="n">quanta_start</span>
+    <span class="n">stoppoint</span> <span class="o">=</span> <span class="n">startpoint</span><span class="o">+</span><span class="n">quanta_size</span>
+    <span class="n">trimleft</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">currents</span><span class="p">)</span><span class="o">&gt;</span><span class="n">startpoint</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">trimright</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">currents</span><span class="p">)</span><span class="o">&lt;</span><span class="n">stoppoint</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="n">dep_var_trimmed</span> <span class="o">=</span> <span class="n">dep_vars</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">trimleft</span><span class="p">:</span><span class="n">trimright</span><span class="p">]</span>
+    <span class="n">ind_vars_trimmed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ind_vars</span><span class="p">)</span>
+    <span class="n">ind_vars_trimmed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ind_vars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">trimleft</span><span class="p">:</span><span class="n">trimright</span><span class="p">]</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#0000FF&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#FFFFFF&#39;</span><span class="p">),</span> <span class="n">color</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="s1">&#39;#FF0000&#39;</span><span class="p">)]</span>
+    <span class="n">_cmap</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">LinearSegmentedColormap</span><span class="o">.</span><span class="n">from_list</span><span class="p">(</span><span class="s1">&#39;my_cmap&#39;</span><span class="p">,</span> <span class="n">colors</span><span class="p">)</span>
+    <span class="n">adj</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">dep_var_trimmed</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dep_var_trimmed</span><span class="p">)</span>
+    <span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dep_var_trimmed</span><span class="p">)</span>
+    
+    <span class="n">_norm</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span> <span class="o">=</span> <span class="n">low</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">high</span><span class="p">)</span>
+    
+    <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ind_vars_trimmed</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ind_vars_trimmed</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">graph_x</span> <span class="o">=</span> <span class="n">ind_vars_trimmed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">scale_factor</span>
+    
+    <span class="n">dplot</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">extent</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">ind_vars_trimmed</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">ind_vars_trimmed</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">aspect</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span> <span class="o">=</span> <span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">norm</span> <span class="o">=</span> <span class="n">_norm</span><span class="p">,</span> <span class="n">cmap</span> <span class="o">=</span> <span class="n">_cmap</span><span class="p">)</span>
+    <span class="n">fplot</span><span class="p">,</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">51</span><span class="p">),</span> <span class="n">snail_freqs_fits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">margins</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">salpha</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">start_freq</span> <span class="o">=</span> <span class="n">sfreq</span><span class="o">.</span><span class="n">val</span>
+        <span class="c1"># x = np.where(p_arr == p)[0][0]</span>
+        <span class="c1"># y = np.where(alpha_arr == alpha)[0][0]</span>
+        <span class="c1"># print(&quot;p: &quot;+str(p_arr[p])+&quot; Alpha: &quot;+str(alpha_arr[alpha]))</span>
+        <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">start_freq</span><span class="o">/</span><span class="n">snail_freqs_fits</span><span class="p">[</span><span class="n">p</span><span class="p">][</span><span class="n">alpha</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">fplot</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">snail_freqs_fits</span><span class="p">[</span><span class="n">p</span><span class="p">][</span><span class="n">alpha</span><span class="p">]</span><span class="o">*</span><span class="n">scale_factor</span><span class="p">)</span>
+        
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">x_adj</span> <span class="o">=</span> <span class="n">center</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">fplot</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">phi</span><span class="o">+</span><span class="n">x_adj</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
+    
+    <span class="n">axp</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">])</span>
+    <span class="n">axalpha</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">])</span>
+    <span class="n">axbox</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.075</span><span class="p">])</span>
+    <span class="n">axfreq</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span><span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">])</span>
+    
+    <span class="n">text_box</span> <span class="o">=</span> <span class="n">TextBox</span><span class="p">(</span><span class="n">axbox</span><span class="p">,</span> <span class="s1">&#39;Center&#39;</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="s2">&quot;3.1415&quot;</span><span class="p">)</span>
+    <span class="n">text_box</span><span class="o">.</span><span class="n">on_submit</span><span class="p">(</span><span class="n">submit</span><span class="p">)</span>
+    
+    <span class="n">sp</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span><span class="n">axp</span><span class="p">,</span> <span class="s1">&#39;P index&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">p_arr</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">valinit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">valstep</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">salpha</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span><span class="n">axalpha</span><span class="p">,</span> <span class="s1">&#39;Alpha index&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">alpha_arr</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">valinit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">valstep</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sfreq</span> <span class="o">=</span> <span class="n">Slider</span><span class="p">(</span><span class="n">axfreq</span><span class="p">,</span> <span class="s1">&#39;start frequency&#39;</span><span class="p">,</span> <span class="n">start_freq</span><span class="o">-</span><span class="mf">3e9</span><span class="p">,</span> <span class="n">start_freq</span><span class="o">+</span><span class="mf">3e9</span><span class="p">,</span> <span class="n">valinit</span><span class="o">=</span><span class="n">start_freq</span><span class="p">)</span>
+    
+    <span class="n">sp</span><span class="o">.</span><span class="n">on_changed</span><span class="p">(</span><span class="n">update</span><span class="p">)</span>
+    <span class="n">salpha</span><span class="o">.</span><span class="n">on_changed</span><span class="p">(</span><span class="n">update</span><span class="p">)</span>
+    <span class="n">sfreq</span><span class="o">.</span><span class="n">on_changed</span><span class="p">(</span><span class="n">update</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">sp</span><span class="p">,</span> <span class="n">salpha</span><span class="p">,</span> <span class="n">sfreq</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span> 
+    <span class="n">fs_filepath</span><span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">136.142.53.51\data002\Texas\Cooldown_20210408\SA_C1_FS\2021-05-04_0005_C1_FS6_very_wide_fine.ddh5&quot;</span>
+    <span class="c1"># load pickled fit data</span>
+    <span class="n">fit_filepath</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;C:\Users\Hatlab_3\Desktop\RK_Scripts\NewRepos\data_processing\data_processing\models\SNAIL_supporting_modules\SNAIL_detailed.p&quot;</span>
+    <span class="n">p_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+    <span class="n">alpha_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.32</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+    <span class="n">p_slider</span><span class="p">,</span> <span class="n">a_slider</span><span class="p">,</span> <span class="n">freq_slider</span> <span class="o">=</span> <span class="n">slider_fit</span><span class="p">(</span><span class="n">fs_filepath</span><span class="p">,</span> <span class="n">fit_filepath</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.98e-5</span><span class="p">,</span> <span class="mf">220.6e-6</span><span class="p">,</span> <span class="n">p_arr</span><span class="p">,</span> <span class="n">alpha_arr</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Hatlab Data Processing 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Participation_and_Alpha_Fitter</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Boris Mesits.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+  </body>
+</html>
