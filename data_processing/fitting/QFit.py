@@ -40,6 +40,26 @@ def reflectionFunc_re(freq, Qext, Qint, f0, magBack, phaseCorrect):
     return reflectionFunc(freq, Qext, Qint, f0, magBack, phaseCorrect)[::2]
 
 def getData_from_datadict(filepath, plot_data = None): 
+    '''
+    Takes a VNA trace and returns the data as numpy arrays. It returns trace data
+    in both real-imaginary and phase-magnitude form.
+
+    Parameters
+    ----------
+    filepath : TYPE
+        DESCRIPTION.
+    plot_data : TYPE, optional
+        DESCRIPTION. The default is None.
+
+    Returns
+    -------
+    freqs : np.float
+    real : np.float
+    imag : np.float
+    powers_dB : np.float
+    phase_rad : np.float
+
+    '''
     datadict = all_datadicts_from_hdf5(filepath)['data']
     powers_dB = datadict.extract('power')['power']['values']
     freqs = datadict.extract('power')['frequency']['values']*2*np.pi
