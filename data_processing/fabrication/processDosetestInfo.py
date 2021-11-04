@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as color
+from matplotlib.colors import ListedColormap
 
 locationDict = {
     1111: (1,5), 
@@ -135,7 +136,8 @@ optical_val_key = {
     'na': -3
     }
 
-dt_filepath = r'G:/My Drive/fab/20210812_SNAILs/SA_3X_SHARC_5X_msmts.csv'
+# dt_filepath = r'G:/My Drive/fab/20210812_SNAILs/SA_3X_SHARC_5X_msmts.csv'
+dt_filepath = r'G:/My Drive/fab/20211012_SNAILs/SA_4X_SH_6X_msmts.csv'
 data = pd.read_csv(dt_filepath)
 
 ser_nums = data['Serial Number'][:-1]
@@ -151,7 +153,10 @@ loc_arr = []
 for ind, SN in enumerate(ser_nums):
     print(SN, ind)
     loc_arr.append(locationDict[SN])
-    res_val_arr[ind] = res_vals[ind]
+    if res_vals[ind] == '#DIV/0!':
+        res_val_arr[ind] = -1
+    else: 
+        res_val_arr[ind] = res_vals[ind]
     opt_val_arr[ind] = optical_val_key[opt_vals[ind]]
     
 
@@ -187,24 +192,30 @@ for ind, loc in enumerate(loc_arr):
 colors = [color.hex2color('#4444FF'), color.hex2color('#FFFFFF'), color.hex2color('#05ff3f'), color.hex2color('#05ff3f'),color.hex2color('#FFFFFF'), color.hex2color('#FF4444')]
 colors = [color.hex2color('#4444FF'), color.hex2color('#05ff3f'), color.hex2color('#05ff3f'), color.hex2color('#FF4444')]
 _cmap = color.LinearSegmentedColormap.from_list('my_cmap', colors)
+newcolors = _cmap(np.linspace(0,1,256))
+gray = np.array([50/256, 50/256, 50/256, 1])
+newcolors[:1, :] = gray
+newcmp = ListedColormap(newcolors)
 
 colors1 = [color.hex2color('#FF4444'),color.hex2color('#FFFFFF'), color.hex2color('#05ff3f')]
 _cmap1 = color.LinearSegmentedColormap.from_list('my_cmap', colors1)
+# print(_cmap1.N)
+# _cmap1[0:10] == color.hex2color('FFFFFF')
 
 x_ax = range(10)[1:]
 y_ax = range(10)[1:]
 fig = plt.figure(figsize = (16,8))
 ax = fig.add_subplot(121)
-goal_resistance = 60
+goal_resistance = 69
 
-plt.pcolormesh(res_imshow_arr.T-goal_resistance, cmap = _cmap)
+plt.pcolormesh(res_imshow_arr.T-goal_resistance, cmap = newcmp)
 cbar = plt.colorbar()
 cbar.ax.set_ylabel('Resistance (Ohms)')
 ax.invert_yaxis()
 ax.set_aspect(1)
 ax.hlines(np.arange(0,11,1), 0,10, linestyles = '-', colors = ['black'])
 ax.vlines(np.arange(0,11,1), 0,10, linestyles = '-', colors = ['black'])
-ax.set_title(f'Resistance measurements (goal_resistance: {goal_resistance} Ohms)')
+ax.set_title(f'Resistance measurements \ngoal_resistance: {goal_resistance} Ohms\n avg resistance (all): {np.round(np.average(res_val_arr[np.logical_not(res_val_arr==-1)]), 2)} Ohms\n avg resistance (opt gg or better): {np.round(np.average(res_val_arr[opt_val_arr >= 2]), 2)} Ohms')
 plt.clim(-5,5)
 for key, val in locationDict.items(): 
     ax.annotate(key, np.flip(np.array(val)+np.array([-0.5,-1])))
