@@ -38,14 +38,14 @@ A_Brass_440 = (np.pi*2.38506**2)/1e6 #m^2
 
 torque_in_arr_metric = torque_in_arr*inoz_to_Nm
 
-F_out_arr = eta_Brass_256*(2*np.pi/lead_Brass_440)*torque_in_arr
-sig_out_arr= F_out_arr/A_Brass_440
+sig_out_arr = torque_in_arr*inoz_to_Nm*2*np.pi/lead_Brass_440/A_Brass_440/1e6
 fig, ax = plt.subplots()
 ax.plot(torque_in_arr, sig_out_arr)
 
 ax.set_xlabel("Torque(in-oz)")
 ax.set_ylabel("Stress (MPa)")
 ax.grid()
-ax.hlines([310e6], 0, 60, label = "Yield Strength (Brass)", linestyle = 'dashed', color = 'red')
+ax.hlines([140], 0, 60, label = "Yield Strength (Brass, MPa)", linestyle = 'dashed', color = 'orange')
+ax.hlines([360], 0, 60, label = "Tensile Strength (Brass, MPa)", linestyle = 'dashed', color = 'red')
 ax.legend()
-ax.set_title("2-56 Brass")
+ax.set_title("4-40 Brass")
