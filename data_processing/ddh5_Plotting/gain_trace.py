@@ -8,6 +8,8 @@ from plottr.data.datadict_storage import all_datadicts_from_hdf5
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+
 filepath = r'Z:/Data/SH_5B1_4141/Traces/gain1/2021-09-13/2021-09-13_0001_6.065Ghz_SS_Gain_SG_-6.6dBm/2021-09-13_0001_6.065Ghz_SS_Gain_SG_-6.6dBm.ddh5'
 
 dd = all_datadicts_from_hdf5(filepath)['data']

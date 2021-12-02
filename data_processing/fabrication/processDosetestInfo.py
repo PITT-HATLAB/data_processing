@@ -137,7 +137,7 @@ optical_val_key = {
     }
 
 # dt_filepath = r'G:/My Drive/fab/20210812_SNAILs/SA_3X_SHARC_5X_msmts.csv'
-dt_filepath = r'G:/My Drive/fab/20211012_SNAILs/SA_4X_SH_6X_msmts.csv'
+dt_filepath = r'G:/My Drive/fab/20211119_SNAILs/SA_4X_SH_6X_msmts.csv'
 data = pd.read_csv(dt_filepath)
 
 ser_nums = data['Serial Number'][:-1]
@@ -157,6 +157,8 @@ for ind, SN in enumerate(ser_nums):
         res_val_arr[ind] = -1
     else: 
         res_val_arr[ind] = res_vals[ind]
+    # print(ind)
+    # print(opt_vals[ind])
     opt_val_arr[ind] = optical_val_key[opt_vals[ind]]
     
 

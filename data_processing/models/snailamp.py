@@ -269,7 +269,7 @@ class SnailAmp():
         return fit_func, [fitted_alpha, fitted_p, fitted_f0], [d_alpha, d_p, d_f0]
         
     def frattini_p_to_part(self, fp, alpha):
-        return 1/(1/fp*c2_func_gen_vectorize(alpha)(0)+1)
+        return lambda flux: 1/(1/fp*c2_func_gen_vectorize(alpha)(flux)+1)
     
     def slider_participation_fitter(self, stored_fits_filepath: str, fluxsweep_filepath: str, ret_sliders = False, start_freq = 7e9): 
         '''

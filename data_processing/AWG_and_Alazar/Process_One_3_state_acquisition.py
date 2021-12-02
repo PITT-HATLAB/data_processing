@@ -34,84 +34,6 @@ def find_all_ddh5(cwd):
 
 #%%sample one file to check things
 
-IQ_offset =  np.array((0,0))
-# records_per_pulsetype = 3870
-cf = 6171427180.18
-# amp_off_filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/Pump_power_sweeps/1/2021-06-30/2021-06-30_0011_LO_6152798714.0_pwr_-8.69_amp_1_rotation_phase_2.094/2021-06-30_0011_LO_6152798714.0_pwr_-8.69_amp_1_rotation_phase_2.094.ddh5'
-# amp_off_filepath = r'Z:/Data/C1/C1_Hakan/Gain_pt_0.103mA/signal_power_sweeps/1_initial_guess/2021-07-06/2021-07-06_0003_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.0_V_Phase_0.0_rad_/2021-07-06_0003_Amp_0__LO_freq_6153298714.0_Hz_Sig_Volt_0.0_V_Phase_0.0_rad_.ddh5'
-
-# filepath = r'G:/My Drive/shared/Amplifier_Response_Data/Data/Pump_pwr_detuning_sweeps/2021-07-07/2021-07-07_0409_Amp_1__pwr_-8.83_dBm_LO_freq_6172127180.18_Hz_Phase_0.0_rad_/2021-07-07_0409_Amp_1__pwr_-8.83_dBm_LO_freq_6172127180.18_Hz_Phase_0.0_rad_.ddh5'
-
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep/2021-09-14/2021-09-14_0002_3_state_40dB_att_Amp_0__pwr_-7.0_dBm_Rep_1__/2021-09-14_0002_3_state_40dB_att_Amp_0__pwr_-7.0_dBm_Rep_1__.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep/2021-09-14/2021-09-14_0027_3_state_40dB_att_Amp_1__pwr_-7.0_dBm_Rep_1__/2021-09-14_0027_3_state_40dB_att_Amp_1__pwr_-7.0_dBm_Rep_1__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep/2021-09-14/2021-09-14_0034_3_state_40dB_att_Amp_1__pwr_-6.75_dBm_Rep_3__/2021-09-14_0034_3_state_40dB_att_Amp_1__pwr_-6.75_dBm_Rep_3__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep/2021-09-14/2021-09-14_0038_3_state_40dB_att_Amp_1__pwr_-6.5_dBm_Rep_2__/2021-09-14_0038_3_state_40dB_att_Amp_1__pwr_-6.5_dBm_Rep_2__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep/2021-09-14/2021-09-14_0044_3_state_40dB_att_Amp_1__pwr_-6.25_dBm_Rep_3__/2021-09-14_0044_3_state_40dB_att_Amp_1__pwr_-6.25_dBm_Rep_3__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep/2021-09-14/2021-09-14_0046_3_state_40dB_att_Amp_1__pwr_-6.0_dBm_Rep_0__/2021-09-14_0046_3_state_40dB_att_Amp_1__pwr_-6.0_dBm_Rep_0__.ddh5'
-
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep_+500kHz/2021-09-14/2021-09-14_0001_3_state_40dB_att_Amp_0__pwr_-7.0_dBm_Rep_0__/2021-09-14_0001_3_state_40dB_att_Amp_0__pwr_-7.0_dBm_Rep_0__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep_+500kHz/2021-09-14/2021-09-14_0028_3_state_40dB_att_Amp_1__pwr_-7.0_dBm_Rep_2__/2021-09-14_0028_3_state_40dB_att_Amp_1__pwr_-7.0_dBm_Rep_2__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep_+500kHz/2021-09-14/2021-09-14_0031_3_state_40dB_att_Amp_1__pwr_-6.75_dBm_Rep_0__/2021-09-14_0031_3_state_40dB_att_Amp_1__pwr_-6.75_dBm_Rep_0__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep_+500kHz/2021-09-14/2021-09-14_0036_3_state_40dB_att_Amp_1__pwr_-6.5_dBm_Rep_0__/2021-09-14_0036_3_state_40dB_att_Amp_1__pwr_-6.5_dBm_Rep_0__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep_+500kHz/2021-09-14/2021-09-14_0042_3_state_40dB_att_Amp_1__pwr_-6.25_dBm_Rep_1__/2021-09-14_0042_3_state_40dB_att_Amp_1__pwr_-6.25_dBm_Rep_1__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/gen_pwr_sweep_+500kHz/2021-09-14/2021-09-14_0047_3_state_40dB_att_Amp_1__pwr_-6.0_dBm_Rep_1__/2021-09-14_0047_3_state_40dB_att_Amp_1__pwr_-6.0_dBm_Rep_1__.ddh5'
-
-#loopback for sat_discriminator
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\loopbacks\2021-09-30\2021-09-30_0009_3_state_loopback_0dB_att_Rep_0__\2021-09-30_0009_3_state_loopback_0dB_att_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-09-30\2021-09-30_0002_3_state_deep_sat_40dB_att_Rep_0__\2021-09-30_0002_3_state_deep_sat_40dB_att_Rep_0__.ddh5'
-
-#in order of increasing power
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-09-30\2021-09-30_0003_3_state_deep_sat_40dB_att_Sig_Volt_0.2_V_Rep_0__\2021-09-30_0003_3_state_deep_sat_40dB_att_Sig_Volt_0.2_V_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-09-30\2021-09-30_0004_3_state_deep_sat_40dB_att_Sig_Volt_0.25_V_Rep_0__\2021-09-30_0004_3_state_deep_sat_40dB_att_Sig_Volt_0.25_V_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-09-30\2021-09-30_0005_3_state_deep_sat_40dB_att_Sig_Volt_0.3_V_Rep_0__\2021-09-30_0005_3_state_deep_sat_40dB_att_Sig_Volt_0.3_V_Rep_0__.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-09-30\2021-09-30_0011_3_state_deep_sat_40dB_att_Sig_Volt_0.6_V_Rep_0__\2021-09-30_0011_3_state_deep_sat_40dB_att_Sig_Volt_0.6_V_Rep_0__.ddh5'
-
-#longer time: 
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-09-30\2021-09-30_0017_3_state_deep_sat_40dB_att_8us_time_Rep_0__\2021-09-30_0017_3_state_deep_sat_40dB_att_8us_time_Rep_0__.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-09-30\2021-09-30_0030_3_state_deep_sat_40dB_att_8us_time_Rep_4__\2021-09-30_0030_3_state_deep_sat_40dB_att_8us_time_Rep_4__.ddh5'
-
-#SWEEPING power
-#0.55V
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-01\2021-10-01_0076_3_state_deep_sat_40dB_att_2V_Sig_Volt_0.55_V_\2021-10-01_0076_3_state_deep_sat_40dB_att_2V_Sig_Volt_0.55_V_.ddh5'
-
-#0.6V
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-01\2021-10-01_0077_3_state_deep_sat_40dB_att_2V_Sig_Volt_0.6_V_\2021-10-01_0077_3_state_deep_sat_40dB_att_2V_Sig_Volt_0.6_V_.ddh5'
-
-#0.95V
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-01\2021-10-01_0084_3_state_deep_sat_40dB_att_2V_Sig_Volt_0.95_V_\2021-10-01_0084_3_state_deep_sat_40dB_att_2V_Sig_Volt_0.95_V_.ddh5'
-
-#1.1V
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-01\2021-10-01_0088_3_state_deep_sat_40dB_att_2V_Sig_Volt_1.15_V_\2021-10-01_0088_3_state_deep_sat_40dB_att_2V_Sig_Volt_1.15_V_.ddh5'
-
-#WTF Trigger?
-
-import easygui
-# filepath = easygui.fileopenbox(default = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-01\*')
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-04\2021-10-04_0005_3_state_deep_sat_40dB_att_2V_Rep_4__\2021-10-04_0005_3_state_deep_sat_40dB_att_2V_Rep_4__.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-04\2021-10-04_0004_3_state_deep_sat_40dB_att_2V_Rep_3__\2021-10-04_0004_3_state_deep_sat_40dB_att_2V_Rep_3__.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-04\2021-10-04_0003_3_state_deep_sat_40dB_att_2V_Rep_2__\2021-10-04_0003_3_state_deep_sat_40dB_att_2V_Rep_2__.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-04\2021-10-04_0002_3_state_deep_sat_40dB_att_2V_Rep_1__\2021-10-04_0002_3_state_deep_sat_40dB_att_2V_Rep_1__.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\saturation_discriminator\2021-10-04\2021-10-04_0001_3_state_deep_sat_40dB_att_2V_Rep_0__\2021-10-04_0001_3_state_deep_sat_40dB_att_2V_Rep_0__.ddh5'
-
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\digitizer_troubleshooting\2021-10-06\2021-10-06_0028_loopback_10dB_att_Rep_0__\2021-10-06_0028_loopback_10dB_att_Rep_0__.ddh5'
-
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\deep_saturation_phase_sweep\2021-10-06\2021-10-06_0001_40dB_att_Phase_0.0_rad_\2021-10-06_0001_40dB_att_Phase_0.0_rad_.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_6.064GHz\3_state\deep_saturation_phase_sweep\amp_on\2021-10-06\2021-10-06_0013_40dB_att_Phase_0.0_rad_\2021-10-06_0013_40dB_att_Phase_0.0_rad_.ddh5'
-
-#phase sweep
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0054_40dB_att_6us_Phase_0.0_rad_/2021-10-06_0054_40dB_att_6us_Phase_0.0_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0055_40dB_att_6us_Phase_0.524_rad_/2021-10-06_0055_40dB_att_6us_Phase_0.524_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0056_40dB_att_6us_Phase_1.047_rad_/2021-10-06_0056_40dB_att_6us_Phase_1.047_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0057_40dB_att_6us_Phase_1.571_rad_/2021-10-06_0057_40dB_att_6us_Phase_1.571_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0058_40dB_att_6us_Phase_2.094_rad_/2021-10-06_0058_40dB_att_6us_Phase_2.094_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0059_40dB_att_6us_Phase_2.618_rad_/2021-10-06_0059_40dB_att_6us_Phase_2.618_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0060_40dB_att_6us_Phase_3.142_rad_/2021-10-06_0060_40dB_att_6us_Phase_3.142_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0061_40dB_att_6us_Phase_3.665_rad_/2021-10-06_0061_40dB_att_6us_Phase_3.665_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0062_40dB_att_6us_Phase_4.189_rad_/2021-10-06_0062_40dB_att_6us_Phase_4.189_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0063_40dB_att_6us_Phase_4.712_rad_/2021-10-06_0063_40dB_att_6us_Phase_4.712_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0064_40dB_att_6us_Phase_5.236_rad_/2021-10-06_0064_40dB_att_6us_Phase_5.236_rad_.ddh5'
-filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/3_state/deep_saturation_phase_sweep/amp_on/2021-10-06/2021-10-06_0065_40dB_att_6us_Phase_5.76_rad_/2021-10-06_0065_40dB_att_6us_Phase_5.76_rad_.ddh5'
-
 filepath = r'G:/My Drive/shared/Amplifier_Response_Data/2021-09-30_0030_3_state_deep_sat_40dB_att_8us_time_Rep_4__.ddh5'
 
 # PU.get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = 0.01, records_per_pulsetype = 3870*2)
@@ -122,67 +44,23 @@ IQ_offset = (0,0)
 
 #%%
 # original bias point (closest to bp2)
-# filepath = r'G:/My Drive/shared/Amplifier_Response_Data/2021-09-30_0030_3_state_deep_sat_40dB_att_8us_time_Rep_4__.ddh5'
-# filepath = r'G:/My Drive/shared/Amplifier_Response_Data/Data/20210927_3state/amplifier_on/2021-09-14_0044_3_state_40dB_att_Amp_1__pwr_-6.25_dBm_Rep_3__.ddh5'
 
-#bp3
-# loopback
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\loopback\2021-10-13\2021-10-13_0005_bp3_loopback_Rep_0__\2021-10-13_0005_bp3_loopback_Rep_0__.ddh5'
-#oscillating states - amp off
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\loopback\2021-10-13\2021-10-13_0006_bp3_40dbAtt_4us_1.5V_Rep_0__\2021-10-13_0006_bp3_40dbAtt_4us_1.5V_Rep_0__.ddh5'
-#oscillating states - amp on
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\loopback\2021-10-13\2021-10-13_0007_bp3_40dbAtt_4us_1.5V_Rep_0__\2021-10-13_0007_bp3_40dbAtt_4us_1.5V_Rep_0__.ddh5'
-#more conservative rearming time
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\wait_time_sweep\2021-10-13\2021-10-13_0001_bp3_40dbAtt_4us_1.5V_Trigger_wait_0_us_\2021-10-13_0001_bp3_40dbAtt_4us_1.5V_Trigger_wait_0_us_.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\wait_time_sweep\2021-10-13\2021-10-13_0002_bp3_40dbAtt_4us_1.5V_Trigger_wait_100_us_\2021-10-13_0002_bp3_40dbAtt_4us_1.5V_Trigger_wait_100_us_.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\wait_time_sweep\2021-10-13\2021-10-13_0003_bp3_40dbAtt_4us_1.5V_Trigger_wait_200_us_\2021-10-13_0003_bp3_40dbAtt_4us_1.5V_Trigger_wait_200_us_.ddh5'
-filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\wait_time_sweep\2021-10-13\2021-10-13_0005_bp3_40dbAtt_4us_1.5V_Trigger_wait_400_us_\2021-10-13_0005_bp3_40dbAtt_4us_1.5V_Trigger_wait_400_us_.ddh5'
-
-#picking and choosing from the sweep
-#0.7V
-
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_sweep_no_sig_fine\2021-10-13\2021-10-13_0011_bp3_pump_sweep_no_sig_pump_pwr_7.78_dBm_\2021-10-13_0011_bp3_pump_sweep_no_sig_pump_pwr_7.78_dBm_.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig_fine/2021-10-13/2021-10-13_0010_bp3_pump_sweep_no_sig_pump_pwr_7.28_dBm_/2021-10-13_0010_bp3_pump_sweep_no_sig_pump_pwr_7.28_dBm_.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig_fine/2021-10-13/2021-10-13_0009_bp3_pump_sweep_no_sig_pump_pwr_6.78_dBm_/2021-10-13_0009_bp3_pump_sweep_no_sig_pump_pwr_6.78_dBm_.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig_fine/2021-10-13/2021-10-13_0008_bp3_pump_sweep_no_sig_pump_pwr_6.28_dBm_/2021-10-13_0008_bp3_pump_sweep_no_sig_pump_pwr_6.28_dBm_.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig_fine/2021-10-13/2021-10-13_0006_bp3_pump_sweep_no_sig_pump_pwr_5.28_dBm_/2021-10-13_0006_bp3_pump_sweep_no_sig_pump_pwr_5.28_dBm_.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig_fine/2021-10-13/2021-10-13_0001_bp3_pump_sweep_no_sig_pump_pwr_2.78_dBm_/2021-10-13_0001_bp3_pump_sweep_no_sig_pump_pwr_2.78_dBm_.ddh5'
-
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_no_Rb_clock\2021-10-13\2021-10-13_0001_bp3_pump_sweep_no_sig_Rep_0__\2021-10-13_0001_bp3_pump_sweep_no_sig_Rep_0__.ddh5'
-
-# #low power input
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/signal_power_sweep/2021-10-13/2021-10-13_0004_bp3_40dbAtt_4us_1.5V_Sig_Volt_0.2_V_/2021-10-13_0004_bp3_40dbAtt_4us_1.5V_Sig_Volt_0.2_V_.ddh5'
-
-# #no signal, at crit pump power
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig_fine/2021-10-13/2021-10-13_0011_bp3_pump_sweep_no_sig_pump_pwr_7.78_dBm_/2021-10-13_0011_bp3_pump_sweep_no_sig_pump_pwr_7.78_dBm_.ddh5'
-
-# #signal, but compensating 200Hz drift with offset in reference generator
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_no_Rb_clock\2021-10-14\2021-10-14_0001_bp3_SC9_detuning_Rep_0__\2021-10-14_0001_bp3_SC9_detuning_Rep_0__.ddh5' 
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_no_Rb_clock\2021-10-14\2021-10-14_0002_bp3_SC9_detuning_0Hz_Rep_0__\2021-10-14_0002_bp3_SC9_detuning_0Hz_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_no_Rb_clock\2021-10-14\2021-10-14_0003_bp3_SC9_detuning_0Hz_Rep_0__\2021-10-14_0003_bp3_SC9_detuning_0Hz_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_demod_detuning\2021-10-14\2021-10-14_0001_bp3_SC9_detuning_0Hz_Rep_0__\2021-10-14_0001_bp3_SC9_detuning_0Hz_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_demod_detuning\2021-10-14\2021-10-14_0002_bp3_SC9_detuning_0Hz_Rep_0__\2021-10-14_0002_bp3_SC9_detuning_0Hz_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_demod_detuning\2021-10-14\2021-10-14_0003_bp3_SC9_detuning_0Hz_Rep_0__\2021-10-14_0003_bp3_SC9_detuning_0Hz_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_demod_detuning\2021-10-14\2021-10-14_0004_bp3_SC9_detuning_0Hz_Rep_0__\2021-10-14_0004_bp3_SC9_detuning_0Hz_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\pulsed_pump_demod_detuning\2021-10-14\2021-10-14_0005_bp3_SC9_detuning_0Hz_Rep_0__\2021-10-14_0005_bp3_SC9_detuning_0Hz_Rep_0__.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/detuning_sweep_fine/2021-10-14/2021-10-14_0009_bp3_LO_detuning_0.3V_LO_freq_6800000000.0_Hz_/2021-10-14_0009_bp3_LO_detuning_0.3V_LO_freq_6800000000.0_Hz_.ddh5'
-
-# #looking at just pump pulsing again
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig__extra_fine_high_power/2021-10-13/2021-10-13_0016_bp3_pump_sweep_no_sig_pump_pwr_7.53_dBm_/2021-10-13_0016_bp3_pump_sweep_no_sig_pump_pwr_7.53_dBm_.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig__extra_fine_high_power/2021-10-13/2021-10-13_0006_bp3_pump_sweep_no_sig_pump_pwr_7.03_dBm_/2021-10-13_0006_bp3_pump_sweep_no_sig_pump_pwr_7.03_dBm_.ddh5'
-# filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_bp3/3_state/bp3/pulsed_pump_sweep_no_sig__extra_fine_high_power/2021-10-13/2021-10-13_0035_bp3_pump_sweep_no_sig_pump_pwr_8.48_dBm_/2021-10-13_0035_bp3_pump_sweep_no_sig_pump_pwr_8.48_dBm_.ddh5'
+filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__.ddh5'
+filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0036_amp_gain_test_Sig_Volt_0.1_V_Rep_0__\2021-11-18_0036_amp_gain_test_Sig_Volt_0.1_V_Rep_0__.ddh5'
+# filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0075_amp_gain_test_Sig_Volt_0.45_V_Rep_4__\2021-11-18_0075_amp_gain_test_Sig_Volt_0.45_V_Rep_4__.ddh5'
 
 fidelity = PU.extract_3pulse_histogram_from_filepath(filepath, 
                                             numRecords =  7686, 
                                             IQ_offset = (0,0), 
                                             plot = True, 
-                                            hist_scale = 25, 
+                                            hist_scale = 0.04, 
                                             fit = True,
-                                            boxcar = True,
+                                            boxcar = False,
                                             bc_window = [50, 150],
                                             lpf = False, 
                                             lpf_wc = 15e6, 
-                                            record_track = True)
+                                            record_track = True, 
+                                            tuneup_plots = True)
 print(fidelity)
 #%% extract the average phase difference between records from filepaths
 #extract 3 pulse noise for the 

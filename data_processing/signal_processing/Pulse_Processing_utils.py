@@ -162,6 +162,16 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         
         fig.tight_layout(h_pad = 1, w_pad = 1.5)
         
+        fig01 = plt.figure(10, figsize = (12,8))
+        fig01.suptitle(name, fontsize = 20)
+        ax1 = fig01.add_subplot(111)
+        ax1.set_title("Magnitude Difference between G and E")
+        ax1.set_ylabel("Voltage (mV)")
+        ax1.set_xlabel("Time (ns)")
+        ax1.plot(time_vals, np.sqrt(sI_c1_avg**2+sQ_c1_avg**2)*1000 - np.sqrt(sI_c2_avg**2+sQ_c2_avg**2)*1000, label = 'G_records-E_records')
+
+        ax1.grid()
+        
         fig2 = plt.figure(2, figsize = (12,8))
         
         ax11 = fig2.add_subplot(331)
@@ -204,7 +214,9 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         hist_scale2 = hist_scale1
         hist_scale3 = hist_scale1
     else: 
-        hist_scale1 = hist_scale2 = hist_scale3 = hist_scale
+        hist_scale1 = hist_scale
+        hist_scale2 = hist_scale
+        hist_scale3 = hist_scale
     # hist_scale2 = np.max(np.abs([sI_c2_avg, sQ_c2_avg]))*1.2
     # hist_scale3 = np.max(np.abs([sI_c3_avg, sQ_c3_avg]))*1.2
     
@@ -214,14 +226,14 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
     bins_GE_F, h_GE_F, I_GE_F_pts, Q_GE_F_pts = weighted_histogram(fig2, ax13, Sge, sI_c3, sQ_c3, scale = hist_scale3, record_track = record_track)
     
     #using GF weights:
-    bins_GF_G, h_GF_G, I_GF_G_pts, Q_GF_G_pts = weighted_histogram(fig2, ax21, Sgf, sI_c1, sQ_c1, scale = hist_scale1, record_track = record_track)
-    bins_GF_E, h_GF_E, I_GF_E_pts, Q_GF_E_pts = weighted_histogram(fig2, ax22, Sgf, sI_c2, sQ_c2, scale = hist_scale2, record_track = record_track)
-    bins_GF_F, h_GF_F, I_GF_F_pts, Q_GF_F_pts = weighted_histogram(fig2, ax23, Sgf, sI_c3, sQ_c3, scale = hist_scale3, record_track = record_track)
+    bins_GF_G, h_GF_G, I_GF_G_pts, Q_GF_G_pts = weighted_histogram(fig2, ax21, Sgf, sI_c1, sQ_c1, scale = hist_scale1, record_track = False)
+    bins_GF_E, h_GF_E, I_GF_E_pts, Q_GF_E_pts = weighted_histogram(fig2, ax22, Sgf, sI_c2, sQ_c2, scale = hist_scale2, record_track = False)
+    bins_GF_F, h_GF_F, I_GF_F_pts, Q_GF_F_pts = weighted_histogram(fig2, ax23, Sgf, sI_c3, sQ_c3, scale = hist_scale3, record_track = False)
     
     #using EF weights:
-    bins_EF_G, h_EF_G, I_EF_G_pts, Q_EF_G_pts = weighted_histogram(fig2, ax31, Sef, sI_c1, sQ_c1, scale = hist_scale1, record_track = record_track)
-    bins_EF_E, h_EF_E, I_EF_E_pts, Q_EF_E_pts = weighted_histogram(fig2, ax32, Sef, sI_c2, sQ_c2, scale = hist_scale2, record_track = record_track)
-    bins_EF_F, h_EF_F, I_EF_F_pts, Q_EF_F_pts = weighted_histogram(fig2, ax33, Sef, sI_c3, sQ_c3, scale = hist_scale3, record_track = record_track)
+    bins_EF_G, h_EF_G, I_EF_G_pts, Q_EF_G_pts = weighted_histogram(fig2, ax31, Sef, sI_c1, sQ_c1, scale = hist_scale1, record_track = False)
+    bins_EF_E, h_EF_E, I_EF_E_pts, Q_EF_E_pts = weighted_histogram(fig2, ax32, Sef, sI_c2, sQ_c2, scale = hist_scale2, record_track = False)
+    bins_EF_F, h_EF_F, I_EF_F_pts, Q_EF_F_pts = weighted_histogram(fig2, ax33, Sef, sI_c3, sQ_c3, scale = hist_scale3, record_track = False)
     
     if fit: 
         
@@ -243,72 +255,73 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         
         G_x0Guess = np.max(I_G_avg)
         G_y0Guess = np.max(Q_G_avg)
-        G_ampGuess = hist_y_scale
+        G_ampGuess = np.average(np.sqrt(I_G_avg**2+Q_G_avg**2))
         G_sxGuess = hist_scale/2
-        G_syGuess = G_sxGuess
-        G_thetaGuess = 0
+        G_syGuess = hist_scale/2
+        G_thetaGuess = np.average(np.angle(I_G_avg+1j*Q_G_avg))
         G_offsetGuess = 0
         
         E_x0Guess = np.max(I_E_avg)
         E_y0Guess = np.max(Q_E_avg)
-        E_ampGuess = hist_y_scale
+        E_ampGuess = np.average(np.sqrt(I_E_avg**2+Q_E_avg**2))
         E_sxGuess = hist_scale/2
-        E_syGuess = E_sxGuess
-        E_thetaGuess = 0
+        E_syGuess = hist_scale/2
+        E_thetaGuess = np.average(np.angle(I_E_avg+1j*Q_E_avg))
         E_offsetGuess = 0
         
         F_x0Guess = np.max(I_F_avg)
         F_y0Guess = np.max(Q_F_avg)
-        F_ampGuess = hist_y_scale
+        F_ampGuess = np.average(np.sqrt(I_F_avg**2+Q_F_avg**2))
         F_sxGuess = hist_scale/2
-        F_syGuess = F_sxGuess
-        F_thetaGuess = 0
+        F_syGuess = hist_scale/2
+        F_thetaGuess = np.average(np.angle(I_F_avg+1j*Q_F_avg))
         F_offsetGuess = 0
         
-        guessParams = [[G_ampGuess, G_x0Guess, G_y0Guess, G_sxGuess, G_syGuess, G_thetaGuess],
-                       [E_ampGuess, E_x0Guess, E_y0Guess, E_sxGuess, E_syGuess, E_thetaGuess], 
-                       [F_ampGuess, F_x0Guess, F_y0Guess, F_sxGuess, F_syGuess, F_thetaGuess]]
+        guessParams = [[G_ampGuess, G_x0Guess, G_y0Guess, G_sxGuess, G_thetaGuess],
+                       [E_ampGuess, E_x0Guess, E_y0Guess, E_sxGuess, E_thetaGuess], 
+                       [F_ampGuess, F_x0Guess, F_y0Guess, F_sxGuess, F_thetaGuess]]
         
         print(guessParams)
         ########
+        max_fev = 10000
         GE_G_fit = fit_2D_Gaussian('GE_G_fit', bins_GE_G, h_GE_G, 
                                                     guessParams[0],
-                                                    max_fev = 1000,
+                                                    max_fev = max_fev,
                                                     contour_line = 4)
         GE_G_fit_h = Gaussian_2D(np.meshgrid(bins_GE_G[:-1], bins_GE_G[:-1]), *GE_G_fit.info_dict['popt'])
         GE_G_fit_h_norm = np.copy(GE_G_fit_h/np.sum(GE_G_fit_h))
         ########
         GE_E_fit = fit_2D_Gaussian('GE_E_fit', bins_GE_E, h_GE_E, 
                                                     guessParams[1],
-                                                    max_fev = 1000,
+                                                    max_fev = max_fev,
                                                     contour_line = 4)
         GE_E_fit_h = Gaussian_2D(np.meshgrid(bins_GE_E[:-1], bins_GE_E[:-1]), *GE_E_fit.info_dict['popt'])
         GE_E_fit_h_norm = np.copy(GE_E_fit_h/np.sum(GE_E_fit_h))
         ########
         GF_G_fit = fit_2D_Gaussian('GF_G_fit', bins_GF_G, h_GF_G,
                                                 guessParams[0],
-                                                max_fev = 1000,
+                                                max_fev = max_fev,
                                                 contour_line = 4)
         GF_G_fit_h = Gaussian_2D(np.meshgrid(bins_GF_G[:-1], bins_GF_G[:-1]), *GF_G_fit.info_dict['popt'])
         GF_G_fit_h_norm = np.copy(GF_G_fit_h/np.sum(GF_G_fit_h))
         
         GF_F_fit = fit_2D_Gaussian('GF_F_fit', bins_GF_F, h_GF_F,
                                                 guessParams[2],
-                                                max_fev = 1000,
+                                                max_fev = max_fev,
                                                 contour_line = 4)
         GF_F_fit_h = Gaussian_2D(np.meshgrid(bins_GF_F[:-1], bins_GF_F[:-1]), *GF_F_fit.info_dict['popt'])
         GF_F_fit_h_norm = np.copy(GF_F_fit_h/np.sum(GF_F_fit_h))
         
         EF_E_fit = fit_2D_Gaussian('EF_E_fit', bins_EF_E, h_EF_E,
                                                 guessParams[2],
-                                                max_fev = 1000,
+                                                max_fev = max_fev,
                                                 contour_line = 4)
         EF_E_fit_h = Gaussian_2D(np.meshgrid(bins_EF_E[:-1], bins_EF_E[:-1]), *EF_E_fit.info_dict['popt'])
         EF_E_fit_h_norm = np.copy(EF_E_fit_h/np.sum(EF_E_fit_h))
         
         EF_F_fit = fit_2D_Gaussian('EF_F_fit', bins_EF_F, h_EF_F,
                                                 guessParams[2],
-                                                max_fev = 1000,
+                                                max_fev = max_fev,
                                                 contour_line = 4)
         EF_F_fit_h = Gaussian_2D(np.meshgrid(bins_EF_F[:-1], bins_EF_F[:-1]), *EF_F_fit.info_dict['popt'])
         EF_F_fit_h_norm = np.copy(EF_F_fit_h/np.sum(EF_F_fit_h))
@@ -528,16 +541,16 @@ def weighted_histogram(fig, ax, weight_function_arr, sI, sQ, scale = 1, num_bins
     # ax.set_yticks(np.array([-100,-75,-50,-25,0,25,50,75,100])*scale/100)
     if record_track: 
         fig2, ax2 = plt.subplots()
-        ax2.set_title("Record Tracking")
+        ax2.set_title("Record Tracking: Demodulated signals")
         ax2.set_xlabel("time (~us)")
         ax2.set_ylabel("$\phi(t)$")
-        unwrapped_phases = np.unwrap(np.arctan(np.array(I_pts[0:500])/np.array(Q_pts[0:500])), period = np.pi)
+        unwrapped_phases = np.mod(np.unwrap(np.arctan(np.array(I_pts[0:500])/np.array(Q_pts[0:500])), period = np.pi), 2*np.pi)
         ax2.plot(np.arange(500)*500, unwrapped_phases, '.', label = "phi(t)")
         print("Average phase difference between records: ", np.average(np.diff(unwrapped_phases))/np.pi*180, ' degrees')
         # ax2.hlines(-12*np.pi, 0, 20000)
     
     return bins, h, I_pts, Q_pts
-
+'''
 def Gaussian_2D(M,amplitude, xo, yo, sigma_x, sigma_y, theta):
     x, y = M
     xo = float(xo)
@@ -548,7 +561,17 @@ def Gaussian_2D(M,amplitude, xo, yo, sigma_x, sigma_y, theta):
     g = amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo)
                             + c*((y-yo)**2)))
     return g
-
+'''
+def Gaussian_2D(M,amplitude, xo, yo, sigma, theta):
+    x, y = M
+    xo = float(xo)
+    yo = float(yo)
+    a = (np.cos(theta)**2)/(2*sigma**2) + (np.sin(theta)**2)/(2*sigma**2)
+    b = -(np.sin(2*theta))/(4*sigma**2) + (np.sin(2*theta))/(4*sigma**2)
+    c = (np.sin(theta)**2)/(2*sigma**2) + (np.cos(theta)**2)/(2*sigma**2)
+    g = amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo)
+                            + c*((y-yo)**2)))
+    return g
 
 class Gaussian_info: 
     def __init__(self): 
@@ -594,9 +617,9 @@ def fit_2D_Gaussian(name,
                     bins, 
                     h_arr, 
                     guessParams, 
-                    max_fev = 100, 
+                    max_fev = 10000, 
                     contour_line = 3): 
-    
+    print("fitting with maxfev = ", max_fev)
     X, Y = np.meshgrid(bins[0:-1], bins[0:-1])
     resh_size = np.shape(X)
     xdata, ydata= np.vstack((X.ravel(), Y.ravel())), h_arr.ravel()
@@ -614,8 +637,8 @@ def fit_2D_Gaussian(name,
     GC.info_dict['x0'] = popt[1]
     GC.info_dict['y0'] = popt[2]
     GC.info_dict['sigma_x'] = np.abs(popt[3])
-    GC.info_dict['sigma_y'] = np.abs(popt[4])
-    GC.info_dict['theta'] = popt[5]
+    GC.info_dict['sigma_y'] = np.abs(popt[3])
+    GC.info_dict['theta'] = popt[4]
     GC.info_dict['popt'] = popt
     GC.info_dict['pcov'] = pcov
     GC.info_dict['contour'] = get_contour_line(X, Y, Gaussian_2D(xdata, *popt).reshape(resh_size), contour_line = contour_line)
@@ -805,10 +828,10 @@ def extract_3pulse_pwr_from_filepath(datapath, numRecords = 3840*2, window = [0,
     return np.average(np.sqrt(I_G_avg**2+Q_G_avg**2)[offset:rtrim]), np.average(np.sqrt(I_E_avg**2+Q_E_avg**2)[offset:rtrim]), np.average(np.sqrt(I_F_avg**2+Q_F_avg**2)[offset:rtrim])
 
 
-def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = None, numRecords = 3840*2, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = False, bc_window = [50, 150], record_track = True):
+def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = None, numRecords = 3840*2, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = False, bc_window = [50, 150], record_track = True, tuneup_plots = True):
     I_offset, Q_offset = IQ_offset
     dd = all_datadicts_from_hdf5(datapath)['data']
-    
+    print("dd keys",dd.keys())
     time_unit = dd['time']['unit']
     
     # print(np.size(np.unique(dd['time']['values'])))
