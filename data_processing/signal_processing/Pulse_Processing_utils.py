@@ -96,11 +96,11 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         Sge = Sgf = Sef = WF
     else: 
         #weight functions denoted by Sij for telling trace i from trace j
-        Sge = (np.average(sI_c1, axis = 0)-np.average(sI_c2, axis = 0))+(np.average(sQ_c1, axis = 0)-np.average(sQ_c2, axis = 0))
+        Sge_I, Sge_Q = [(np.average(sI_c1, axis = 0)-np.average(sI_c2, axis = 0)), (np.average(sQ_c1, axis = 0)-np.average(sQ_c2, axis = 0))] 
         
-        Sgf = (np.average(sI_c1, axis = 0)-np.average(sI_c3, axis = 0))+(np.average(sQ_c1, axis = 0)-np.average(sQ_c3, axis = 0))
+        Sgf_I, Sgf_Q = [(np.average(sI_c1, axis = 0)-np.average(sI_c3, axis = 0)), (np.average(sQ_c1, axis = 0)-np.average(sQ_c3, axis = 0))]
         
-        Sef = (np.average(sI_c2, axis = 0)-np.average(sI_c3, axis = 0))+(np.average(sQ_c2, axis = 0)-np.average(sQ_c3, axis = 0))
+        Sef_I, Sef_Q = [(np.average(sI_c2, axis = 0)-np.average(sI_c3, axis = 0)), (np.average(sQ_c2, axis = 0)-np.average(sQ_c3, axis = 0))]
 
     if lpf: 
     
@@ -109,6 +109,14 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         Sgf = sosfilt(butter(10, lpf_wc, fs = 1e9/20, output = 'sos'), Sgf)
     
         Sef = sosfilt(butter(10, lpf_wc, fs = 1e9/20, output = 'sos'), Sef)
+    
+    #nromalizing weight functions
+    # Sge_I /= np.linalg.norm([np.abs(Sge_I), np.abs(Sge_Q)])
+    # Sge_Q /= np.linalg.norm([np.abs(Sge_I), np.abs(Sge_Q)])
+    # Sef_I /= np.linalg.norm([np.abs(Sef_I), np.abs(Sef_Q)])
+    # Sef_Q /= np.linalg.norm([np.abs(Sef_I), np.abs(Sef_Q)])
+    # Sgf_I /= np.linalg.norm([np.abs(Sgf_I), np.abs(Sgf_Q)])
+    # Sgf_Q /= np.linalg.norm([np.abs(Sgf_I), np.abs(Sgf_Q)])
         
     sI_c1_avg = np.average(sI_c1, axis = 0)
     sI_c2_avg = np.average(sI_c2, axis = 0)
@@ -154,9 +162,12 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         
         ax4 = fig.add_subplot(224)
         ax4.set_title("Weight Functions")
-        ax4.plot(Sge, label = 'Wge')
-        ax4.plot(Sgf, label = 'Wgf')
-        ax4.plot(Sef, label = 'Wef')
+        ax4.plot(Sge_I, label = 'Wge_I')
+        ax4.plot(Sge_Q, label = 'Wge_Q')
+        ax4.plot(Sgf_I, label = 'Wgf')
+        ax4.plot(Sgf_Q, label = 'Wgf')
+        ax4.plot(Sef_I, label = 'Wef')
+        ax4.plot(Sef_Q, label = 'Wef')
         ax4.legend()
         ax4.grid()
         
@@ -221,19 +232,19 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
     # hist_scale3 = np.max(np.abs([sI_c3_avg, sQ_c3_avg]))*1.2
     
     #GE weights
-    bins_GE_G, h_GE_G, I_GE_G_pts, Q_GE_G_pts = weighted_histogram(fig2, ax11, Sge, sI_c1, sQ_c1, scale = hist_scale1, record_track = record_track)
-    bins_GE_E, h_GE_E, I_GE_E_pts, Q_GE_E_pts = weighted_histogram(fig2, ax12, Sge, sI_c2, sQ_c2, scale = hist_scale2, record_track = record_track)
-    bins_GE_F, h_GE_F, I_GE_F_pts, Q_GE_F_pts = weighted_histogram(fig2, ax13, Sge, sI_c3, sQ_c3, scale = hist_scale3, record_track = record_track)
+    bins_GE_G, h_GE_G, I_GE_G_pts, Q_GE_G_pts = weighted_histogram(fig2, ax11, Sge_I, Sge_Q, sI_c1, sQ_c1, scale = hist_scale1, record_track = record_track)
+    bins_GE_E, h_GE_E, I_GE_E_pts, Q_GE_E_pts = weighted_histogram(fig2, ax12, Sge_I, Sge_Q, sI_c2, sQ_c2, scale = hist_scale2, record_track = record_track)
+    bins_GE_F, h_GE_F, I_GE_F_pts, Q_GE_F_pts = weighted_histogram(fig2, ax13, Sge_I, Sge_Q, sI_c3, sQ_c3, scale = hist_scale3, record_track = record_track)
+    # 
+    # #using GF weights:
+    bins_GF_G, h_GF_G, I_GF_G_pts, Q_GF_G_pts = weighted_histogram(fig2, ax21, Sgf_I, Sgf_Q, sI_c1, sQ_c1, scale = hist_scale1, record_track = False)
+    bins_GF_E, h_GF_E, I_GF_E_pts, Q_GF_E_pts = weighted_histogram(fig2, ax22, Sgf_I, Sgf_Q, sI_c2, sQ_c2, scale = hist_scale2, record_track = False)
+    bins_GF_F, h_GF_F, I_GF_F_pts, Q_GF_F_pts = weighted_histogram(fig2, ax23, Sgf_I, Sgf_Q, sI_c3, sQ_c3, scale = hist_scale3, record_track = False)
     
-    #using GF weights:
-    bins_GF_G, h_GF_G, I_GF_G_pts, Q_GF_G_pts = weighted_histogram(fig2, ax21, Sgf, sI_c1, sQ_c1, scale = hist_scale1, record_track = False)
-    bins_GF_E, h_GF_E, I_GF_E_pts, Q_GF_E_pts = weighted_histogram(fig2, ax22, Sgf, sI_c2, sQ_c2, scale = hist_scale2, record_track = False)
-    bins_GF_F, h_GF_F, I_GF_F_pts, Q_GF_F_pts = weighted_histogram(fig2, ax23, Sgf, sI_c3, sQ_c3, scale = hist_scale3, record_track = False)
-    
-    #using EF weights:
-    bins_EF_G, h_EF_G, I_EF_G_pts, Q_EF_G_pts = weighted_histogram(fig2, ax31, Sef, sI_c1, sQ_c1, scale = hist_scale1, record_track = False)
-    bins_EF_E, h_EF_E, I_EF_E_pts, Q_EF_E_pts = weighted_histogram(fig2, ax32, Sef, sI_c2, sQ_c2, scale = hist_scale2, record_track = False)
-    bins_EF_F, h_EF_F, I_EF_F_pts, Q_EF_F_pts = weighted_histogram(fig2, ax33, Sef, sI_c3, sQ_c3, scale = hist_scale3, record_track = False)
+    # #using EF weights:
+    bins_EF_G, h_EF_G, I_EF_G_pts, Q_EF_G_pts = weighted_histogram(fig2, ax31, Sef_I, Sef_Q, sI_c1, sQ_c1, scale = hist_scale1, record_track = False)
+    bins_EF_E, h_EF_E, I_EF_E_pts, Q_EF_E_pts = weighted_histogram(fig2, ax32, Sef_I, Sef_Q, sI_c2, sQ_c2, scale = hist_scale2, record_track = False)
+    bins_EF_F, h_EF_F, I_EF_F_pts, Q_EF_F_pts = weighted_histogram(fig2, ax33, Sef_I, Sef_Q, sI_c3, sQ_c3, scale = hist_scale3, record_track = False)
     
     if fit: 
         
@@ -285,42 +296,48 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         ########
         max_fev = 10000
         GE_G_fit = fit_2D_Gaussian('GE_G_fit', bins_GE_G, h_GE_G, 
-                                                    guessParams[0],
+                                                    # guessParams[0],
+                                                    None,
                                                     max_fev = max_fev,
                                                     contour_line = 4)
         GE_G_fit_h = Gaussian_2D(np.meshgrid(bins_GE_G[:-1], bins_GE_G[:-1]), *GE_G_fit.info_dict['popt'])
         GE_G_fit_h_norm = np.copy(GE_G_fit_h/np.sum(GE_G_fit_h))
         ########
         GE_E_fit = fit_2D_Gaussian('GE_E_fit', bins_GE_E, h_GE_E, 
-                                                    guessParams[1],
+                                                    # guessParams[1],
+                                                    None, 
                                                     max_fev = max_fev,
                                                     contour_line = 4)
         GE_E_fit_h = Gaussian_2D(np.meshgrid(bins_GE_E[:-1], bins_GE_E[:-1]), *GE_E_fit.info_dict['popt'])
         GE_E_fit_h_norm = np.copy(GE_E_fit_h/np.sum(GE_E_fit_h))
         ########
         GF_G_fit = fit_2D_Gaussian('GF_G_fit', bins_GF_G, h_GF_G,
-                                                guessParams[0],
+                                                # guessParams[0],
+                                                None,
                                                 max_fev = max_fev,
                                                 contour_line = 4)
         GF_G_fit_h = Gaussian_2D(np.meshgrid(bins_GF_G[:-1], bins_GF_G[:-1]), *GF_G_fit.info_dict['popt'])
         GF_G_fit_h_norm = np.copy(GF_G_fit_h/np.sum(GF_G_fit_h))
         
         GF_F_fit = fit_2D_Gaussian('GF_F_fit', bins_GF_F, h_GF_F,
-                                                guessParams[2],
+                                                # guessParams[2],
+                                                None,
                                                 max_fev = max_fev,
                                                 contour_line = 4)
         GF_F_fit_h = Gaussian_2D(np.meshgrid(bins_GF_F[:-1], bins_GF_F[:-1]), *GF_F_fit.info_dict['popt'])
         GF_F_fit_h_norm = np.copy(GF_F_fit_h/np.sum(GF_F_fit_h))
         
         EF_E_fit = fit_2D_Gaussian('EF_E_fit', bins_EF_E, h_EF_E,
-                                                guessParams[2],
+                                                # guessParams[2],
+                                                None, 
                                                 max_fev = max_fev,
                                                 contour_line = 4)
         EF_E_fit_h = Gaussian_2D(np.meshgrid(bins_EF_E[:-1], bins_EF_E[:-1]), *EF_E_fit.info_dict['popt'])
         EF_E_fit_h_norm = np.copy(EF_E_fit_h/np.sum(EF_E_fit_h))
         
         EF_F_fit = fit_2D_Gaussian('EF_F_fit', bins_EF_F, h_EF_F,
-                                                guessParams[2],
+                                                # guessParams[2],
+                                                None,
                                                 max_fev = max_fev,
                                                 contour_line = 4)
         EF_F_fit_h = Gaussian_2D(np.meshgrid(bins_EF_F[:-1], bins_EF_F[:-1]), *EF_F_fit.info_dict['popt'])
@@ -398,45 +415,60 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         all_Q = np.vstack((sQ_c1, sQ_c2, sQ_c3))
         # print("all_I shape: ", np.shape(all_I))
         # print(np.shape(list(zip(sI_c1, sQ_c1))))
-        for G_record in list(zip(all_I, all_Q)): 
-            It, Qt = G_record[0], G_record[1]
+        for record in list(zip(all_I, all_Q)): 
+            
+            It, Qt = record[0], record[1]
             
             #GE weights
-            Sge_I = np.dot(Sge, It)
-            Sge_Q = np.dot(Sge, Qt)
+            ge_I = np.dot(Sge_I, It)+np.dot(Sge_Q, Qt)
+            ge_Q = np.dot(Sge_I, Qt)-np.dot(Sge_Q, It)
             
-            Iloc = np.digitize(Sge_I, bins_GE_G)
-            Qloc = np.digitize(Sge_Q, bins_GE_G)
+            Iloc = np.digitize(ge_I, bins_GE_G)
+            Qloc = np.digitize(ge_Q, bins_GE_G)
+            
+            if Iloc >= 99: Iloc = 98
+            if Qloc >= 99: Qloc = 98
             
             #if 1 it's G
             Sge_result = GE_is_G[Iloc, Qloc]
             
             #GF weights
-            Sgf_I = np.dot(Sgf, It)
-            Sgf_Q = np.dot(Sgf, Qt)
+            gf_I = np.dot(Sgf_I, It)+np.dot(Sgf_Q, Qt)
+            gf_Q = np.dot(Sgf_I, Qt)-np.dot(Sgf_Q, It)
             
-            Iloc = np.digitize(Sgf_I, bins_GF_G)
-            Qloc = np.digitize(Sgf_Q, bins_GF_G)
+            Iloc = np.digitize(gf_I, bins_GF_G)
+            Qloc = np.digitize(gf_Q, bins_GF_G)
+            
+            if Iloc >= 99: Iloc = 98
+            if Qloc >= 99: Qloc = 98
             
             #if 1 it's G
             Sgf_result = GF_is_G[Iloc, Qloc]
             
             #EF weights
-            Sef_I = np.dot(Sef, It)
-            Sef_Q = np.dot(Sef, Qt)
+            ef_I = np.dot(Sef_I, It)+np.dot(Sef_Q, Qt)
+            ef_Q  = np.dot(Sef_I, Qt)-np.dot(Sef_Q, It)
             
-            Iloc = np.digitize(Sef_I, bins_EF_E)
-            Qloc = np.digitize(Sef_Q, bins_EF_E)
+            Iloc = np.digitize(ef_I, bins_EF_E)
+            Qloc = np.digitize(ef_Q, bins_EF_E)#edge-shifting
+            
+            if Iloc >= 99: Iloc = 98
+            if Qloc >= 99: Qloc = 98
             
             #if 1 it's E
             Sef_result = EF_is_E[Iloc, Qloc]
             
+            
+            # print(Sge_result)
+            # print(Sgf_result)
             if Sge_result*Sgf_result: 
                 result = 1 #G
             elif not Sge_result and Sef_result: 
                 result = 2 #E
-            else: 
+            elif not Sef_result and not Sgf_result: 
                 result = 3 #F
+            else: 
+                result = 4 #Null
             
             results.append(result)
             GE_results.append(Sge_result)
@@ -459,7 +491,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         viridisBig = cm.get_cmap('viridis', 512)
         _cmap = ListedColormap(viridisBig(np.linspace(0, 1, 256)))
         
-        scale = Norm(vmin = 1, vmax = 3)
+        scale = Norm(vmin = 1, vmax = 4)
         
         
         ax[0].set_title("Correct classifications")
@@ -483,13 +515,17 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         for axi in ax: 
             axi.get_yaxis().set_ticks([])
             axi.set_aspect(1000)
-        right = correct_classifications==results
         # ax[2].imshow([right, right], interpolation = 'none')
         # ax[2].set_aspect(1000)
         fig.tight_layout(h_pad = 1, w_pad = 1)
     
         fidelity = np.round(np.sum(correct_classifications==results)/numRecords, 3)
         print("checking sum: ", np.max(correct_classifications[2*div1:-1]==results[2*div1:-1]))
+        print("Number of Null results: ", np.sum(results[results == 4]/4))
+        print("Sge Imbar/sigma: ", np.linalg.norm(GE_G_fit.center_vec()-GE_E_fit.center_vec())/GE_G_fit.info_dict['sigma_x'])
+        print("Sgf Imbar/sigma: ", np.linalg.norm(GF_G_fit.center_vec()-GF_F_fit.center_vec())/GF_G_fit.info_dict['sigma_x'])
+        print("Sef Imbar/sigma: ", np.linalg.norm(EF_E_fit.center_vec()-EF_F_fit.center_vec())/EF_E_fit.info_dict['sigma_x'])
+        
         G_fidelity = np.round(np.sum(correct_classifications[0:div1]==results[0:div1])/div1, 3)
         E_fidelity = np.round(np.sum(correct_classifications[div1:2*div1]==results[div1:2*div1])/div1, 3)
         F_fidelity = np.round(np.sum(correct_classifications[2*div1:-1]==results[2*div1:-1])/div1, 3)
@@ -521,14 +557,14 @@ def boxcar_histogram(fig, ax,start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 0
     
     return bins, h
 
-def weighted_histogram(fig, ax, weight_function_arr, sI, sQ, scale = 1, num_bins = 100, record_track = False): 
+def weighted_histogram(fig, ax, weight_function_arr_I, weight_function_arr_Q, sI, sQ, scale = 1, num_bins = 100, record_track = False): 
     I_pts = []
     Q_pts = []
-    print("size check: ", np.shape(sI))
-    print("weights: ", np.shape(weight_function_arr))
+    # print("size check: ", np.shape(sI))
+    # print("weights: ", np.shape(weight_function_arr))
     for I_row, Q_row in zip(sI, sQ): 
-        I_pts.append(np.dot(I_row, weight_function_arr))
-        Q_pts.append(np.dot(Q_row, weight_function_arr))
+        I_pts.append(np.dot(I_row, weight_function_arr_I)+np.dot(Q_row, weight_function_arr_Q))
+        Q_pts.append(np.dot(Q_row, weight_function_arr_I)-np.dot(I_row, weight_function_arr_Q))
     # plt.imshow(np.histogram2d(np.array(I_pts), np.array(Q_pts))[0])
     divider = make_axes_locatable(ax)
     ax.set_aspect(1)

@@ -34,7 +34,7 @@ def find_all_ddh5(cwd):
 
 #%%sample one file to check things
 
-filepath = r'G:/My Drive/shared/Amplifier_Response_Data/2021-09-30_0030_3_state_deep_sat_40dB_att_8us_time_Rep_4__.ddh5'
+filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_.ddh5'
 
 # PU.get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = 0.01, records_per_pulsetype = 3870*2)
 # IQ_offset = PU.get_IQ_offset_from_filepath(filepath, plot = False, hist_scale = 0.002, records_per_pulsetype = 3840*2)
@@ -45,20 +45,21 @@ IQ_offset = (0,0)
 #%%
 # original bias point (closest to bp2)
 
-filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__.ddh5'
-filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0036_amp_gain_test_Sig_Volt_0.1_V_Rep_0__\2021-11-18_0036_amp_gain_test_Sig_Volt_0.1_V_Rep_0__.ddh5'
-# filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0075_amp_gain_test_Sig_Volt_0.45_V_Rep_4__\2021-11-18_0075_amp_gain_test_Sig_Volt_0.45_V_Rep_4__.ddh5'
-
+# filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__.ddh5'
+# filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_.ddh5'
+filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0005_amp_gain_test_Sig_Volt_0.5_V_/2021-11-18_0005_amp_gain_test_Sig_Volt_0.5_V_.ddh5'
+# filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0007_amp_gain_test_Sig_Volt_0.7_V_/2021-11-18_0007_amp_gain_test_Sig_Volt_0.7_V_.ddh5'
+# filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0010_amp_gain_test_Sig_Volt_1.0_V_/2021-11-18_0010_amp_gain_test_Sig_Volt_1.0_V_.ddh5'
 fidelity = PU.extract_3pulse_histogram_from_filepath(filepath, 
                                             numRecords =  7686, 
                                             IQ_offset = (0,0), 
                                             plot = True, 
-                                            hist_scale = 0.04, 
+                                            hist_scale = 0.0005, 
                                             fit = True,
                                             boxcar = False,
                                             bc_window = [50, 150],
                                             lpf = False, 
-                                            lpf_wc = 15e6, 
+                                            lpf_wc = 10e6, 
                                             record_track = True, 
                                             tuneup_plots = True)
 print(fidelity)
@@ -125,7 +126,8 @@ ax.legend()
 #wait_time_sweep
 # filepaths = find_all_ddh5(r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\wait_time_sweep_fine')
 #input_power_sweep
-filepaths = find_all_ddh5(r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\signal_power_sweep')
+# filepaths = find_all_ddh5(r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18')
+filepaths = find_all_ddh5(r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_sweep\2021-11-18')
 pwrs = []
 for filepath in filepaths:
     pwrs.append(PU.extract_3pulse_pwr_from_filepath(filepath,
@@ -134,8 +136,8 @@ for filepath in filepaths:
 print("Average Powers: ", pwrs)
 #%%gain plotting
 labels = ["G", "E", "F"]
-x = np.arange(0.05, 1.5, 0.05)
-xlog = 20*np.log10(x)
+x = np.arange(0.1, 1.91, 0.1)
+xlog = 10*np.log10(x)
 x_name = 'Signal input power (dBV)'
 fig, ax = plt.subplots(1, 1)
 for i, pwr in enumerate(np.array(pwrs).T): 
