@@ -45,8 +45,9 @@ IQ_offset = (0,0)
 #%%
 # original bias point (closest to bp2)
 
-# filepath = r'Z:\Data\Hakan\SA_3C1_3221_7GHz\signal_power_sweep\2021-11-18\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__\2021-11-18_0033_amp_gain_test_Sig_Volt_0.05_V_Rep_2__.ddh5'
+# filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_power_sweep/2021-11-18/2021-11-18_0041_amp_gain_test_Sig_Volt_0.15_V_Rep_0__/2021-11-18_0041_amp_gain_test_Sig_Volt_0.15_V_Rep_0__.ddh5'
 # filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_.ddh5'
+# filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0003_amp_gain_test_Sig_Volt_0.3_V_/2021-11-18_0003_amp_gain_test_Sig_Volt_0.3_V_.ddh5'
 filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0005_amp_gain_test_Sig_Volt_0.5_V_/2021-11-18_0005_amp_gain_test_Sig_Volt_0.5_V_.ddh5'
 # filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0007_amp_gain_test_Sig_Volt_0.7_V_/2021-11-18_0007_amp_gain_test_Sig_Volt_0.7_V_.ddh5'
 # filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0010_amp_gain_test_Sig_Volt_1.0_V_/2021-11-18_0010_amp_gain_test_Sig_Volt_1.0_V_.ddh5'
@@ -54,7 +55,9 @@ fidelity = PU.extract_3pulse_histogram_from_filepath(filepath,
                                             numRecords =  7686, 
                                             IQ_offset = (0,0), 
                                             plot = True, 
-                                            hist_scale = 0.0005, 
+                                            # hist_scale = None, 
+                                            hist_scale = 0.0003,
+                                            # hist_scale = 0.0004,
                                             fit = True,
                                             boxcar = False,
                                             bc_window = [50, 150],
@@ -63,6 +66,7 @@ fidelity = PU.extract_3pulse_histogram_from_filepath(filepath,
                                             record_track = True, 
                                             tuneup_plots = True)
 print(fidelity)
+
 #%% extract the average phase difference between records from filepaths
 #extract 3 pulse noise for the 
 filepaths = find_all_ddh5(r'Z:\Data\Hakan\SH_5B1_SS_Gain_bp3\3_state\bp3\detuning_sweep_fine\2021-10-14')
