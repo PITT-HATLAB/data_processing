@@ -30,7 +30,7 @@ def find_all_ddh5(cwd):
     return filepaths
 
 
-smtx_dir = r'Z:\Data\SH6F1_1141\gp4\gc_noise_mtx1_2'
+smtx_dir = r'Z:\Data\SH6F1_1141\gp11_weird_gain\A+S_smtx_wider1_Mixer'
 filepaths = find_all_ddh5(smtx_dir)
 fig, axs = plt.subplots(2,2, figsize = (12,12))
 axmap = {'S11': (0,0), 
@@ -38,11 +38,11 @@ axmap = {'S11': (0,0),
          'S21': (1,0), 
          'S22': (1,1)}
 
-cross_center = -85
-cross_scale = 10
-diag_center = -75
-diag_scale = 15
-fig.suptitle("GC1 (gp4)", fontsize = 40)
+cross_center = -60
+cross_scale = 30
+diag_center = -60
+diag_scale = 40
+fig.suptitle("Transmission gain one pump", fontsize = 40)
 
 for filepath in filepaths:
     name = filepath.split('_')[-1].split('.')[0]

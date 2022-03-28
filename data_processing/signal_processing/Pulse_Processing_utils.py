@@ -18,10 +18,10 @@ from matplotlib.colors import Normalize as Norm
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 from scipy.signal import butter, sosfilt
 
-def Process_One_Acquisition_np(filepath, plot = False, pulse_types = 2):
+# def Process_One_Acquisition_np(filepath, plot = False, pulse_types = 2):
     
     
-    return pulse
+#     return pulse
     
 
 def Process_One_Acquisition(name, sI_c1, sI_c2, sQ_c1 ,sQ_c2, bin_start, bin_stop, hist_scale = 200, odd_only = False, even_only = False, plot = False):
@@ -88,12 +88,30 @@ def Process_One_Acquisition(name, sI_c1, sI_c2, sQ_c1 ,sQ_c2, bin_start, bin_sto
         plt.show()
     return bins_even, bins_odd, h_even.T, h_odd.T
 
-def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 ,sQ_c2, sQ_c3, hist_scale = 200, odd_only = False, even_only = False, plot = False, lpf = True, lpf_wc = 50e6, fit = False, hist_y_scale = 10, boxcar = False, bc_window = [50, 150], record_track = False):
+def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 ,sQ_c2, sQ_c3, hist_scale = 200, odd_only = False, even_only = False, plot = False, lpf = True, lpf_wc = 50e6, fit = False, hist_y_scale = 10, boxcar = False, bc_window = [50, 150], record_track = False, numRecordsUsed = 7860):
+    
+    sI_c1_classify = sI_c1
+    sI_c2_classify = sI_c2
+    sI_c3_classify = sI_c3
+    
+    sQ_c1_classify = sQ_c1
+    sQ_c2_classify = sQ_c2
+    sQ_c3_classify = sQ_c3
+    
+    sI_c1 = sI_c1[0:numRecordsUsed//3].copy()
+    sI_c2 = sI_c2[0:numRecordsUsed//3].copy()
+    sI_c3 = sI_c3[0:numRecordsUsed//3].copy()
+    sQ_c1 = sQ_c1[0:numRecordsUsed//3].copy()
+    sQ_c2 = sQ_c2[0:numRecordsUsed//3].copy()
+    sQ_c3 = sQ_c3[0:numRecordsUsed//3].copy()
     
     if boxcar:
         WF = np.zeros(np.size(time_vals))
         WF[bc_window[0]:bc_window[1]] = 1
         Sge = Sgf = Sef = WF
+        
+        
+        
     else: 
         #weight functions denoted by Sij for telling trace i from trace j
         Sge_I, Sge_Q = [(np.average(sI_c1, axis = 0)-np.average(sI_c2, axis = 0)), (np.average(sQ_c1, axis = 0)-np.average(sQ_c2, axis = 0))] 
@@ -101,6 +119,8 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         Sgf_I, Sgf_Q = [(np.average(sI_c1, axis = 0)-np.average(sI_c3, axis = 0)), (np.average(sQ_c1, axis = 0)-np.average(sQ_c3, axis = 0))]
         
         Sef_I, Sef_Q = [(np.average(sI_c2, axis = 0)-np.average(sI_c3, axis = 0)), (np.average(sQ_c2, axis = 0)-np.average(sQ_c3, axis = 0))]
+        
+        
 
     if lpf: 
     
@@ -295,11 +315,12 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         print(guessParams)
         ########
         max_fev = 10000
+        line_ind = 0
         GE_G_fit = fit_2D_Gaussian('GE_G_fit', bins_GE_G, h_GE_G, 
                                                     # guessParams[0],
                                                     None,
                                                     max_fev = max_fev,
-                                                    contour_line = 4)
+                                                    contour_line = line_ind)
         GE_G_fit_h = Gaussian_2D(np.meshgrid(bins_GE_G[:-1], bins_GE_G[:-1]), *GE_G_fit.info_dict['popt'])
         GE_G_fit_h_norm = np.copy(GE_G_fit_h/np.sum(GE_G_fit_h))
         ########
@@ -307,7 +328,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
                                                     # guessParams[1],
                                                     None, 
                                                     max_fev = max_fev,
-                                                    contour_line = 4)
+                                                    contour_line = line_ind)
         GE_E_fit_h = Gaussian_2D(np.meshgrid(bins_GE_E[:-1], bins_GE_E[:-1]), *GE_E_fit.info_dict['popt'])
         GE_E_fit_h_norm = np.copy(GE_E_fit_h/np.sum(GE_E_fit_h))
         ########
@@ -315,7 +336,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
                                                 # guessParams[0],
                                                 None,
                                                 max_fev = max_fev,
-                                                contour_line = 4)
+                                                contour_line = line_ind)
         GF_G_fit_h = Gaussian_2D(np.meshgrid(bins_GF_G[:-1], bins_GF_G[:-1]), *GF_G_fit.info_dict['popt'])
         GF_G_fit_h_norm = np.copy(GF_G_fit_h/np.sum(GF_G_fit_h))
         
@@ -323,7 +344,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
                                                 # guessParams[2],
                                                 None,
                                                 max_fev = max_fev,
-                                                contour_line = 4)
+                                                contour_line = line_ind)
         GF_F_fit_h = Gaussian_2D(np.meshgrid(bins_GF_F[:-1], bins_GF_F[:-1]), *GF_F_fit.info_dict['popt'])
         GF_F_fit_h_norm = np.copy(GF_F_fit_h/np.sum(GF_F_fit_h))
         
@@ -331,7 +352,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
                                                 # guessParams[2],
                                                 None, 
                                                 max_fev = max_fev,
-                                                contour_line = 4)
+                                                contour_line = line_ind)
         EF_E_fit_h = Gaussian_2D(np.meshgrid(bins_EF_E[:-1], bins_EF_E[:-1]), *EF_E_fit.info_dict['popt'])
         EF_E_fit_h_norm = np.copy(EF_E_fit_h/np.sum(EF_E_fit_h))
         
@@ -339,7 +360,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
                                                 # guessParams[2],
                                                 None,
                                                 max_fev = max_fev,
-                                                contour_line = 4)
+                                                contour_line = line_ind)
         EF_F_fit_h = Gaussian_2D(np.meshgrid(bins_EF_F[:-1], bins_EF_F[:-1]), *EF_F_fit.info_dict['popt'])
         EF_F_fit_h_norm = np.copy(EF_F_fit_h/np.sum(EF_F_fit_h))
         
@@ -411,8 +432,8 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         GE_results = []
         GF_results = []
         EF_results = []
-        all_I = np.vstack((sI_c1, sI_c2, sI_c3))
-        all_Q = np.vstack((sQ_c1, sQ_c2, sQ_c3))
+        all_I = np.vstack((sI_c1_classify, sI_c2_classify, sI_c3_classify))
+        all_Q = np.vstack((sQ_c1_classify, sQ_c2_classify, sQ_c3_classify))
         # print("all_I shape: ", np.shape(all_I))
         # print(np.shape(list(zip(sI_c1, sQ_c1))))
         for record in list(zip(all_I, all_Q)): 
@@ -481,7 +502,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         GE_results = np.logical_not(np.array(GE_results))+1
         GF_results = np.logical_not(np.array(GF_results))*2+1
         EF_results = np.logical_not(np.array(EF_results))+2
-        div1 = np.shape(sI_c1)[0]
+        div1 = np.shape(sI_c1_classify)[0]
         numRecords = 3*div1
         # print(div1)
         correct_classifications = np.append(np.append(np.ones(div1), 2*np.ones(div1)), 3*np.ones(div1))
@@ -518,10 +539,10 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         # ax[2].imshow([right, right], interpolation = 'none')
         # ax[2].set_aspect(1000)
         fig.tight_layout(h_pad = 1, w_pad = 1)
-    
+        numberNull = np.sum(results[results == 4]/4)
         fidelity = np.round(np.sum(correct_classifications==results)/numRecords, 3)
         print("checking sum: ", np.max(correct_classifications[2*div1:-1]==results[2*div1:-1]))
-        print("Number of Null results: ", np.sum(results[results == 4]/4))
+        print("Number of Null results: ", numberNull)
         print("Sge Imbar/sigma: ", np.linalg.norm(GE_G_fit.center_vec()-GE_E_fit.center_vec())/GE_G_fit.info_dict['sigma_x'])
         print("Sgf Imbar/sigma: ", np.linalg.norm(GF_G_fit.center_vec()-GF_F_fit.center_vec())/GF_G_fit.info_dict['sigma_x'])
         print("Sef Imbar/sigma: ", np.linalg.norm(EF_E_fit.center_vec()-EF_F_fit.center_vec())/EF_E_fit.info_dict['sigma_x'])
@@ -531,7 +552,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         F_fidelity = np.round(np.sum(correct_classifications[2*div1:-1]==results[2*div1:-1])/div1, 3)
         
 
-        return G_fidelity, E_fidelity, F_fidelity, fidelity
+        return G_fidelity, E_fidelity, F_fidelity, fidelity, numberNull
     
     
 def boxcar_histogram(fig, ax,start_pt, stop_pt, sI, sQ, Ioffset = 0, Qoffset = 0, scale = 1, num_bins = 100):
@@ -634,7 +655,7 @@ class Gaussian_info:
     def center_vec(self): 
         return np.array([self.info_dict['x0'], self.info_dict['y0']])
     def plot_on_ax(self, ax, displacement = np.array([0,0]), color = 'white'): 
-        ax.annotate("", xy=self.center_vec(), xytext=(0, 0), arrowprops=dict(arrowstyle = '->', lw = 3, color = color))
+        ax.annotate("", xy=self.center_vec(), xytext=(0,0), arrowprops=dict(arrowstyle = '->', lw = 3, color = color))
     def plot_array(self):
         return Gaussian_2D(*self.info_dict['popt'])
     def sigma_contour(self): 
@@ -654,7 +675,7 @@ def fit_2D_Gaussian(name,
                     h_arr, 
                     guessParams, 
                     max_fev = 10000, 
-                    contour_line = 3): 
+                    contour_line = 0): 
     print("fitting with maxfev = ", max_fev)
     X, Y = np.meshgrid(bins[0:-1], bins[0:-1])
     resh_size = np.shape(X)
@@ -663,9 +684,9 @@ def fit_2D_Gaussian(name,
     # print("y shape: ",np.shape(ydata))
     print("running curve_fit")
     #,amplitude, xo, yo, sigma_x, sigma_y, theta
-    bounds = [[0,np.min(bins), np.min(bins), 0, 0, 0],
-              [np.max(h_arr), np.max(bins), np.max(bins), np.max(bins), np.max(bins), np.pi/2]]
-    popt, pcov = curve_fit(Gaussian_2D, xdata, ydata, p0 = guessParams, maxfev = max_fev)
+    bounds = ([0,np.min(bins), np.min(bins), 0, 0],
+              [np.max(h_arr), np.max(bins), np.max(bins), np.max(bins), np.max(bins)])
+    popt, pcov = curve_fit(Gaussian_2D, xdata, ydata, p0 = guessParams, maxfev = max_fev, bounds = bounds)
     GC = Gaussian_info()
     GC.info_dict['name'] = name
     GC.info_dict['canvas'] = xdata 
@@ -677,17 +698,20 @@ def fit_2D_Gaussian(name,
     GC.info_dict['theta'] = popt[4]
     GC.info_dict['popt'] = popt
     GC.info_dict['pcov'] = pcov
-    GC.info_dict['contour'] = get_contour_line(X, Y, Gaussian_2D(xdata, *popt).reshape(resh_size), contour_line = contour_line)
+    # GC.info_dict['contour'] = get_contour_line(X, Y, Gaussian_2D(xdata, *popt).reshape(resh_size), contour_line = contour_line)
     
     return GC
 
-def get_contour_line(cont_x, cont_y, contour_arr, contour_line = 3):
-    fig = plt.figure()
-    contour_map = plt.contour(cont_x, cont_y, contour_arr)
-    plt.close(fig)
-    v = contour_map.collections[contour_line].get_paths()[0].vertices
-    plot_y, plot_x = v[:,1], v[:,0]
-    return plot_x, plot_y
+# def get_contour_line(cont_x, cont_y, contour_arr, contour_line = 0):
+#     fig = plt.figure()
+#     contour_map = plt.contour(cont_x, cont_y, contour_arr, vmin = 0, vmax = 1)
+#     # plt.close(fig)
+#     print(contour_line)
+#     print(contour_map.collections)
+#     print(contour_map.collections[contour_line].get_paths())
+#     v = contour_map.collections[contour_line].get_paths()[0].vertices
+#     plot_y, plot_x = v[:,1], v[:,0]
+#     return plot_x, plot_y
 
 def extract_2pulse_histogram_from_filepath(datapath, plot = False, bin_start = 55, bin_stop = 150, hist_scale = None, even_only = False, odd_only = False, numRecords = 3840*2, IQ_offset = (0,0)): 
     I_offset, Q_offset = IQ_offset
@@ -864,7 +888,7 @@ def extract_3pulse_pwr_from_filepath(datapath, numRecords = 3840*2, window = [0,
     return np.average(np.sqrt(I_G_avg**2+Q_G_avg**2)[offset:rtrim]), np.average(np.sqrt(I_E_avg**2+Q_E_avg**2)[offset:rtrim]), np.average(np.sqrt(I_F_avg**2+Q_F_avg**2)[offset:rtrim])
 
 
-def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = None, numRecords = 3840*2, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = False, bc_window = [50, 150], record_track = True, tuneup_plots = True):
+def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = None, numRecords = 3840*2, numRecordsUsed = 3840*2, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = False, bc_window = [50, 150], record_track = True, tuneup_plots = True):
     I_offset, Q_offset = IQ_offset
     dd = all_datadicts_from_hdf5(datapath)['data']
     print("dd keys",dd.keys())
@@ -893,7 +917,7 @@ def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = 
     Q_E_avg = np.average(Q_E, axis = 0)
     Q_F_avg = np.average(Q_F, axis = 0)
 
-    return Process_One_Acquisition_3_state(datapath.split('/')[-1].split('\\')[-1], time_vals[0], I_G, I_E, I_F, Q_G, Q_E, Q_F,hist_scale = hist_scale, plot = plot, fit = fit, lpf = lpf, lpf_wc = lpf_wc, boxcar = boxcar, bc_window = bc_window, record_track = record_track) 
+    return Process_One_Acquisition_3_state(datapath.split('/')[-1].split('\\')[-1], time_vals[0], I_G, I_E, I_F, Q_G, Q_E, Q_F,hist_scale = hist_scale, plot = plot, fit = fit, lpf = lpf, lpf_wc = lpf_wc, boxcar = boxcar, bc_window = bc_window, record_track = record_track, numRecordsUsed = numRecordsUsed) 
         
 def get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = None, records_per_pulsetype = 3870*2): 
     

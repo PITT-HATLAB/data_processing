@@ -61,9 +61,9 @@ YBrass = 125e9
 YSS = 193e9
 YAl = 68e9
 
-YBrass_Cryo = 
-YSS_Cryo = 
-YAl_Cryo = 
+# YBrass_Cryo = 
+# YSS_Cryo = 
+# YAl_Cryo = 
 
 
 L1_arr = np.linspace(0, 5, 100)*10#mm, 0-5cm
@@ -88,7 +88,7 @@ im = plt.pcolormesh(sRT_arr/1e6, L2_arr, np.array(sCryo)/1e6, cmap = 'seismic', 
 plt.title("")
 plt.ylabel("length_of_Mo (mm)")
 plt.xlabel("$\sigma_{RT}$ (MPa)")
-plt.title("Stress (MPa) vs tightening and Mo Length")
+plt.title("Stress (MPa) vs tightening and Mo Length, L0 = ")
 cb = plt.colorbar()
 
 # plt.figure()

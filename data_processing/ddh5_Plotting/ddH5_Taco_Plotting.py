@@ -49,9 +49,10 @@ gain_data = gainDict.extract('calculated_gain')
 #%%Extract slices of currents, saturation data, etc which are each individual tacos
 b1_val = np.unique(bias_current)[0]
 b1 = (bias_current == b1_val)
+line_att = 0
 # *(gen_power<11)*(gen_power>8.5)
 ""
-gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1], calc_gain[b1]
+gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1]-line_att, calc_gain[b1]
 fig, ax, cb = make_tacos(b1_val, gf1, gp1, g1, vmin = 15, vmax = 25)
 ax.set_xlabel("Generator Frequency (GHz)")
 ax.set_ylabel("Generator Pump Power (dBm)")
@@ -68,7 +69,7 @@ ax.grid(linestyle = '--', zorder = 2)
 bp1 = (sat_bias_current == np.unique(sat_bias_current)[0])
 # plt.plot(bp1)
 sf1, svp1, sgp1, sg1 = sat_gen_freq[bp1], sat_vna_powers[bp1], sat_gen_power[bp1], sat_gain[bp1]
-fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1, sg1, norm_power = -92, levels = [-20, -1,1, 20], filter_window = 15, vmin = -1.7, vmax = 1.7)
+fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1-line_att, sg1, norm_power = -92, levels = [-20, -1,1, 20], filter_window = 15, vmin = -1.7, vmax = 1.7)
 #supplementary graph info
 if fancy:
     title = f'{device_name} Saturation power vs. Generator Frequency\nBias = {np.round(b1_val*1000, 4)}mA'
@@ -87,14 +88,19 @@ fig, ax = make_gain_surface(gain_filepath)
 ax.azim = 45
 ax.elev = 45
 #%%Plot individual power sweeps to check
-gain_traces = gainDict.extract('gain_trace').data_vals('gain_trace')
-vna_freqs = gainDict.extract('gain_trace').data_vals('vna_frequency')
+gain_traces = satDict.extract('sat_gain').data_vals('sat_gain')
+vna_freqs = satDict.extract('sat_gain').data_vals('sat_vna_freq')
+gen_frequency = satDict.extract('sat_gain').data_vals('sat_gen_freq')
+sat_currents = satDict.extract("sat_gain").data_vals('sat_bias_current')
+b1 = np.isclose(sat_currents, -0.02e-3, 
 colors = [color.hex2color('#0000FF'), color.hex2color('#FFFFFF'), color.hex2color('#FF0000')]
 _cmap = color.LinearSegmentedColormap.from_list('my_cmap', colors)
-f_val = 12.02e9
+f_val = 14.815e9
 f1 = gen_frequency == gen_frequency[np.argmin(np.abs(gen_frequency-f_val))]
 vnaf1, gp2, g2 = vna_freqs[b1*f1]/1e6, gen_power[b1*f1], gain_traces[b1*f1]-20
-plt.pcolormesh(vnaf1, gp2, g2, cmap = _cmap, vmin = -3, vmax = 3)
+# plt.pcolormesh(vnaf1, gp2, g2, cmap = _cmap, vmin = -3, vmax = 3)
+index = 3
+plt.plot(vnaf1, g2)
 plt.colorbar()
 plt.xlabel('VNA Frequency (MHz)')
 plt.ylabel('Gen Power (dBm)')
@@ -106,10 +112,13 @@ gain_traces = gainDict.extract('gain_trace').data_vals('gain_trace')
 gen_power = gainDict.extract('gain_trace').data_vals('gen_power')
 vna_freqs = gainDict.extract('gain_trace').data_vals('vna_frequency')
 gen_frequency = gainDict.extract('gain_trace').data_vals('gen_frequency')
-gp_val = -2.1
+gp_val = -29+line_att
 gp_filt = np.isclose(gen_power, gp_val, atol = 0.05)
 f_val= np.round(np.average(gen_frequency[gp_filt])/1e6, 0)
-plt.plot(np.convolve(gain_traces[gp_filt][0], np.blackman(5)))
+plt.plot(vna_freqs[gp_filt][0]/1e9, np.convolve(gain_traces[gp_filt][0], np.blackman(1)))
+plt.xlabel("VNA frequency (GHz)")
+plt.ylabel("Gain (dB)")
+plt.grid()
 # plt.plot(vna_freqs[gp_filt][0]/1e6, gain_traces[gp_filt][0])
 plt.title(f'Trace at bias = {np.round(b1_val*1000, 3)}mA\nGen Frequency {f_val}MHz\nGen Power {gp_val}dBm')
 #%%Plot Individual Saturation traces

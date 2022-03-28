@@ -32,16 +32,6 @@ def find_all_ddh5(cwd):
                     filepaths.append(cwd+'\\'+path)
     return filepaths
 
-#%%sample one file to check things
-
-filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_/2021-11-18_0001_amp_gain_test_Sig_Volt_0.1_V_.ddh5'
-
-# PU.get_normalizing_voltage_from_filepath(amp_off_filepath, plot = False, hist_scale = 0.01, records_per_pulsetype = 3870*2)
-# IQ_offset = PU.get_IQ_offset_from_filepath(filepath, plot = False, hist_scale = 0.002, records_per_pulsetype = 3840*2)
-# PU.get_fidelity_from_filepath_3_state(filepath, plot = True, hist_scale = 0.05, records_per_pulsetype = 2562, state_relabel = 0, bin_start = 50, bin_stop = 400)
-PU.get_fidelity_from_filepath_3_state(filepath, plot = True, hist_scale = 0.7, records_per_pulsetype = 7686//3, state_relabel = 0, bin_start = 50, bin_stop = 400, fit = False)
-IQ_offset = (0,0)
-
 #%%
 # original bias point (closest to bp2)
 
@@ -51,8 +41,11 @@ IQ_offset = (0,0)
 filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0005_amp_gain_test_Sig_Volt_0.5_V_/2021-11-18_0005_amp_gain_test_Sig_Volt_0.5_V_.ddh5'
 # filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0007_amp_gain_test_Sig_Volt_0.7_V_/2021-11-18_0007_amp_gain_test_Sig_Volt_0.7_V_.ddh5'
 # filepath = r'Z:/Data/Hakan/SA_3C1_3221_7GHz/signal_sweep/2021-11-18/2021-11-18_0010_amp_gain_test_Sig_Volt_1.0_V_/2021-11-18_0010_amp_gain_test_Sig_Volt_1.0_V_.ddh5'
+fid_arr = []
+num_records_used_arr = 
 fidelity = PU.extract_3pulse_histogram_from_filepath(filepath, 
                                             numRecords =  7686, 
+                                            numRecordsUsed = 300, 
                                             IQ_offset = (0,0), 
                                             plot = True, 
                                             # hist_scale = None, 
@@ -63,7 +56,7 @@ fidelity = PU.extract_3pulse_histogram_from_filepath(filepath,
                                             bc_window = [50, 150],
                                             lpf = False, 
                                             lpf_wc = 10e6, 
-                                            record_track = True, 
+                                            record_track = False, 
                                             tuneup_plots = True)
 print(fidelity)
 
