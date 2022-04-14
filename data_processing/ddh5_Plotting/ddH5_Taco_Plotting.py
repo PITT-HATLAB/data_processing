@@ -23,8 +23,8 @@ plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
 device_name = 'SA_3C1_3132'
 
-gain_filepath = r'Z:/Data/SA_3C1_3132/tacos/2021-09-01/2021-09-01_0009_-2e-05mA_TACO_gain/2021-09-01_0009_-2e-05mA_TACO_gain.ddh5'
-sat_filepath = r'Z:/Data/SA_3C1_3132/tacos/2021-09-01/2021-09-01_0010_-2e-05mA_TACO_sat/2021-09-01_0010_-2e-05mA_TACO_sat.ddh5'
+gain_filepath = r'Z:/Data/SA_3B1_1131/tacos/2s/2022-03-29/2022-03-29_0003_0.00014mA_TACO_gain/2022-03-29_0003_0.00014mA_TACO_gain.ddh5'
+sat_filepath = r'Z:/Data/SA_3B1_1131/tacos/2s/2022-03-29/2022-03-29_0004_0.00014mA_TACO_sat/2022-03-29_0004_0.00014mA_TACO_sat.ddh5'
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']

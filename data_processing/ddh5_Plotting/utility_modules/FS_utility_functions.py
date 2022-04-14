@@ -11,7 +11,7 @@ from scipy.signal import savgol_filter
 from scipy.fftpack import dct, idct
 
 class fit_fluxsweep():
-    def __init__(self, Flux_filepath, save_filepath, name):
+    def __init__(self, Flux_filepath, save_filepath, name, currentName = 'current', phaseName = 'phase', powerName = 'power', freqName = 'frequency'):
         #setup files
         self.name = name
         self.datadict = dd.DataDict(
@@ -32,16 +32,16 @@ class fit_fluxsweep():
         #Duffing/FS Data Extraction
         duff_dicts = all_datadicts_from_hdf5(Flux_filepath)
         duffDict = duff_dicts['data']
-        uvphDict = duffDict.extract('phase')
-        uvpoDict = duffDict.extract('power')
+        uvphDict = duffDict.extract(phaseName)
+        uvpoDict = duffDict.extract(powerName)
 
         
         #get the arrays back out
-        self.undriven_vna_phase = uvphDict.data_vals('phase')
-        self.undriven_vna_power = uvpoDict.data_vals('power')
+        self.undriven_vna_phase = uvphDict.data_vals(phaseName)
+        self.undriven_vna_power = uvpoDict.data_vals(powerName)
 
-        self.vna_freqs = uvphDict.data_vals('frequency')*2*np.pi
-        self.currents = uvphDict.data_vals('current')
+        self.vna_freqs = uvphDict.data_vals(freqName)*2*np.pi
+        self.currents = uvphDict.data_vals(currentName)
         
     def default_bounds(self, QextGuess, QintGuess, f0Guess, magBackGuess):
         return ([QextGuess / 1.5, QintGuess / 1.5, f0Guess/2, magBackGuess / 5.0, -2 * np.pi],

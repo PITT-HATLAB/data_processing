@@ -70,26 +70,26 @@ class fit_Duff_Measurement():
         #Duffing Data Extraction
         duff_dicts = all_datadicts_from_hdf5(Duff_filepath)
         duffDict = duff_dicts['data']
-        uvphDict = duffDict.extract('undriven_vna_phase')
-        uvpoDict = duffDict.extract('undriven_vna_power')
-        dvphDict = duffDict.extract('driven_vna_phase')
-        dvpoDict = duffDict.extract('driven_vna_power')
+        uvphDict = duffDict.extract(vna_phase_name)
+        uvpoDict = duffDict.extract(vna_pow_name)
+        dvphDict = duffDict.extract(vna_phase_name)
+        dvpoDict = duffDict.extract(vna_pow_name)
         
         if current_filt == None: 
-            lower = np.min(uvphDict.data_vals('current'))
-            upper = np.max(uvphDict.data_vals('current'))
+            lower = np.min(uvphDict.data_vals(current_name))
+            upper = np.max(uvphDict.data_vals(current_name))
         else: 
             [lower, upper] = current_filt
             #get the arrays back out
             
-        filt = (uvphDict.data_vals('current')<upper)*(uvphDict.data_vals('current')>lower)
-        self.undriven_vna_phase = uvphDict.data_vals('undriven_vna_phase')[filt]
-        self.undriven_vna_power = uvpoDict.data_vals('undriven_vna_power')[filt]
-        self.driven_vna_phase = dvphDict.data_vals('driven_vna_phase')[filt]
-        self.driven_vna_power= dvpoDict.data_vals('driven_vna_power')[filt]
-        self.vna_freqs = uvphDict.data_vals('vna_frequency')[filt]*2*np.pi
-        self.currents = uvphDict.data_vals('current')[filt]
-        self.gen_powers = dvpoDict.data_vals('gen_power')[filt]
+        filt = (uvphDict.data_vals(current_name)<upper)*(uvphDict.data_vals(current_name)>lower)
+        self.undriven_vna_phase = uvphDict.data_vals(vna_phase_name)[filt]
+        self.undriven_vna_power = uvpoDict.data_vals(vna_pow_name)[filt]
+        self.driven_vna_phase = dvphDict.data_vals(vna_phase_name)[filt]
+        self.driven_vna_power= dvpoDict.data_vals(vna_pow_name)[filt]
+        self.vna_freqs = uvphDict.data_vals(vna_freq_name)[filt]*2*np.pi
+        self.currents = uvphDict.data_vals(current_name)[filt]
+        self.gen_powers = dvpoDict.data_vals(gen_power_name)[filt]
 
                         
         
