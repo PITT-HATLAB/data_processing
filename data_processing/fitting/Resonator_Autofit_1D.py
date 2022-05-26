@@ -16,26 +16,35 @@ import inspect
 from plottr.data import datadict_storage as dds, datadict as dd
 from scipy.signal import savgol_filter
 from scipy.fftpack import dct, idct
+from dataclasses import dataclass
 
+@dataclass
 class fit_res_sweep():
-    def __init__(self, datadict, writer, save_func, raw_filepath, ind_par_name, create_file = True):
+    def __init__(self, 
+                 raw_filepath: str,
+                 save_dir: str, 
+                 ind_par_name: str,
+                 vna_fname: str = 'vna_frequency', 
+                 vna_phase_name: str = 'vna_phase', 
+                 vna_power_name: str = 'vna_power',
+                 create_file: bool = True):
         #setup files
-        self.datadict = datadict
-        self.writer = writer
+        self.datadict, self.writer = self.make_datadict()
+        
         if create_file: 
             self.writer.__enter__()
-        self.save_func = save_func
+
         #1D Data Extraction
         dicts = all_datadicts_from_hdf5(raw_filepath)['data']
-        uvphDict = dicts.extract('phase')
-        uvpoDict = dicts.extract('power')
+        uvphDict = dicts.extract(self.vna_phase_name)
+        uvpoDict = dicts.extract(self.vna_power_name)
 
         
         #get the arrays back out
-        self.vna_phase = uvphDict.data_vals('phase')
-        self.vna_power = uvpoDict.data_vals('power')
+        self.vna_phase = uvphDict.data_vals(self.vna_phase_name)
+        self.vna_power = uvpoDict.data_vals(self.vna_power_name)
 
-        self.vna_freqs = uvphDict.data_vals('VNA_frequency')*2*np.pi
+        self.vna_freqs = uvphDict.data_vals(self.vna_frequency_name)*2*np.pi
         self.ind_par = uvphDict.data_vals(ind_par_name)
         
     def default_bounds(self, QextGuess, QintGuess, f0Guess, magBackGuess):
@@ -93,7 +102,7 @@ class fit_res_sweep():
         plotRes(init_vna_freqs, real, imag, init_pow_trace, init_phase_trace, popt)
         
     def save_fit(self, ind_par_val, base_popt, base_pconv): 
-        self.save_func(self.writer, ind_par_val, base_popt, base_pconv)
+        
         
     def semiauto_fit(self, ind_par, vna_freqs, vna_mags, vna_phases, init_popt, debug = False, savedata = False, smooth = False, smooth_win = 11, adaptive_window = False, adapt_win_size = 300e6, fourier_filter = False, fourier_cutoff = 40, pconv_tol = 2, bounds_func = None, alt_array_scale = 1):
         print("RUNNING SEMI-AUTO FIT")
