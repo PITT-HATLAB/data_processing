@@ -10,7 +10,7 @@ import numpy as np
 
 
 
-filepath = r'Z:/Data/SH_5B1_4141/Traces/gain1/2021-09-13/2021-09-13_0001_6.065Ghz_SS_Gain_SG_-6.6dBm/2021-09-13_0001_6.065Ghz_SS_Gain_SG_-6.6dBm.ddh5'
+filepath = r'Z:/Data/N25_L3_SQ/traces/gain/2022-04-25/2022-04-25_0001_bp1_gain/2022-04-25_0001_bp1_gain.ddh5'
 
 dd = all_datadicts_from_hdf5(filepath)['data']
 pows = dd.extract('power')['power']['values']
@@ -18,13 +18,30 @@ freqs = dd.extract('power')['frequency']['values']
 
 #plot the LO leakage vs power
 fig, ax = plt.subplots(figsize = (8,6))
-ax.plot(freqs, pows)
+ax.plot(freqs/1e9, pows)
 ax.set_xlabel('VNA frequency (GHz)')
 
 ax.set_ylabel('VNA Gain (dB)')
 ax.legend()
 ax.grid()
-ax.set_title('Tuned at -6.6dBm $2\omega_s$ power')
+ax.set_title(f'0.06mA, {8.65-30-10}dBm Cryo, +277kHZ generator detuning: 6.6MHz BW')
+
+#%%
+filepath = r'Z:/Data/N25_L3_SQ/traces/sat/2022-04-25/2022-04-25_0001_bp1_sat/2022-04-25_0001_bp1_sat.ddh5'
+
+dd = all_datadicts_from_hdf5(filepath)['data']
+pows = dd.extract('power')['power']['values']
+freqs = dd.extract('power')['frequency']['values']
+
+#plot the LO leakage vs power
+fig, ax = plt.subplots(figsize = (8,6))
+ax.plot(freqs-77, pows)
+ax.set_xlabel('VNA power (dBm Cryo)')
+
+ax.set_ylabel('VNA Gain (dB)')
+ax.legend()
+ax.grid()
+ax.set_title('0.06mA, 8.65dBm RT, +277kHZ generator detuning: 6.6MHz BW')
 
 #%% vna gen power sweep
 filepath = r'Z:/Data/Hakan/SH_5B1_SS_Gain_6.064GHz/vna_gain_sweep/2021-09-13/2021-09-13_0006_gain_vs_gen_power_50dBatten/2021-09-13_0006_gain_vs_gen_power_50dBatten.ddh5'

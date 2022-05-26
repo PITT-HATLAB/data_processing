@@ -15,14 +15,14 @@ import matplotlib.colors as color
 from scipy.ndimage import gaussian_filter
 
 #Get Taco (irregular imshow)
-def make_tacos(bias_current, gen_frequency, gen_power, calculated_gain, replace_nan = False, vmin = 15, vmax = 25, fancy = False): 
+def make_tacos(bias_current, gen_frequency, gen_power, calculated_gain, replace_nan = False, vmin = 15, vmax = 25, fancy = False, target = 20): 
     fig, ax = plt.subplots(1,1)
     if replace_nan: 
         calculated_gain[np.isnan(calculated_gain)] = 0
     img = ax.scatter(gen_frequency/1e6, gen_power, c = calculated_gain, cmap = 'seismic', vmin = vmin, vmax = vmax, zorder = 1)
     cb = fig.colorbar(img, ax = ax)
     unique_freqs = np.unique(gen_frequency)
-    best_powers = [select_closest_to_target(gen_power[gen_frequency == f], calculated_gain[gen_frequency == f], 20) for f in unique_freqs]
+    best_powers = [select_closest_to_target(gen_power[gen_frequency == f], calculated_gain[gen_frequency == f], target) for f in unique_freqs]
     ax.plot(unique_freqs/1e6, best_powers, 'k-', lw = 2)
     return fig, ax, cb
 
@@ -75,7 +75,7 @@ def make_gain_surface(filepath, replace_nan = False, vmin = 15, vmax = 25, angle
     sig_f_array = []
     gain_array = []
     for best_power in best_powers:     
-        gp_filt = np.isclose(gen_power, best_power, atol = 0.05)
+        gp_filt = gen_power == best_power
         f_val= np.round(np.average(gen_frequency_raw[gp_filt])/1e6, 0)
         
         gen_f_array.append(f_val*np.ones(np.size(vna_freqs[gp_filt][0])))

@@ -16,29 +16,235 @@ from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from matplotlib.colors import Normalize as Norm
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
-from scipy.signal import butter, sosfilt
+from scipy.signal import butter, lfilter, sosfilt
+from scipy.stats import tstd
+from scipy.special import gamma
 
-def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 ,sQ_c2, sQ_c3, hist_scale = 200, odd_only = False, even_only = False, plot = False, lpf = True, lpf_wc = 50e6, fit = False, hist_y_scale = 10, boxcar = False, bc_window = [50, 150], record_track = False, numRecordsUsed = 7860, debug = False, tstart_index = 0, tstop_index = -1):
+#plotting variance in the data wrt time
+from plottr.data.datadict_storage import all_datadicts_from_hdf5
+gfit =  lambda x, s, m, A: A*np.exp(-0.5*((x-m)/s)**2)
+def pfit(x, m, A, scale): 
+    return A*np.power(m, x*scale)*np.exp(-m)/gamma(x*scale)
+
+def custom_var(data_slice, debug = False, timestamp = 2000, trace = 0, method = 'gauss', title = '', fit = 0): 
+    '''
+    we don't trust the numpy var, because by eye it doesn't look like it's changing that much
+    so this fuction will take in an array that is [nrecords x 1], create a histogram and fit 
+    that histogram to a gaussian or poisson distribution to extract variance, which is what our eyes are doing
+    '''
+    plt.figure()
+    plt.title(f"trace {trace} time {timestamp}ns {title} distribution over records")
+    h1, bins = np.histogram(data_slice, bins = 100, density = True)
+    plt.plot(bins[:-1], h1, '.', label = 'data')
+    if fit: 
+        if method == 'gauss': 
+            popt, pcov = curve_fit(gfit, bins[:-1], h1, maxfev = 10000, p0 = [np.max(np.abs(bins))/10, bins[50], 150])
+        elif method == 'poisson': 
+            popt, pcov = curve_fit(pfit, bins[:-1], h1)
+            
+        if debug: 
+            
+            if method == 'gauss': 
+                
+                plt.plot(bins[:-1], gfit(bins[:-1], *popt), label = f'{method} fit')
+                
+            elif method == 'poisson':
+                plt.plot(bins[:-1], pfit(bins[:-1], *popt), label = f'{method} fit')
+                #have to be careful here, because this fit is to a scalable x-axis
+                #so in terms of the real voltage, the mean is actually popt[0]/popt[-1]
+                #the second parameter A should be irrelevant
+                popt[0] = popt[0]/popt[-1]
+            plt.title(f"trace {trace} time {timestamp}ns {title} distribution over records")
+            plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+              fancybox=True, shadow=True, ncol=5)
+        
+
+            return np.abs(popt[0])
     
-    sI_c1_classify = sI_c1
-    sI_c2_classify = sI_c2
-    sI_c3_classify = sI_c3
+def plot_custom_stats_from_filepath(filepath, timeslice = 100, trace = 0, debug = 0, fit = 0):
+    dicts = all_datadicts_from_hdf5(filepath)['data']
+    # print(dicts)
+    data_name_list = [x for x in dicts.keys() if x[0] == 'I' or x[0] == 'Q']
+    time = np.unique(dicts['time']['values'])
+    time_num = np.size(time)
+    rec_num = np.size(dicts['time']['values'])//time_num
     
-    sQ_c1_classify = sQ_c1
-    sQ_c2_classify = sQ_c2
-    sQ_c3_classify = sQ_c3
+    I_list = [name for name in data_name_list if name[0]=='I']
+    Q_list = [name for name in data_name_list if name[0]=='Q']
     
-    sI_c1 = sI_c1[0:numRecordsUsed//3].copy()
-    sI_c2 = sI_c2[0:numRecordsUsed//3].copy()
-    sI_c3 = sI_c3[0:numRecordsUsed//3].copy()
-    sQ_c1 = sQ_c1[0:numRecordsUsed//3].copy()
-    sQ_c2 = sQ_c2[0:numRecordsUsed//3].copy()
-    sQ_c3 = sQ_c3[0:numRecordsUsed//3].copy()
+    print(I_list)
+    
+    Pvar_arr = []
+    Pvar_fit_arr = []
+    Pavg_arr = []
+    for i, (I_name, Q_name) in enumerate(zip(I_list, Q_list)): 
+        
+        if i == trace: 
+            print(f"Looking at the {i, I_name, Q_name} trace")
+            Idata = dicts[I_name]['values'].reshape(rec_num, time_num)
+            Qdata = dicts[Q_name]['values'].reshape(rec_num, time_num)
+        
+            Pavg = np.average(np.sqrt(Idata**2+Qdata**2), axis = 0)
+            Pvar = tstd(np.sqrt(Idata**2+Qdata**2), axis = 0)**2
+            Pvar_arr.append(Pvar[timeslice])
+            Pavg_arr.append(Pavg[timeslice])
+            
+
+
+            Pvar_fit = custom_var(np.sqrt(Idata**2+Qdata**2)[:, timeslice], debug = debug, timestamp = timeslice*20, trace = I_name[-1], method = 'poisson', title = 'Power', fit = fit)
+            Pvar_fit_arr.append(Pvar_fit)
+        
+            Ivar_fit = custom_var(Idata[:, timeslice], debug = debug, timestamp = timeslice*20, trace = I_name[-1], method = 'gauss', title = "I", fit = fit)
+        
+            Qvar_fit = custom_var(Qdata[:, timeslice], debug = debug, timestamp = timeslice*20, trace = I_name[-1], method = 'gauss', title = 'Q', fit = fit)
+            
+
+            
+            # if debug: 
+            #     plt.figure()
+            #     plt.plot(Pavg)
+            #     plt.title("DEBUG: Average vs. sample_num")
+                
+                
+                
+    return np.array(Pvar_arr), np.array(Pvar_fit_arr), np.array(Pavg_arr), Ivar_fit, Qvar_fit
+    
+    
+def plot_stats_from_filepath(filepath, plt_avg = 0, plt_var = 1, vscale = 100, plot = 0): 
+    dicts = all_datadicts_from_hdf5(filepath)['data']
+    data_name_list = [x for x in dicts.keys() if x[0] == 'I' or x[0] == 'Q']
+    time = np.unique(dicts['time']['values'])
+    time_num = np.size(time)
+    rec_num = np.size(dicts['time']['values'])//time_num
+    variance_dict = {}
+    
+    if plot: 
+        fig, axs = plt.subplots(3,2, figsize = (16,12))
+        fig.suptitle(filepath.split('\\')[-1])
+    
+    I_list = [name for name in data_name_list if name[0]=='I']
+    Q_list = [name for name in data_name_list if name[0]=='Q']
+    
+    titles = ["G", "E", "F"]
+    Pvar_arr = []
+    Pavg_arr = []
+    for i, (I_name, Q_name) in enumerate(zip(I_list, Q_list)): 
+        Idata = dicts[I_name]['values'].reshape(rec_num, time_num)
+        Qdata = dicts[Q_name]['values'].reshape(rec_num, time_num)
+        I_at_rec0 = Idata[:, 30]
+        I_at_rec1 = Idata[:, 100]
+        
+        if plot: 
+            plt.figure()
+            print("first val: ", I_at_rec0[0])
+            print("max val: ", np.max(I_at_rec0))
+            plt.plot(I_at_rec0-np.average(I_at_rec0), '.', label = 'time 30*20ns')
+            plt.plot(I_at_rec1-np.average(I_at_rec1), '.', label = 'time 90*20ns')
+            plt.title(titles[i])
+            plt.legend()
+            
+            print("variance at first value: ", np.var(I_at_rec0-np.average(I_at_rec0)))
+            print("variance at second value: ", np.var(I_at_rec1-np.average(I_at_rec1)))
+        
+            plt.figure()
+            h1 = np.histogram(I_at_rec1-np.average(I_at_rec0), bins = 50, density = True)
+            h2 = np.histogram(I_at_rec1-np.average(I_at_rec1), bins = 50, density = True)
+            plt.plot(h1[1][:-1], h1[0])
+            plt.plot(h2[1][:-1], h2[0])
+        
+        Pavg = np.average(np.sqrt(Idata**2+Qdata**2), axis = 0)
+        Pvar = tstd(np.sqrt(Idata**2+Qdata**2), axis = 0)**2
+        
+        Pvar_arr.append(Pvar)
+        Pavg_arr.append(Pavg)
+    
+    for name in I_list: 
+        data = dicts[name]['values'].reshape(rec_num, time_num)
+        avg = np.average(data, axis = 0)
+        var = np.var(data-np.average(data, axis = 0), axis = 0)
+        var_coherent = var/np.sqrt(np.abs(avg))
+        variance_dict[name] = var
+        
+        if plot: 
+            axs[0, 0].fill_between(time, np.average(data, axis = 0)-vscale*var, np.average(data, axis = 0)+vscale*var, label = name)
+            axs[0,0].plot(time, np.average(data, axis = 0))
+            axs[1, 0].plot(time, var, label = name)
+    if plot: 
+        axs[0,0].set_title("Averages")
+        axs[1,0].set_title("Variances")
+        axs[0,0].grid()
+        axs[1,0].grid()
+        axs[0,0].legend()
+        axs[1,0].legend()
+    
+    for name in Q_list: 
+        data = dicts[name]['values'].reshape(rec_num, time_num)
+        var = np.var(data, axis = 0)
+        variance_dict[name] = var
+        var_coherent = var/np.sqrt(np.abs(avg))
+        if plot: 
+            axs[0, 1].fill_between(time, np.average(data, axis = 0)-vscale*var, np.average(data, axis = 0)+vscale*var, label = name)
+            axs[0,1].plot(time, np.average(data, axis = 0))
+            axs[1, 1].plot(time, var, label = name)
+    if plot: 
+        axs[2,0].plot(time, Pavg)
+        axs[2,1].plot(time, Pvar)
+        axs[0,1].set_title("Averages")
+        axs[1,1].set_title("Variances")
+        axs[0,1].grid()
+        axs[1,1].grid()
+        axs[0,1].legend()
+        axs[1,1].legend()
+        
+        fig.tight_layout()
+    
+    return zip(np.array(Pvar_arr), np.array(Pavg_arr))
+
+
+def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 ,sQ_c2, sQ_c3, figscale = 1, hist_scale = 200, odd_only = False, even_only = False, plot = False, lpf = True, lpf_wc = 1e6, fit = False, hist_y_scale = 10, boxcar = False, bc_window = [50, 150], record_track = False, rec_start = 0, rec_stop = 7860, debug = False, tstart_index = 0, tstop_index = -1, guess = 0, rec_skip = 5):
+    fs = 1/np.diff(time_vals)[0]
+    print('\n\n\nsampling rate: ', fs)
+    sI_c1 = sI_c1[rec_start:rec_stop:rec_skip].copy()
+    sI_c2 = sI_c2[rec_start:rec_stop:rec_skip].copy()
+    sI_c3 = sI_c3[rec_start:rec_stop:rec_skip].copy()
+    sQ_c1 = sQ_c1[rec_start:rec_stop:rec_skip].copy()
+    sQ_c2 = sQ_c2[rec_start:rec_stop:rec_skip].copy()
+    sQ_c3 = sQ_c3[rec_start:rec_stop:rec_skip].copy()
+    if lpf: 
+        sI_c1_classify = np.empty(np.shape(sI_c1))
+        sI_c2_classify = np.empty(np.shape(sI_c1))
+        sI_c3_classify = np.empty(np.shape(sI_c1))
+        sQ_c1_classify = np.empty(np.shape(sI_c1))
+        sQ_c2_classify = np.empty(np.shape(sI_c1))
+        sQ_c3_classify = np.empty(np.shape(sI_c1))
+        for i, (rec1, rec2, rec3, rec4, rec5, rec6) in enumerate(zip(sI_c1, sI_c2, sI_c3, sQ_c1, sQ_c2, sQ_c3)): 
+            sI_c1_classify[i] = lfilter(*butter(10, lpf_wc/1e9, fs=fs, btype='low', analog=False), rec1)
+            sI_c2_classify[i] = lfilter(*butter(10, lpf_wc/1e9, fs=fs, btype='low', analog=False), rec2)
+            sI_c3_classify[i] = lfilter(*butter(10, lpf_wc/1e9, fs=fs, btype='low', analog=False), rec3)
+        
+            sQ_c1_classify[i] = lfilter(*butter(10, lpf_wc/1e9, fs=fs, btype='low', analog=False), rec4)
+            sQ_c2_classify[i] = lfilter(*butter(10, lpf_wc/1e9, fs=fs, btype='low', analog=False), rec5)
+            sQ_c3_classify[i] = lfilter(*butter(10, lpf_wc/1e9, fs=fs, btype='low', analog=False), rec6)
+    else: 
+        sI_c1_classify = sI_c1
+        sI_c2_classify = sI_c2
+        sI_c3_classify = sI_c3
+        
+        sQ_c1_classify = sQ_c1
+        sQ_c2_classify = sQ_c2
+        sQ_c3_classify = sQ_c3
+    
+    sI_c1 = sI_c1_classify.copy()
+    sI_c2 = sI_c2_classify.copy()
+    sI_c3 = sI_c3_classify.copy()
+    sQ_c1 = sQ_c1_classify.copy()
+    sQ_c2 = sQ_c2_classify.copy()
+    sQ_c3 = sQ_c3_classify.copy()
     
     if boxcar:
         WF = np.zeros(np.size(time_vals))
         WF[bc_window[0]:bc_window[1]] = 1
-        Sge_I = Sge_Q = Sgf_I = Sgf_Q = Sef_I = Sef_Q = WF
+        Sge_I = Sge_Q = Sgf_I = Sgf_Q = Sef_I = Sef_Q = WF#/(bc_window[1]-bc_window[0])
         
     else: 
         tfilt = np.ones(np.size(np.unique(time_vals)))
@@ -60,7 +266,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
     #     Sef = sosfilt(butter(10, lpf_wc, fs = 1e9/20, output = 'sos'), Sef)
     
     #nromalizing weight functions
-    # Sge_I /= np.linalg.norm([np.abs(Sge_I), np.abs(Sge_Q)])
+    # Sge_I /= np.sum(np.linalg.norm([np.abs(Sge_I), np.abs(Sge_Q)]))
     # Sge_Q /= np.linalg.norm([np.abs(Sge_I), np.abs(Sge_Q)])
     # Sef_I /= np.linalg.norm([np.abs(Sef_I), np.abs(Sef_Q)])
     # Sef_Q /= np.linalg.norm([np.abs(Sef_I), np.abs(Sef_Q)])
@@ -77,7 +283,7 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
     
     if plot: 
         
-        fig = plt.figure(1, figsize = (12,8))
+        fig = plt.figure(1, figsize = tuple(np.array([12,8])*figscale))
         fig.suptitle(name, fontsize = 20)
         ax1 = fig.add_subplot(221)
         ax1.set_title("I average")
@@ -88,7 +294,6 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         ax1.plot(time_vals,np.average(sI_c3, axis = 0)*1000, label = 'F_records')
         ax1.grid()
         # ax1.set_aspect(1)
-        ax1.legend(loc = 'upper right')
         ax2 = fig.add_subplot(222)
         ax2.set_title("Q average")
         ax1.set_ylabel("Voltage (mV)")
@@ -98,7 +303,8 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         ax2.plot(time_vals,np.average(sQ_c3, axis = 0)*1000, label = 'F records')
         ax2.grid()
         # ax2.set_aspect(1)
-        ax2.legend(loc = 'upper right')
+        ax2.legend(bbox_to_anchor=(1.05, 1.0), 
+                            loc='upper left')
         ax3 = fig.add_subplot(223)
         ax3.set_title("Trajectories")
         ax3.set_ylabel("I Voltage (mV)")
@@ -113,11 +319,12 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         ax4.set_title("Weight Functions")
         ax4.plot(Sge_I, label = 'Wge_I')
         ax4.plot(Sge_Q, label = 'Wge_Q')
-        ax4.plot(Sgf_I, label = 'Wgf')
-        ax4.plot(Sgf_Q, label = 'Wgf')
-        ax4.plot(Sef_I, label = 'Wef')
-        ax4.plot(Sef_Q, label = 'Wef')
-        ax4.legend()
+        ax4.plot(Sgf_I, label = 'Wgf_I')
+        ax4.plot(Sgf_Q, label = 'Wgf_Q')
+        ax4.plot(Sef_I, label = 'Wef_I')
+        ax4.plot(Sef_Q, label = 'Wef_Q')
+        ax4.legend(bbox_to_anchor=(1.05, 1.0), 
+                            loc='upper left')
         ax4.grid()
         
         fig.tight_layout(h_pad = 1, w_pad = 1.5)
@@ -156,6 +363,8 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         ax33.grid()
         
         fig2.tight_layout(h_pad = 1, w_pad = 1)
+        
+
     else: 
         fig2 = None
         ax11 = ax12 = ax13 = ax21 = ax22 = ax23 = ax31 = ax32 = ax33 = None
@@ -188,6 +397,32 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
     bins_EF_E, h_EF_E, I_EF_E_pts, Q_EF_E_pts = weighted_histogram(Sef_I, Sef_Q, sI_c2, sQ_c2, plot = plot, fig = fig2, ax = ax32, scale = hist_scale2, record_track = False)
     bins_EF_F, h_EF_F, I_EF_F_pts, Q_EF_F_pts = weighted_histogram(Sef_I, Sef_Q, sI_c3, sQ_c3, plot = plot, fig = fig2, ax = ax33, scale = hist_scale3, record_track = False)
     
+    if plot and not fit: 
+        fig3, axs = plt.subplots(3, 1, figsize = (6,12))
+        viridis = cm.get_cmap('magma', 256)
+        newcolors = viridis(np.linspace(0, 1, 256))
+        gray = np.array([0.1, 0.1, 0.1, 0.1])
+        newcolors[128-5: 128+5] = gray
+        newcmp = ListedColormap(newcolors)
+
+        ax1 = axs[0]
+        ax2 = axs[1]
+        ax3 = axs[2]
+        
+        ax1.set_title("Sge - inputs G and E")
+        ax1.pcolormesh(bins_GE_G, bins_GE_G, h_GE_G+h_GE_E)
+        ax1.set_aspect(1)
+        
+        ax2.set_title("Sgf - inputs G and F")
+        ax2.pcolormesh(bins_GF_G, bins_GF_F, h_GF_G+h_GF_F)
+        ax2.set_aspect(1)
+        
+        ax3.set_title("Sef - inputs E and F")
+        ax3.pcolormesh(bins_EF_E, bins_EF_F, h_EF_E+h_EF_F)
+        ax3.set_aspect(1)
+        
+        fig3.tight_layout()
+    
     if fit: 
         
         I_G = sI_c1
@@ -205,85 +440,85 @@ def Process_One_Acquisition_3_state(name, time_vals, sI_c1, sI_c2, sI_c3, sQ_c1 
         Q_E_avg = np.average(Q_E, axis = 0)
         Q_F_avg = np.average(Q_F, axis = 0)
         
-        
-        G_x0Guess = np.max(I_G_avg)
-        G_y0Guess = np.max(Q_G_avg)
-        G_ampGuess = np.average(np.sqrt(I_G_avg**2+Q_G_avg**2))
-        G_sxGuess = hist_scale/2
-        G_syGuess = hist_scale/2
-        G_thetaGuess = np.average(np.angle(I_G_avg+1j*Q_G_avg))
-        G_offsetGuess = 0
-        
-        E_x0Guess = np.max(I_E_avg)
-        E_y0Guess = np.max(Q_E_avg)
-        E_ampGuess = np.average(np.sqrt(I_E_avg**2+Q_E_avg**2))
-        E_sxGuess = hist_scale/2
-        E_syGuess = hist_scale/2
-        E_thetaGuess = np.average(np.angle(I_E_avg+1j*Q_E_avg))
-        E_offsetGuess = 0
-        
-        F_x0Guess = np.max(I_F_avg)
-        F_y0Guess = np.max(Q_F_avg)
-        F_ampGuess = np.average(np.sqrt(I_F_avg**2+Q_F_avg**2))
-        F_sxGuess = hist_scale/2
-        F_syGuess = hist_scale/2
-        F_thetaGuess = np.average(np.angle(I_F_avg+1j*Q_F_avg))
-        F_offsetGuess = 0
-        
-        guessParams = [[G_ampGuess, G_x0Guess, G_y0Guess, G_sxGuess, G_thetaGuess],
-                       [E_ampGuess, E_x0Guess, E_y0Guess, E_sxGuess, E_thetaGuess], 
-                       [F_ampGuess, F_x0Guess, F_y0Guess, F_sxGuess, F_thetaGuess]]
-        
-        if debug: 
-            print("fitting guess parameters: ", guessParams)
+        if guess:
+            guessParams = []
+            for i, [wfs, avgs] in enumerate([
+                                     [[Sge_I, Sge_Q], [I_G_avg, Q_G_avg, I_E_avg, Q_E_avg]], 
+                                     [[Sgf_I, Sgf_Q], [I_G_avg, Q_G_avg, I_F_avg, Q_F_avg]],
+                                     [[Sef_I, Sef_Q], [I_E_avg, Q_E_avg, I_F_avg, Q_F_avg]],
+                                     ]): 
+                
+                for j in range(2):
+                
+                    A_x0Guess = np.dot(avgs[2*j+0], wfs[0])+np.dot(avgs[2*j+1], wfs[1])
+                    A_y0Guess = np.dot(avgs[2*j+1], wfs[0])-np.dot(avgs[2*j+0], wfs[1])
+                    A_ampGuess = np.average([np.max(h_GE_G), np.max(h_GF_G), np.max(h_EF_F)]) 
+                    A_sxGuess = hist_scale/8
+    
+                    # A_thetaGuess = np.average(np.angle(A_x0Guess+1j*A_y0Guess))
+                    A_thetaGuess = 0
+    
+                    guessParams.append([A_ampGuess, A_y0Guess, A_x0Guess, A_sxGuess])
+            print(["amp", "Y0", 'X0', 'Sigma_x', 'Theta'])
+            print(guessParams)
+            print(np.shape(guessParams))
+        else: 
+            guessParams = [None, None, None, None, None, None]
         ########
         max_fev = 10000
         line_ind = 0
         GE_G_fit = fit_2D_Gaussian('GE_G_fit', bins_GE_G, h_GE_G, 
-                                                    # guessParams[0],
-                                                    None,
+                                                    guessParams[0],
+                                                    # None,
                                                     max_fev = max_fev,
                                                     contour_line = line_ind)
         GE_G_fit_h = Gaussian_2D(np.meshgrid(bins_GE_G[:-1], bins_GE_G[:-1]), *GE_G_fit.info_dict['popt'])
+        print(GE_G_fit.info_dict['popt'])
         GE_G_fit_h_norm = np.copy(GE_G_fit_h/np.sum(GE_G_fit_h))
         ########
         GE_E_fit = fit_2D_Gaussian('GE_E_fit', bins_GE_E, h_GE_E, 
-                                                    # guessParams[1],
-                                                    None, 
+                                                    guessParams[1],
+                                                    # None, 
                                                     max_fev = max_fev,
                                                     contour_line = line_ind)
         GE_E_fit_h = Gaussian_2D(np.meshgrid(bins_GE_E[:-1], bins_GE_E[:-1]), *GE_E_fit.info_dict['popt'])
+        print(GE_E_fit.info_dict['popt'])
         GE_E_fit_h_norm = np.copy(GE_E_fit_h/np.sum(GE_E_fit_h))
         ########
         GF_G_fit = fit_2D_Gaussian('GF_G_fit', bins_GF_G, h_GF_G,
-                                                # guessParams[0],
-                                                None,
+                                                guessParams[2],
+                                                # None,
                                                 max_fev = max_fev,
                                                 contour_line = line_ind)
         GF_G_fit_h = Gaussian_2D(np.meshgrid(bins_GF_G[:-1], bins_GF_G[:-1]), *GF_G_fit.info_dict['popt'])
+        
+        print(GF_G_fit.info_dict['popt'])
         GF_G_fit_h_norm = np.copy(GF_G_fit_h/np.sum(GF_G_fit_h))
         
         GF_F_fit = fit_2D_Gaussian('GF_F_fit', bins_GF_F, h_GF_F,
-                                                # guessParams[2],
-                                                None,
+                                                guessParams[3],
+                                                # None,
                                                 max_fev = max_fev,
                                                 contour_line = line_ind)
+        print(GF_F_fit.info_dict['popt'])
         GF_F_fit_h = Gaussian_2D(np.meshgrid(bins_GF_F[:-1], bins_GF_F[:-1]), *GF_F_fit.info_dict['popt'])
         GF_F_fit_h_norm = np.copy(GF_F_fit_h/np.sum(GF_F_fit_h))
         
         EF_E_fit = fit_2D_Gaussian('EF_E_fit', bins_EF_E, h_EF_E,
-                                                # guessParams[2],
-                                                None, 
+                                                guessParams[4],
+                                                # None, 
                                                 max_fev = max_fev,
                                                 contour_line = line_ind)
+        print(EF_E_fit.info_dict['popt'])
         EF_E_fit_h = Gaussian_2D(np.meshgrid(bins_EF_E[:-1], bins_EF_E[:-1]), *EF_E_fit.info_dict['popt'])
         EF_E_fit_h_norm = np.copy(EF_E_fit_h/np.sum(EF_E_fit_h))
         
         EF_F_fit = fit_2D_Gaussian('EF_F_fit', bins_EF_F, h_EF_F,
-                                                # guessParams[2],
-                                                None,
+                                                guessParams[5],
+                                                # None,
                                                 max_fev = max_fev,
                                                 contour_line = line_ind)
+        print(EF_F_fit.info_dict['popt'])
         EF_F_fit_h = Gaussian_2D(np.meshgrid(bins_EF_F[:-1], bins_EF_F[:-1]), *EF_F_fit.info_dict['popt'])
         EF_F_fit_h_norm = np.copy(EF_F_fit_h/np.sum(EF_F_fit_h))
         
@@ -674,7 +909,9 @@ def Process_One_Acquisition_2_state(name, time_vals, sI_c1, sI_c2, sQ_c1 ,sQ_c2,
         
         
         G_x0Guess = np.max(I_G_avg)
+        G_x0Guess = np.dot(I_G_avg, Sge_I)+np.dot(Q_G_avg, Sge_Q)
         G_y0Guess = np.max(Q_G_avg)
+        G_y0_Guess = np.dot(Q_G_avg, Sge_Q)-np.dot(I_G_avg, Sge_I)
         G_ampGuess = np.average(np.sqrt(I_G_avg**2+Q_G_avg**2))
         G_sxGuess = hist_scale/2
         G_syGuess = hist_scale/2
@@ -1002,10 +1239,12 @@ def weighted_histogram(weight_function_arr_I, weight_function_arr_Q, sI, sQ, sca
     for I_row, Q_row in zip(sI, sQ): 
         I_pts.append(np.dot(I_row, weight_function_arr_I)+np.dot(Q_row, weight_function_arr_Q))
         Q_pts.append(np.dot(Q_row, weight_function_arr_I)-np.dot(I_row, weight_function_arr_Q))
+        # I_pts.append(np.dot(I_row, weight_function_arr_I))
+        # Q_pts.append(np.dot(Q_row, weight_function_arr_Q))
     # plt.imshow(np.histogram2d(np.array(I_pts), np.array(Q_pts))[0])
 
     bins = np.linspace(-1,1, num_bins)*scale
-    (h, xedges, yedges) = np.histogram2d(I_pts, Q_pts, bins = [bins, bins])
+    (h, xedges, yedges) = np.histogram2d(I_pts, Q_pts, bins = [bins, bins], density = False)
     
     if plot: 
         im = ax.pcolormesh(bins, bins, h)
@@ -1019,8 +1258,8 @@ def weighted_histogram(weight_function_arr_I, weight_function_arr_Q, sI, sQ, sca
         ax2.set_title("Record Tracking: Demodulated signals")
         ax2.set_xlabel("time (~us)")
         ax2.set_ylabel("$\phi(t)$")
-        unwrapped_phases = np.mod(np.unwrap(np.arctan(np.array(sI[0:500])/np.array(sQ[0:500])), period = np.pi), 2*np.pi)
-        ax2.plot(np.arange(500)*500, unwrapped_phases, '.', label = "phi(t)")
+        unwrapped_phases = np.mod(np.unwrap(np.arctan(np.array(sI[0:500, 100])/np.array(sQ[0:500, 100])), period = np.pi), 2*np.pi)
+        ax2.plot(np.arange(100)*500, unwrapped_phases, '.', label = "phi(t)")
         print("Average phase difference between records: ", np.average(np.diff(unwrapped_phases))/np.pi*180, ' degrees')
         # ax2.hlines(-12*np.pi, 0, 20000)
     
@@ -1037,7 +1276,18 @@ def Gaussian_2D(M,amplitude, xo, yo, sigma_x, sigma_y, theta):
                             + c*((y-yo)**2)))
     return g
 '''
-def Gaussian_2D(M,amplitude, xo, yo, sigma, theta):
+def Gaussian_2D(M,amplitude, xo, yo, sigma):
+    theta = 0
+    x, y = M
+    xo = float(xo)
+    yo = float(yo)
+    a = (np.cos(theta)**2)/(2*sigma**2) + (np.sin(theta)**2)/(2*sigma**2)
+    b = -(np.sin(2*theta))/(4*sigma**2) + (np.sin(2*theta))/(4*sigma**2)
+    c = (np.sin(theta)**2)/(2*sigma**2) + (np.cos(theta)**2)/(2*sigma**2)
+    g = amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo)
+                            + c*((y-yo)**2)))
+    return g
+def Gaussian_2D_tilted(M,amplitude, xo, yo, sigma, theta = 0):
     x, y = M
     xo = float(xo)
     yo = float(yo)
@@ -1080,7 +1330,8 @@ class Gaussian_info:
         x0, y0 = self.center_vec()
         sx = self.info_dict['sigma_x']
         sy = self.info_dict['sigma_y']
-        angle = self.info_dict['theta']
+        # angle = self.info_dict['theta']
+        angle = 0
         return Ellipse((x0, y0), sx, sy, angle = angle/(2*np.pi)*360, 
                        fill = False, 
                        ls = '--',
@@ -1102,8 +1353,8 @@ def fit_2D_Gaussian(name,
     # print('xdata_shape: ', np.shape(xdata))
     # print("y shape: ",np.shape(ydata))
     #,amplitude, xo, yo, sigma_x, sigma_y, theta
-    bounds = ([0,np.min(bins), np.min(bins), 0, 0],
-              [np.max(h_arr), np.max(bins), np.max(bins), np.max(bins), np.max(bins)])
+    bounds = ([0,np.min(bins), np.min(bins), 0],
+              [10*np.max(h_arr), np.max(bins), np.max(bins), np.max(bins)])
     # print(bounds)
     popt, pcov = curve_fit(Gaussian_2D, xdata, ydata, p0 = guessParams, maxfev = max_fev, bounds = bounds)
     GC = Gaussian_info()
@@ -1114,7 +1365,7 @@ def fit_2D_Gaussian(name,
     GC.info_dict['y0'] = popt[2]
     GC.info_dict['sigma_x'] = np.abs(popt[3])
     GC.info_dict['sigma_y'] = np.abs(popt[3])
-    GC.info_dict['theta'] = popt[4]
+    # GC.info_dict['theta'] = popt[4]
     GC.info_dict['popt'] = popt
     GC.info_dict['pcov'] = pcov
     # GC.info_dict['contour'] = get_contour_line(X, Y, Gaussian_2D(xdata, *popt).reshape(resh_size), contour_line = contour_line)
@@ -1204,7 +1455,11 @@ def extract_3pulse_noise_from_filepath(datapath, numRecords = 3840*2, window = [
     Q_E_avg = np.average(Q_E, axis = 0)
     Q_F_avg = np.average(Q_F, axis = 0)
     print(np.shape(I_G))
-    return np.sqrt(np.var(np.sqrt(I_G[:, offset: rtrim]**2+Q_G[:, offset: rtrim]**2)))
+    print(np.shape(I_G_avg))
+    print(np.average(I_G_avg))
+    return [np.sqrt(np.var(np.sqrt((I_G[:, offset: rtrim]-I_G_avg[offset:rtrim])**2+(Q_G[:, offset: rtrim]-Q_G_avg[offset:rtrim])**2))), 
+            np.sqrt(np.var(np.sqrt((I_E[:, offset: rtrim]-I_E_avg[offset:rtrim])**2+(Q_E[:, offset: rtrim]-Q_E_avg[offset:rtrim])**2))), 
+            np.sqrt(np.var(np.sqrt((I_F[:, offset: rtrim]-I_F_avg[offset:rtrim])**2+(Q_F[:, offset: rtrim]-Q_F_avg[offset:rtrim])**2)))]
 
 def extract_3pulse_pwr_from_filepath(datapath, numRecords = 3840*2, window = [0, -1]):
     dd = all_datadicts_from_hdf5(datapath)['data']
@@ -1237,10 +1492,11 @@ def extract_3pulse_pwr_from_filepath(datapath, numRecords = 3840*2, window = [0,
     Q_E_avg = np.average(Q_E, axis = 0)
     Q_F_avg = np.average(Q_F, axis = 0)
 
-    return np.average(np.sqrt(I_G_avg**2+Q_G_avg**2)[offset:rtrim]), np.average(np.sqrt(I_E_avg**2+Q_E_avg**2)[offset:rtrim]), np.average(np.sqrt(I_F_avg**2+Q_F_avg**2)[offset:rtrim])
+    return np.average(np.sqrt(I_G_avg**2+Q_G_avg**2)[offset:rtrim]), np.average(np.sqrt(I_E_avg**2+Q_E_avg**2)[offset:rtrim]), np.average(np.sqrt(I_F_avg**2+Q_F_avg**2)[offset:rtrim]), 
 
 
-def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = None, numRecords = 3840*2, numRecordsUsed = 3840*2, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = False, bc_window = [50, 150], record_track = True, tuneup_plots = True, debug = False, tstart_index = 0, tstop_index = -1):
+def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = None, numRecords = 3840*2, rec_start = 0, rec_stop = -1, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = False, bc_window = [50, 150], record_track = True, tuneup_plots = True, debug = False, tstart_index = 0, tstop_index = -1, phase_correction_rate = 0, figscale = 1, guess = 0, rec_skip = 5):
+    
     I_offset, Q_offset = IQ_offset
     dd = all_datadicts_from_hdf5(datapath)['data']
     if debug: 
@@ -1252,7 +1508,7 @@ def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = 
     
     rec_unit = dd['record_num']['unit']
     rec_num = dd['record_num']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))
-
+    
     I_G = dd['I_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
     I_E = dd['I_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
     I_F = dd['I_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-I_offset
@@ -1260,17 +1516,23 @@ def extract_3pulse_histogram_from_filepath(datapath, plot = False, hist_scale = 
     Q_G = dd['Q_G']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
     Q_E = dd['Q_E']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
     Q_F = dd['Q_F']['values'].reshape((numRecords//3, np.size(dd['time']['values'])//(numRecords//3)))-Q_offset
-
-    #averages
-    I_G_avg = np.average(I_G, axis = 0)
-    I_E_avg = np.average(I_E, axis = 0)
-    I_F_avg = np.average(I_F, axis = 0)
     
-    Q_G_avg = np.average(Q_G, axis = 0)
-    Q_E_avg = np.average(Q_E, axis = 0)
-    Q_F_avg = np.average(Q_F, axis = 0)
+    #attempting to correct a rotating generator phase
+    pcr = phase_correction_rate
+    C = np.cos(pcr*rec_num)
+    S = np.sin(pcr*rec_num)
+    
+    I_G = (I_G*C-Q_G*S).copy()
+    Q_G = (Q_G*C+I_G*S).copy()
+    
+    I_E = (I_E*C-Q_E*S).copy()
+    Q_E = (Q_E*C+I_E*S).copy()
+    
+    I_F = (I_F*C-Q_F*S).copy()
+    Q_F = (Q_F*C+I_F*S).copy()
 
-    return Process_One_Acquisition_3_state(datapath.split('/')[-1].split('\\')[-1], time_vals[0], I_G, I_E, I_F, Q_G, Q_E, Q_F,hist_scale = hist_scale, plot = plot, fit = fit, lpf = lpf, lpf_wc = lpf_wc, boxcar = boxcar, bc_window = bc_window, record_track = record_track, numRecordsUsed = numRecordsUsed, debug = debug, tstart_index = tstart_index, tstop_index = tstop_index) 
+
+    return Process_One_Acquisition_3_state(datapath.split('/')[-1].split('\\')[-1], time_vals[0], I_G, I_E, I_F, Q_G, Q_E, Q_F,hist_scale = hist_scale, plot = plot, fit = fit, lpf = lpf, lpf_wc = lpf_wc, boxcar = boxcar, bc_window = bc_window, record_track = record_track, rec_start = rec_start, rec_stop = rec_stop, debug = debug, tstart_index = tstart_index, tstop_index = tstop_index, figscale = figscale, guess = guess, rec_skip = rec_skip) 
 
 def extract_2pulse_histogram_from_filepath(datapath, plot = False, hist_scale = None, numRecords = 3840*2, numRecordsUsed = 3840*2, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = False, bc_window = [50, 150], record_track = True, tuneup_plots = True, debug = False):
     I_offset, Q_offset = IQ_offset

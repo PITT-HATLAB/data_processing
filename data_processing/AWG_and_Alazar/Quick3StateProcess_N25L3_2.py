@@ -14,121 +14,40 @@ plt.style.use('hatlab')
 import numpy as np
 #histogram plotting
 
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\loopback_after_rebuild_2\2022-05-05_0002_test1_Rep_0__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_tests_0.4mA\2022-05-05_0001_amp_onoff_-90_Amp_0__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_tests_0.4mA\2022-05-05_0002_amp_onoff_-90_Amp_1__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_tests_0.4mA\2022-05-05_0003_amp_onoff_-120_Amp_0__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_tests_0.4mA\2022-05-05_0004_amp_onoff_-120_Amp_1__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_tests_0.4mA\2022-05-05_0005_amp_onoff_-120_Amp_0__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_tests_0.4mA\2022-05-05_0006_amp_onoff_-120_Amp_1__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA\2022-05-05_0006_amp_onoff_-100_higher_range_Amp_1__.ddh5'
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA/2022-05-05_0003_amp_onoff_-100_higher_range_Amp_0__.ddh5'
+#loopback
+datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\loopbacks\2022-05-25_0002_loopback_20dB_att_Rep_0__.ddh5'
+datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\loopbacks\2022-05-25_0003_loopback_0dB_att_Rep_0__.ddh5'
 
-#now trying to see saturation
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA\2022-05-05_0002_amp_onoff_-100_Amp_1__.ddh5'
-
-datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA\2022-05-05_0009_amp_onoff_-80_high_pwr_var_Rep_0__.ddh5'
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep/2022-05-05_0008_pwr_sweep_30dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.35_V_.ddh5'
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep/2022-05-05_0018_pwr_sweep_30dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep/2022-05-05_0050_pwr_sweep_30dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_0.35_V_.ddh5'
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep/2022-05-05_0060_pwr_sweep_30dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_higher_pwr/2022-05-05_0046_pwr_sweep_20dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_0.35_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_higher_pwr/2022-05-05_0056_pwr_sweep_20dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA_sweep_even_higher_pwr\2022-05-05_0006_pwr_sweep_10dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.55_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_higher_pwr/2022-05-05_0028_pwr_sweep_20dB_att_pump_pwr_9.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_higher_pwr/2022-05-05_0056_pwr_sweep_20dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0001_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.05_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0004_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.35_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0014_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0029_pwr_sweep_0dB_att_pump_pwr_10.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.05_V_.ddh5'
-
-datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA_sweep_0dB_att\2022-05-05_0002_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.15_V_.ddh5'
-
-datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA_sweep_0dB_att\2022-05-05_0006_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.5_V_.ddh5'
-
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA_sweep_0dB_att\2022-05-05_0064_pwr_sweep_0dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0039_pwr_sweep_0dB_att_pump_pwr_10.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_1.05_V_.ddh5'
-
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0048_pwr_sweep_0dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_0.55_V_.ddh5'
-
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0052_pwr_sweep_0dB_att_pump_pwr_10.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_0.95_V_.ddh5'
-#
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA_farther_detuned\2022-05-05_0001_amp_onoff_-110_Amp_0__.ddh5'
-# datapath = r'Z:\Data\N25_L3_SQ\BP1\amp_saturation_0.4mA_farther_detuned\2022-05-05_0002_amp_onoff_-110_Amp_1__.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_0dB_att/2022-05-05_0013_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.45_V_.ddh5'
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0005_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.45_V_.ddh5'
-
-#this one looks like a Poisson distribution
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_was_actually_off/amp_saturation_0.4mA_sweep/2022-05-05_0010_pwr_sweep_30dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.55_V_.ddh5'
-#this is those SAME settings, but with the amplifier on
-datapath = r''
-
-#10dB more power
+#init_test at something close to -30dBm RT, or about -120dBm at cryo
+datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\init_amp_test\2022-05-25_0001_pwr_swp_0dB_att_Rep_0__.ddh5'
+#at4x that voltage: 
+datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\init_amp_test\2022-05-25_0004_pwr_swp_0dB_att_Sig_Volt_1.244_V_.ddh5'
+#init test at about 0dBm RT, or about -90 cryo
+#after repluggin clock
+datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\init_amp_test_replug_clock\2022-05-25_0002_pwr_swp_0dB_att_Sig_Volt_1.244_V_.ddh5'
 #amp_off
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_was_actually_off/amp_saturation_0.4mA_sweep_higher_pwr/2022-05-05_0001_pwr_sweep_20dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.05_V_.ddh5'
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_was_actually_off/amp_saturation_0.4mA_sweep_higher_pwr/2022-05-05_0006_pwr_sweep_20dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.55_V_.ddh5'
 
+#after finding broken cable, replacing, and rerunning: 
+#amp off
+datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\fixed\signal_power_sweep_-30MHz_detuned\2022-05-25_0001_pwr_swp_0dB_att_Amp_0__.ddh5'
 #amp on
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0006_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.55_V_.ddh5'
+# datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\fixed\signal_power_sweep_-30MHz_detuned\2022-05-25_0002_pwr_swp_0dB_att_Amp_1__.ddh5'
 
-#higher power
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_was_actually_off/amp_saturation_0.4mA_sweep/2022-05-05_0018_pwr_sweep_30dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_1.35_V_.ddh5'
-
-# datapath = r"Z:/Data/N25_L3_SQ/BP1/amp_was_actually_off/amp_saturation_0.4mA_sweep_higher_pwr/2022-05-05_0001_pwr_sweep_20dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.05_V_.ddh5"
-
-
-
-
-
-datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0001_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.05_V_.ddh5'
-
-
-
-
-
-# 
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0002_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.15_V_.ddh5'
-#reduce detuning
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0016_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5917000000.0_Hz_Sig_Volt_0.15_V_.ddh5'
-
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0003_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.25_V_.ddh5'
-
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0006_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.55_V_.ddh5'
-
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_saturation_0.4mA_sweep_20dB_att/2022-05-05_0010_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.95_V_.ddh5'
-
-#amp off high power
-# datapath = r'Z:/Data/N25_L3_SQ/BP1/amp_was_actually_off/amp_saturation_0.4mA_sweep_even_even_higher_pwr/2022-05-05_0010_pwr_sweep_0dB_att_pump_pwr_9.76_dBm_LO_freq_5914000000.0_Hz_Sig_Volt_0.95_V_.ddh5'
-# print(datapath)
+# datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\init_amp_test_replug_clock\2022-05-25_0003_pwr_swp_0dB_att_pump_off_Sig_Volt_1.244_V_.ddh5'
 nr = 7686
-# #%%
-# print(datapath)
-# fid = extract_3pulse_histogram_from_filepath(datapath, plot = True, hist_scale = 0.01, numRecords = nr, numRecordsUsed = 400, IQ_offset = (0,0), fit = False, lpf = True, lpf_wc = 50e6, boxcar = True, bc_window = [50, 150], record_track = False, tuneup_plots = False, debug = False, tstart_index = 0, tstop_index = -1)
+
 #%%
 # print(datapath)
 
 # fid = extract_3pulse_histogram_from_filepath(datapath, figscale = 1.2, plot = True, hist_scale = 0.0006, numRecords = nr, rec_start = 0, rec_stop = 2500, IQ_offset = (0,0), fit = False, lpf = False, lpf_wc = 50e6, boxcar = False, bc_window = [80, 100], record_track = False, tuneup_plots = False, debug = False, tstart_index = 60 , tstop_index = 120, phase_correction_rate = 0.0000, guess = 1)
 tstart = 50
 tstop = 150
-fid = extract_3pulse_histogram_from_filepath(datapath, figscale = 1.2, plot = True, hist_scale = 0.003, numRecords = nr, rec_start = 1, rec_stop = 7686, rec_skip = 1, IQ_offset = (0,0), fit = 0, lpf = 0, lpf_wc = 15e6, boxcar = False, bc_window = [tstart, tstop], record_track = False, tuneup_plots = False, debug = False, tstart_index = tstart , tstop_index = tstop, phase_correction_rate = 0.0000, guess = 1)
+fid = extract_3pulse_histogram_from_filepath(datapath, figscale = 1.2, plot = True, hist_scale = 0.5, numRecords = nr, rec_start = 1, rec_stop = 7686, rec_skip = 1, IQ_offset = (0,0), fit = 0, lpf = 0, lpf_wc = 15e6, boxcar = True, bc_window = [tstart, tstop], record_track = False, tuneup_plots = False, debug = False, tstart_index = tstart , tstop_index = tstop, phase_correction_rate = 0.0000, guess = 1)
 
 print(fid)
 #%%custom stats
 for trace in [0,1,2]: 
-    Pvar, Pvar_fit, Pavg, Ivar, Qvar = plot_custom_stats_from_filepath(datapath, debug = True, trace = trace, fit = 0, timeslice = 58)
+    Pvar, Pvar_fit, Pavg, Ivar, Qvar = plot_custom_stats_from_filepath(datapath, debug = True, trace = trace, fit = 1, timeslice = 100)
     print("Variance (numpy):", Pvar, "\nVariance (fit): ", Pvar_fit, "\nAverage: ", Pavg)
 
 #%%old stats

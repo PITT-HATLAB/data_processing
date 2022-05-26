@@ -21,10 +21,16 @@ plt.rc('axes', labelsize=15)    # fontsize of the x and y labels
 plt.rc('xtick', labelsize=12)    # fontsize of the tick labels
 plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
-device_name = 'SA_3C1_3132'
+device_name = 'N25L3_SQ'
 
-gain_filepath = r'Z:/Data/SA_3B1_1131/tacos/2s/2022-03-29/2022-03-29_0003_0.00014mA_TACO_gain/2022-03-29_0003_0.00014mA_TACO_gain.ddh5'
-sat_filepath = r'Z:/Data/SA_3B1_1131/tacos/2s/2022-03-29/2022-03-29_0004_0.00014mA_TACO_sat/2022-03-29_0004_0.00014mA_TACO_sat.ddh5'
+gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-02/2022-05-02_0001_0.0004mA_TACO_gain/2022-05-02_0001_0.0004mA_TACO_gain.ddh5'
+gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0043_0.0004mA_TACO_16dB_gain.ddh5'
+gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0027_0.0004mA_TACO_14dB_gain.ddh5'
+# gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0011_0.0004mA_TACO_12dBm_gain.ddh5'
+sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-02/2022-05-02_0002_0.0004mA_TACO_sat/2022-05-02_0002_0.0004mA_TACO_sat.ddh5'
+sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0044_0.0004mA_TACO_16dB_sat.ddh5'
+sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0038_0.0004mA_TACO_20dB_sat.ddh5'
+# sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0012_0.0004mA_TACO_12dBm_sat.ddh5'
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']
@@ -49,17 +55,19 @@ gain_data = gainDict.extract('calculated_gain')
 #%%Extract slices of currents, saturation data, etc which are each individual tacos
 b1_val = np.unique(bias_current)[0]
 b1 = (bias_current == b1_val)
-line_att = 0
+line_att = 77-30
 # *(gen_power<11)*(gen_power>8.5)
 ""
+target = 16
+plt.style.use('hatlab')
 gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1]-line_att, calc_gain[b1]
-fig, ax, cb = make_tacos(b1_val, gf1, gp1, g1, vmin = 15, vmax = 25)
+fig, ax, cb = make_tacos(b1_val, gf1, gp1, g1, vmin = target - 2, vmax = target+2, target = target)
 ax.set_xlabel("Generator Frequency (GHz)")
 ax.set_ylabel("Generator Pump Power (dBm)")
 cb.set_label("Gain (dB)")
 fancy = True
 if fancy:
-    title = f'{device_name} 20dB Generator Power vs. Generator Frequency\nBias = {np.round(b1_val*1000, 4)}mA'
+    title = f'{device_name} {target}dB Generator Power vs. Generator Frequency\nBias = {np.round(b1_val*1000, 4)}mA'
 else:
     title = f'{get_name_from_path(gain_filepath)}\nSHARC41: Bias = {np.round(b1_val*1000, 4)}mA'
 ax.title.set_text(title)
@@ -69,7 +77,7 @@ ax.grid(linestyle = '--', zorder = 2)
 bp1 = (sat_bias_current == np.unique(sat_bias_current)[0])
 # plt.plot(bp1)
 sf1, svp1, sgp1, sg1 = sat_gen_freq[bp1], sat_vna_powers[bp1], sat_gen_power[bp1], sat_gain[bp1]
-fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1-line_att, sg1, norm_power = -92, levels = [-20, -1,1, 20], filter_window = 15, vmin = -1.7, vmax = 1.7)
+fig, ax, img = make_sat_img_plot(b1_val, sf1/1000, svp1-line_att, sg1, norm_power = -65-line_att, levels = [-20, -1,1, 20], filter_window = 0, vmin = -1.7, vmax = 1.7)
 #supplementary graph info
 if fancy:
     title = f'{device_name} Saturation power vs. Generator Frequency\nBias = {np.round(b1_val*1000, 4)}mA'
@@ -79,14 +87,14 @@ cb = fig.colorbar(img, ax = ax)
 ax.title.set_text(title)
 plt.xlabel('Generator Frequency(GHz)')
 plt.ylabel('Signal Power (dBm)')
-cb.set_label("S21 change from 20dB (dB)")
+cb.set_label(f"S21 change from {target}dB (dB)")
 
 #%%plot a 3d profile of all the gain traces that were the "best"
 # make_gain_profiles(gain_filepath, angles = [20, 45])
 
 fig, ax = make_gain_surface(gain_filepath)
-ax.azim = 45
-ax.elev = 45
+ax.azim = 90
+ax.elev = 0
 #%%Plot individual power sweeps to check
 gain_traces = satDict.extract('sat_gain').data_vals('sat_gain')
 vna_freqs = satDict.extract('sat_gain').data_vals('sat_vna_freq')
