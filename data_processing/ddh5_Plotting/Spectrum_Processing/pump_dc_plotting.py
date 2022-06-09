@@ -42,19 +42,24 @@ detuning = 4e6
 sf = 5601900000.0+2e6
 
 pump_dc_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(5601900000.0)))]
+pump_signal_imd = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(5601900000.0+detuning)))]
+pump_idler_imd = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(5601900000.0-detuning)))]
 
-signal_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(cf)))]
-idler_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(center_freq-detuning)))]
+signal_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(sf)))]
+idler_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(signal_freq-detuning)))]
 
-idler_IMD1_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(center_freq-2*detuning)))]
-signal_IMD1_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(center_freq+detuning)))]
+idler_IMD1_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(signal_freq-2*detuning)))]
+signal_IMD1_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(signal_freq+detuning)))]
 
-idler_IMD2_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(center_freq-3*detuning)))]
-signal_IMD2_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(center_freq+2*detuning)))]
+idler_IMD2_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(signal_freq-3*detuning)))]
+signal_IMD2_freq = np.unique(spec_freqs)[np.argmin(np.abs(np.unique(spec_freqs)-(signal_freq+2*detuning)))]
 
 pump_filt = spec_freqs == pump_dc_freq
+pump_signal_IMD_filt = spec_freqs == pump_signal_imd
+pump_idler_IMD_filt = spec_freqs == pump_idler_imd
 
-signal_filt = spec_freqs == center_freq
+
+signal_filt = spec_freqs == signal_freq
 idler_filt = spec_freqs == idler_freq
 
 signal_IMD1_filt = spec_freqs == signal_IMD1_freq
@@ -72,6 +77,9 @@ else:
 #plot the LO leakage vs power
 fig, ax = plt.subplots(figsize = (8,6))
 ax.plot(plt_powers[pump_filt], spec_powers[pump_filt], '.', label = 'pump downconversion power (dBm)')
+ax.plot(plt_powers[pump_signal_IMD_filt], spec_powers[pump_signal_IMD_filt], '.', label = 'pump+idler_IMD power (dBm)')
+ax.plot(plt_powers[pump_idler_IMD_filt], spec_powers[pump_signal_IMD_filt], '.', label = 'pump+signal_IMD (dBm)')
+
 ax.plot(plt_powers[signal_filt], spec_powers[signal_filt], '.', label = 'Signal Power (dBm)')
 ax.plot(plt_powers[idler_filt], spec_powers[idler_filt], '.', label = 'Idler Power (dBm)')
 ax.plot(plt_powers[signal_IMD1_filt], spec_powers[signal_IMD1_filt], '.', label = 'Signal IMD1 power (dBm)')
@@ -84,14 +92,36 @@ ax.legend(bbox_to_anchor = (1,1))
 ax.grid()
 ax.set_ylabel('Spectrum Power (dBm)') 
 ax.set_title(f'IMD plot ')
+ax.set_aspect(0.5)
+
+fig, ax = plt.subplots(figsize = (8,6))
+ax.plot(plt_powers[pump_filt], np.diff(spec_powers[pump_filt], prepend = 0), '.', label = 'pump downconversion power (dBm)')
+ax.plot(plt_powers[pump_signal_IMD_filt], np.diff(spec_powers[pump_signal_IMD_filt], prepend = 0), '.', label = 'pump+idler_IMD power (dBm)')
+ax.plot(plt_powers[pump_idler_IMD_filt], np.diff(spec_powers[pump_signal_IMD_filt], prepend = 0), '.', label = 'pump+signal_IMD (dBm)')
+
+ax.plot(plt_powers[signal_filt], np.diff(spec_powers[signal_filt], prepend = 0), '.', label = 'Signal Power (dBm)')
+ax.plot(plt_powers[idler_filt], np.diff(spec_powers[idler_filt], prepend = 0), '.', label = 'Idler Power (dBm)')
+ax.plot(plt_powers[signal_IMD1_filt], np.diff(spec_powers[signal_IMD1_filt], prepend = 0), '.', label = 'Signal IMD1 power (dBm)')
+ax.plot(plt_powers[idler_IMD1_filt], np.diff(spec_powers[idler_IMD1_filt], prepend = 0), '.', label = 'idler IMD1 power (dBm)')
+ax.plot(plt_powers[signal_IMD2_filt], np.diff(spec_powers[signal_IMD2_filt], prepend = 0), '.', label = 'Signal IMD2 power (dBm)')
+ax.plot(plt_powers[idler_IMD2_filt], np.diff(spec_powers[idler_IMD2_filt], prepend = 0), '.', label = 'idler IMD2 power (dBm)')
+
+ax.set_xlabel('Signal generator power (dBm)')
+ax.legend(bbox_to_anchor = (1,1))
+ax.grid()
+ax.set_ylabel('Spectrum Power (dBm)') 
+ax.set_title(f'IMD plot ')
+ax.set_aspect(0.5)
+ax.set_ylim(-10, 10)
+ax.hlines([1,2,3], -20, 0, color = 'k', linestyle = '-.')
 
 plt.figure()
 fsize = np.size(np.unique(spec_freqs))
 fwindow = [sf-detuning*5, sf+detuning*5]
 [fw0, fw1] = fwindow
 
-plt_power = gen_powers[np.argmin(np.abs(np.unique(gen_powers)-(-0)))]
-gen_filt = gen_powers == plt_power
+plt_power = gen_powers[np.argmin(np.abs(np.unique(gen_powers)))]
+gen_filt = gen_powers == -10
 #end: 
 # plt_freqs = spec_freqs[-fsize:]
 
@@ -100,12 +130,12 @@ plt_freqs = spec_freqs[gen_filt]
 
 ffilt = (plt_freqs>=fw0)*(plt_freqs<fw1)
 # plt.plot(spec_freqs[0: fsize], spec_powers[0: fsize])
-plt_powers =  spec_powers[-fsize:]
+plt_powers =  spec_powers[gen_filt]
 plt.plot(plt_freqs[ffilt],plt_powers[ffilt])
-plt.vlines([pump_dc_freq,
-    signal_freq, signal_IMD1_freq, #signal_IMD2_freq, 
+plt.vlines([pump_dc_freq, pump_signal_imd, pump_idler_imd,
+            signal_freq, signal_IMD1_freq, #signal_IMD2_freq, 
             idler_freq, idler_IMD1_freq, #idler_IMD2_freq,
-            ], -80, 20, color = ['blue', 'orange'], linestyle = '--')
+            ], -80, 20, color = ['green', 'green', 'green', 'blue','blue', 'orange', 'orange'], linestyle = '--')
 
 
 

@@ -14,7 +14,10 @@ from matplotlib.patches import Ellipse
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from matplotlib.colors import Normalize as Norm
-
+from numpy.fft import fft, fftfreq
+from data_processing.Helper_Functions import find_all_ddh5
+import data_processing.signal_processing.Pulse_Processing_utils_raw_data as pulseUtils
+from plottr.data import datadict_storage as dds, datadict as dd
 #DO NOT USE, only here for backwards compatibility
 def demod(signal_data, reference_data, mod_freq = 50e6, sampling_rate = 1e9): 
     '''
@@ -77,7 +80,7 @@ def demod(signal_data, reference_data, mod_freq = 50e6, sampling_rate = 1e9):
     
     return (sig_I_summed, sig_Q_summed, ref_I_summed, ref_Q_summed)
 
-def demod_period(signal_data, reference_data, period = 20, sampling_rate = 1e9, debug = False): 
+def demod_period(signal_data, reference_data, period = 20, sampling_rate = 1e9, debug = False, sig_demod_freq = 50e6, ref_demod_freq = 50e6): 
     '''
     #TODO: 
     Parameters
@@ -112,22 +115,28 @@ def demod_period(signal_data, reference_data, period = 20, sampling_rate = 1e9, 
     #first demodulate both channels
     # print("Signal Data Shape: ",np.shape(signal_data))
     # print("Reference Data Shape: ",np.shape(reference_data))
-    if debug: 
-        print("Integrating over a period of: ", period)
-        print("Implies a demodulation frequency of: ", sampling_rate/period/1e6, "MHz")
+    # if debug: 
+    #     print("Integrating over a period of: ", period)
+    #     print("Using a demodulation frequency of: ", demod_freq/1e6, "MHz")
     signal_data = np.pad(signal_data, (0,int(period-np.size(signal_data)%period)))
     reference_data = np.pad(reference_data, (0,int(period-np.size(reference_data)%period)))
     # print("Signal Data Shape: ",np.shape(signal_data))
     # print("Reference Data Shape: ",np.shape(reference_data))
     point_number = np.arange(np.size(reference_data))
     # print('Modulation period: ', period)
-    SinArray = np.sin(2*np.pi/period*point_number)
-    CosArray = np.cos(2*np.pi/period*point_number)
+    equivalent_period_signal = 50e6/sig_demod_freq*20
+    equivalent_period_ref = 50e6/ref_demod_freq*20
+    # print("Equivalent period: ", equivalent_period)
+    SinArraySig = np.sin(2*np.pi/equivalent_period_signal*point_number)
+    CosArraySig = np.cos(2*np.pi/equivalent_period_signal*point_number)
     
-    sig_I = signal_data*SinArray
-    sig_Q = signal_data*CosArray
-    ref_I = reference_data*SinArray
-    ref_Q = reference_data*CosArray
+    SinArrayRef = np.sin(2*np.pi/equivalent_period_ref*point_number)
+    CosArrayRef = np.cos(2*np.pi/equivalent_period_ref*point_number)
+    
+    sig_I = signal_data*SinArraySig
+    sig_Q = signal_data*CosArraySig
+    ref_I = reference_data*SinArrayRef
+    ref_Q = reference_data*CosArrayRef
     
     #now you cut the array up into periods of the sin and cosine modulation, then sum within one period
     #the sqrt 2 is the RMS value of sin and cosine squared, period is to get rid of units of time
@@ -139,7 +148,7 @@ def demod_period(signal_data, reference_data, period = 20, sampling_rate = 1e9, 
     
     return (sig_I_summed, sig_Q_summed, ref_I_summed, ref_Q_summed)
 
-def demod_all_records(s_array: np.ndarray, r_array: np.ndarray, period = 20):
+def demod_all_records(s_array: np.ndarray, r_array: np.ndarray, period = 20, sig_demod_freq = 50e6, ref_demod_freq = 50e6):
     '''
     Parameters
     ----------
@@ -165,11 +174,11 @@ def demod_all_records(s_array: np.ndarray, r_array: np.ndarray, period = 20):
     
     #demodulate each record in windows of (period) width
     for rec_sig, rec_ref in zip(s_array, r_array): 
-        sI, sQ, rI, rQ = demod_period(rec_sig, rec_ref, period = period)
-        sI_arr.append(sI)
-        sQ_arr.append(sQ)
-        rI_arr.append(rI)
-        rQ_arr.append(rQ)
+        sI, sQ, rI, rQ = demod_period(rec_sig, rec_ref, period = period, sig_demod_freq=sig_demod_freq, ref_demod_freq = ref_demod_freq)
+        sI_arr.append(sI[:-1])
+        sQ_arr.append(sQ[:-1])
+        rI_arr.append(rI[:-1])
+        rQ_arr.append(rQ[:-1])
     
     #turn everything into numpy arrays
     for data in [sI_arr, sQ_arr, rI_arr, rQ_arr]: 
@@ -180,7 +189,7 @@ def demod_all_records(s_array: np.ndarray, r_array: np.ndarray, period = 20):
 
 bpf_func = lambda cfreq, BW, order: butter(order, [cfreq-BW/2, cfreq+BW/2], fs = 1e9, output = 'sos', btype = 'bandpass')
 
-def filter_all_records(s_array, r_array, filt): 
+def filter_all_records(s_array, r_array, filt, filter_ref = 0): 
     s_filt_arr = []
     r_filt_arr = []
     
@@ -189,7 +198,11 @@ def filter_all_records(s_array, r_array, filt):
         s_filt = sosfilt(filt, rec_sig)
         r_filt = sosfilt(filt, rec_ref)
         s_filt_arr.append(s_filt)
-        r_filt_arr.append(r_filt)
+        #20220601 bypassed filtering of the reference tone
+        if filter_ref: 
+            r_filt_arr.append(r_filt)
+        else: 
+            r_filt_arr.append(rec_ref)
         
     #turn everything into numpy arrays
     for data in [s_filt_arr, r_filt_arr]: 
@@ -204,7 +217,7 @@ def remove_offset(I, Q, window = [0, 40]):
     return offset_data
     
     
-def phase_correction(sigI, sigQ, refI, refQ): 
+def phase_correction(sigI, sigQ, refI, refQ, debug = False): 
     '''
     Parameters
     ----------
@@ -232,7 +245,7 @@ def phase_correction(sigI, sigQ, refI, refQ):
     rI_trace = np.zeros(np.shape(sigI)[0])
     rQ_trace =np.zeros(np.shape(sigI)[0])
     for i, (sI_rec, sQ_rec, rI_rec, rQ_rec) in enumerate(zip(sigI,sigQ,refI,refQ)):
-        
+
         rI_avg, rQ_avg = np.average(rI_rec), np.average(rQ_rec)
         
         rI_trace[i], rQ_trace[i] = rI_avg, rQ_avg
@@ -252,7 +265,9 @@ def generate_matched_weight_funcs(data1, data2, bc = False, bc_window = [50, 150
     if bc == False: 
     
         WF_I = np.average(d1I, axis = 0)-np.average(d2I, axis = 0)
+        WF_I/np.sum(np.abs(WF_I))
         WF_Q = np.average(d1Q, axis = 0)-np.average(d2Q, axis = 0)
+        WF_Q/=np.sum(np.abs(WF_Q))
     else: 
         WF_I = np.zeros(np.shape(d1I)[1])
         WF_Q = np.zeros(np.shape(d1I)[1])
@@ -312,6 +327,8 @@ class Gaussian_info:
                 pass
             elif key == 'pcov':
                 pass
+            elif key == 'canvas': 
+                pass
             else: 
                 print(key, ': ', val)
                 
@@ -354,9 +371,7 @@ def fit_2D_Gaussian(name,
         print("fitting with maxfev = ", max_fev)
     X, Y = np.meshgrid(bins[0:-1], bins[0:-1])
     xdata, ydata= np.vstack((X.ravel(), Y.ravel())), h_arr.ravel()
-    # print('xdata_shape: ', np.shape(xdata))
-    # print("y shape: ",np.shape(ydata))
-    #,amplitude, xo, yo, sigma_x, sigma_y, theta
+
     bounds = ([0,np.min(bins), np.min(bins), 0],
               [10*np.max(h_arr), np.max(bins), np.max(bins), np.max(bins)])
     # print(bounds)
@@ -412,6 +427,7 @@ def majorityVote3State(all_I, all_Q, WFS, vote_maps, bins, plot = 1, debug = 0, 
         if Qloc >= num_bins-1: Qloc = num_bins-2
         
         #if 1 it's G
+        # print(Iloc, Qloc)
         Sge_result = GE_is_G[Iloc, Qloc]
         
         #GF weights
@@ -516,3 +532,122 @@ def majorityVote3State(all_I, all_Q, WFS, vote_maps, bins, plot = 1, debug = 0, 
     F_fidelity = np.round(np.sum(correct_classifications[2*div1:-1]==results[2*div1:-1])/div1, 3)
     
     return G_fidelity, E_fidelity, F_fidelity, numberNull
+
+def spectra_from_dir(cwd, ind_var_unit = 'V'): 
+    '''
+    purpose: 
+    aggregate a time-domain sweep into a seperate file that allows 
+    plotting of fourier components vs the independent parameter of the sweep
+    '''
+    ind_par_arr = []
+    spec_arr = []
+    fps = find_all_ddh5(cwd)
+    
+    save_fp = cwd+'\\spectra_file'
+    
+    data = dd.DataDict(
+    ind_var = dict(unit=ind_var_unit),
+    frequency = dict(unit='Hz'),
+    power = dict(axes=['ind_var', 'frequency'], unit = 'dBm'), 
+    )
+    with dds.DDH5Writer(save_fp, data, name='spectra') as writer:
+        for i, f in enumerate(fps): 
+            print(f"Processing file {i}")
+            ind_var_val_index = f.find('.ddh5')
+            ind_var_val = float(f[ind_var_val_index-7:ind_var_val_index-3])
+            time, signal_arr, ref_arr = pulseUtils.Process_One_Acquisition_3_state(f)
+            sGAvg = np.average(signal_arr[0], axis = 0)
+            freqs = fftfreq(4096, 1e-9)/1e6
+            power_spec = 20*np.log10(np.abs(fft(sGAvg))/np.sqrt(50))
+            
+            writer.add_data(
+                ind_var = ind_var_val*np.ones(np.size(freqs)),
+                frequency = freqs,
+                power = power_spec)
+        fp = writer.file_path
+    return fp
+
+def combine_and_demodulate(cwd, name, apply_filter = 0): 
+    fps = find_all_ddh5(cwd)
+    
+    save_fp = cwd+'\\combined_demod'
+    
+    data = dd.DataDict(
+    time = dict(unit='ns'),
+    record_num = dict(unit = 'num'), 
+    
+    I_G = dict(axes=['record_num', 'time'], unit = 'V'), 
+    I_E = dict(axes=['record_num','time'], unit = 'V'), 
+    I_F = dict(axes=['record_num','time'], unit = 'V'), 
+    
+    Q_G = dict(axes=['record_num','time'], unit = 'V'), 
+    Q_E = dict(axes=['record_num','time'], unit = 'V'), 
+    Q_F = dict(axes=['record_num','time'], unit = 'V') 
+    )
+    # generate a filter to select a frequency spectrum area of the data
+    cf, BW, order = 50e6, 15e6, 2
+    filt = bpf_func(cf, BW, order) #center frequency, width, order of butterworth filter
+    w, h = sosfreqz(filt, fs = 1e9)
+    fwindow = [0, 200]
+    ffilt2 = (w/1e6>fwindow[0])*(w/1e6<fwindow[1])
+    # plt.figure()
+    # plt.plot(w[ffilt2]/1e6, 10*np.log10(np.abs(h)**2)[ffilt2])
+    # plt.title(f"Applied Butterworth filter {cf/1e6}MHz, {BW/1e6}MHz wide, order {order}")
+    # plt.xlabel('Frequency (MHz)')
+    # plt.ylabel('Magnitude $|H|^2$ (dB')
+    # plt.ylim(-60, 5)
+    with dds.DDH5Writer(save_fp, data, name=f'demod_{name}') as writer:
+
+        for i, f in enumerate(fps): 
+            signal_arr_filtered = []
+            ref_arr_filtered = []
+            state_data_arr = []
+            state_ref_arr = []
+            print(f"Processing file {i}")
+            time, signal_arr, ref_arr = pulseUtils.Process_One_Acquisition_3_state(f)
+            print('signal array shape: ', np.shape(signal_arr))
+            total_rec = np.shape(signal_arr)[1]
+            rec_per_pulse = total_rec
+            
+            for sdata, rdata in zip(signal_arr, ref_arr): 
+                if apply_filter: 
+                    sdata_filt, rdata_filt = filter_all_records(sdata, rdata, filt) #bw is 10MHz
+                else: 
+                    sdata_filt, rdata_filt = sdata, rdata
+                signal_arr_filtered.append(sdata_filt)
+                ref_arr_filtered.append(rdata_filt)
+                demod_data, demod_ref = demod_all_records(sdata_filt, rdata_filt, period = 20, sig_demod_freq = cf, ref_demod_freq = cf)
+                state_data_arr.append(demod_data)
+                state_ref_arr.append(demod_ref)
+                
+            G_data, E_data, F_data = state_data_arr
+            G_ref, E_ref, F_ref = state_ref_arr
+            # phase correction
+            pc = 1
+            if pc: 
+                G_I_corr, G_Q_corr, rI_trace, rQ_trace = phase_correction(*G_data, *G_ref, debug = True)
+                E_I_corr, E_Q_corr, rI_trace, rQ_trace = phase_correction(*E_data, *E_ref)
+                F_I_corr, F_Q_corr, rI_trace, rQ_trace = phase_correction(*F_data, *F_ref)
+            else: 
+                [G_I_corr, G_Q_corr], [E_I_corr, E_Q_corr], [F_I_corr, F_Q_corr] = G_data, E_data, F_data 
+            
+            G_data_off, E_data_off, F_data_off = np.array([G_I_corr, G_Q_corr]), np.array([E_I_corr, E_Q_corr]), np.array([F_I_corr, F_Q_corr])
+            #remove offsets then average
+            G_data, E_data, F_data = [remove_offset(*data, window = [0, 50]) for data in [G_data_off, E_data_off, F_data_off]]
+            GAvg, EAvg, FAvg = [np.average(data, axis = 1) for data in [G_data, E_data, F_data]]
+            time_points = np.shape(GAvg)[1]
+            print('Avg shape: ',  time_points)
+
+            print('rec per pulse: ', rec_per_pulse)
+            writer.add_data(
+                    record_num = np.repeat(np.arange(rec_per_pulse), time_points),
+                    time = np.tile(np.arange(int(time_points)), rec_per_pulse),
+                    I_G = G_data[0].flatten(),
+                    Q_G = G_data[1].flatten(),
+                    I_E = E_data[0].flatten(),
+                    Q_E = E_data[1].flatten(),
+                    I_F = F_data[0].flatten(),
+                    Q_F = F_data[1].flatten()
+                    )
+        fp = writer.file_path
+    return fp

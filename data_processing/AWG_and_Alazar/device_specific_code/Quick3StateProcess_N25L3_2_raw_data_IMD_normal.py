@@ -19,76 +19,67 @@ from scipy.signal import butter, sosfilt, sosfreqz
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 #%%
-# datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\fixed\signal_power_sweep_-30MHz_detuned\2022-05-25_0001_pwr_swp_0dB_att_Amp_0__.ddh5'
+#cable completely unplugged
+datapath = r'Z:\Data\N25_L3_SP_2\time-domain\30dB_4MHz\time_domain\2022-06-02_0008_0.02V_loopback_Rep_0__.ddh5'
 
-#with 50MHz bp filter:
-#amp off
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/2022-05-26_0006_pwr_swp_0dB_att_Amp_0__.ddh5'
-#amp on
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/2022-05-26_0007_pwr_swp_0dB_att_Amp_1__.ddh5'
+#now plugged in with 60dB attenuation: 
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\30dB_4MHz\time_domain\2022-06-02_0009_0.02V_loopback_Rep_0__.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\30dB_4MHz\time_domain\2022-06-02_0010_0.2V_loopback_Rep_0__.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\30dB_4MHz\time_domain\2022-06-02_0011_0.2V_loopback_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\30dB_4MHz\time_domain\2022-06-02_0012_0.2V_loopback_Rep_0__.ddh5'
+f = r''
 
-#without 50MHz bandpass
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/lsb/2022-05-26_0002_pwr_swp_0dB_att_Amp_1__.ddh5'
+#checking that I can move the LO
+f = r'Z:/Data/N25_L3_SP_2/time-domain/pump_downconv_sweep/time-domain/LO_sweep_0.0311V/2022-06-06_0001_LO_swp_ref_det_-50000000.0_Hz_.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\pump_downconv_sweep\time-domain\LO_sweep_0.0311V\2022-06-06_0001_LO_swp_ref_det_-52000000.0_Hz_.ddh5'
 
-#mod at +50 instead of -50
-# datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\raw_data\without_50MHz_bp\2022-05-26_0004_pwr_swp_0dB_att_mod+50_Amp_1__.ddh5'
-
-#back to -50, but switching to the upper sideband of the amplifier
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/usb/2022-05-26_0002_pwr_swp_0dB_att_mod-50_usb_Amp_1__.ddh5'
-
-#the best trace, using the IR mixer as a good high-pass to kick the idler out of the lsb, using signal in usb
-datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/usb/2022-05-26_0002_pwr_swp_0dB_att_mod-50_usb_Amp_1__.ddh5'
-
-#taken the next day, and instead of using the IR mixer to kill the idler, I chose to use lsb so that I can see the idler in the data. I also chose the signal detuning to be -25mHz, so that the idler would be at 100MHz in the data. This is demodulatable by itself! use a period of 10 instead of 20
-# datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\raw_data\without_50MHz_bp\lsb\2022-05-27_0002_pwr_swp_0dB_att_mod-50_usb_Amp_1__.ddh5'
-
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/lsb/2022-05-27_0001_pwr_swp_0dB_att_mod-50_usb_Amp_0__.ddh5'
-
-# usb, 0.3V, amp off
-datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/usb_amp_off/power_sweep/2022-05-27_0001_pwr_swp_0dB_att_mod-50_usb_Sig_Volt_0.3_V_.ddh5'
-
-#usb, 0.3V, amp on, 
-datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/usb/power_sweep/2022-05-27_0001_pwr_swp_0dB_att_mod-50_usb_Sig_Volt_0.3_V_.ddh5'
-
-#phase_sensitive
-datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/usb/power_sweep/2022-05-27_0016_pwr_swp_0dB_att_mod-50_usb_Sig_Volt_1.8_V_.ddh5'
-
-#data taken 10min later
-# datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\raw_data\without_50MHz_bp_phase_sensitive\amp_on\2022-05-27_0001_pwr_swp_0dB_att_mod-50_usb_Rep_0__.ddh5'
-
-#data taken about 20min later
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp_phase_sensitive/amp_on/phase_sweep/2022-05-27_0001_pwr_swp_0dB_att_mod-50_gen_phase_0.0_rad_.ddh5'
-
-#after rotating pump phase by 90 degrees
-# datapath = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\raw_data\without_50MHz_bp_phase_sensitive\amp_on\2022-05-27_0003_pwr_swp_0dB_att_mod-50_usb_+90deg_Rep_0__.ddh5'
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp_phase_sensitive/amp_on/phase_sweep/2022-05-27_0016_pwr_swp_0dB_att_mod-50_gen_phase_5.89_rad_.ddh5'
-
-#lsb sweep sample
-# datapath = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/lsb/power_sweep/2022-05-27_0002_pwr_swp_0dB_att_mod-50_Sig_Volt_0.3_V_.ddh5'
+#signal+2MHz, pump 0MHz
+f = r'Z:\Data\N25_L3_SP_2\time-domain\pump_downconv_sweep\time-domain\LO_sweep_0.0311V\2022-06-06_0001_LO_swp_ref_det_-52000000.0_Hz_.ddh5'
+#signal0MHz, pump_dc-2MHz
+f = r'Z:/Data/N25_L3_SP_2/time-domain/pump_downconv_sweep/time-domain/LO_sweep_0.0311V/2022-06-06_0002_LO_swp_ref_det_-50000000.0_Hz_.ddh5'
 
 
-time, signal_arr, ref_arr = pulseUtils.Process_One_Acquisition_3_state(datapath)
+# f = r'Z:/Data/N25_L3_SP_2/time-domain/pump_downconv_sweep/time-domain/LO_sweep_0.311V/2022-06-06_0001_LO_swp_ref_det_-52000000.0_Hz_.ddh5'
+# f = r'Z:/Data/N25_L3_SP_2/time-domain/pump_downconv_sweep/time-domain/LO_sweep_0.311V/2022-06-06_0002_LO_swp_ref_det_-50000000.0_Hz_.ddh5'
+
+f = r'Z:\Data\N25_L3_SP_2\time-domain\pump_downconv_sweep\time-domain\LO_sweep_2V\2022-06-06_0001_LO_swp_ref_det_-52000000.0_Hz_.ddh5'
+
+f = r'Z:\Data\N25_L3_SP_2\time-domain\pump_downconv_sweep\time-domain\LO_sweeps_with_amp\2022-06-06_0001_0.311V_ref_det_-52000000.0_Hz_.ddh5'
+
+f = r'Z:/Data/N25_L3_SP_2/time-domain/pump_downconv_sweep/time-domain/LO_sweeps_with_amp/2022-06-06_0002_0.311V_ref_det_-50000000.0_Hz_.ddh5'
+
+
+#low-power downconversion bias point
+f = r'Z:/Data/N25_L3_SP_2/time-domain/low_pwr_pump_dc/degen_pwr_swp/2022-06-06_0001_1.7V_Sig_Volt_0.032_V_.ddh5'
+# f = r'Z:/Data/N25_L3_SP_2/time-domain/low_pwr_pump_dc/degen_pwr_swp/2022-06-06_0010_1.7V_Sig_Volt_0.708_V_.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\pump_downconv_sweep\time-domain\LO_sweeps_with_amp\2022-06-06_0006_1.7V_ref_det_-52000000.0_Hz_.ddh5'
+time, signal_arr, ref_arr = pulseUtils.Process_One_Acquisition_3_state(f)
 #%% see if there are multiple freqs in the data
 sGAvg = np.average(signal_arr[0], axis = 0)
-fwindow = [0, 150]
+fwindow = [40, 60]
 freqs = fftfreq(4096, 1e-9)/1e6
 ffilt = (freqs<fwindow[1])*(freqs>fwindow[0])
-plt.plot(freqs[ffilt], 10*np.log10(np.abs(fft(sGAvg)[ffilt])))
+plt.figure()
+plt.plot(freqs[ffilt], 20*np.log10(np.abs(fft(sGAvg))/np.sqrt(50))[ffilt])
 plt.title("Spectrum before filtering")
 plt.xlabel('Frequency (MHz)')
-plt.ylabel('Magnitude (dBmV)')
+plt.ylabel('Magnitude (dBm)')
+plt.ylim(-30, 40)
+plt.vlines(50, -20, 20)
 
 #%% generate a filter to select a frequency spectrum area of the data
-filt = bpf_func(50e6, 10e6, 5) #center frequency, width, order of butterworth filter
+cf, BW, order = 50e6, 3e6, 6
+filt = bpf_func(cf, BW, order) #center frequency, width, order of butterworth filter
 w, h = sosfreqz(filt, fs = 1e9)
 ffilt2 = (w/1e6>fwindow[0])*(w/1e6<fwindow[1])
+plt.figure()
 plt.plot(w[ffilt2]/1e6, 10*np.log10(np.abs(h)**2)[ffilt2])
-plt.title("Applied Butterworth filter")
+plt.title(f"Applied Butterworth filter {cf/1e6}MHz, {BW/1e6}MHz wide, order {order}")
 plt.xlabel('Frequency (MHz)')
 plt.ylabel('Magnitude $|H|^2$ (dB')
 plt.ylim(-60, 5)
 #%% apply the filter, demodulate, remove offsets, and plot averages
-apply_filter = 1
+apply_filter = 0
 signal_arr_filtered = []
 ref_arr_filtered = []
 state_data_arr = []
@@ -100,52 +91,71 @@ for sdata, rdata in zip(signal_arr, ref_arr):
         sdata_filt, rdata_filt = sdata, rdata
     signal_arr_filtered.append(sdata_filt)
     ref_arr_filtered.append(rdata_filt)
-    demod_data, demod_ref = demod_all_records(sdata_filt, rdata_filt, period = 20)
+    demod_data, demod_ref = demod_all_records(sdata_filt, rdata_filt, period = 20, sig_demod_freq = cf, ref_demod_freq = cf)
     state_data_arr.append(demod_data)
     state_ref_arr.append(demod_ref)
     
 G_data, E_data, F_data = state_data_arr
 G_ref, E_ref, F_ref = state_ref_arr
 # phase correction
-G_I_corr, G_Q_corr, rI_trace, rQ_trace = phase_correction(*G_data, *G_ref)
-E_I_corr, E_Q_corr, rI_trace, rQ_trace = phase_correction(*E_data, *E_ref)
-F_I_corr, F_Q_corr, rI_trace, rQ_trace = phase_correction(*F_data, *F_ref)
+pc = 1
+if pc: 
+    G_I_corr, G_Q_corr, rI_trace, rQ_trace = phase_correction(*G_data, *G_ref, debug = True)
+    E_I_corr, E_Q_corr, rI_trace, rQ_trace = phase_correction(*E_data, *E_ref)
+    F_I_corr, F_Q_corr, rI_trace, rQ_trace = phase_correction(*F_data, *F_ref)
+else: 
+    [G_I_corr, G_Q_corr], [E_I_corr, E_Q_corr], [F_I_corr, F_Q_corr] = G_data, E_data, F_data 
 
-G_data_off, E_data_off, F_data_off = [G_I_corr, G_Q_corr], [E_I_corr, E_Q_corr], [F_I_corr, F_Q_corr]
+G_data_off, E_data_off, F_data_off = np.array([G_I_corr, G_Q_corr]), np.array([E_I_corr, E_Q_corr]), np.array([F_I_corr, F_Q_corr])
 #remove offsets then average
-G_data, E_data, F_data = [remove_offset(*data, window = [0, 40]) for data in [G_data_off, E_data_off, F_data_off]]
+G_data, E_data, F_data = [remove_offset(*data, window = [0, 50]) for data in [G_data_off, E_data_off, F_data_off]]
 GAvg, EAvg, FAvg = [np.average(data, axis = 1) for data in [G_data, E_data, F_data]]
 
+fig, axs = plt.subplots(2)
+axs[0].plot(GAvg[0], label = 'G')
+axs[0].plot(EAvg[0], label = 'E')
+axs[0].plot(FAvg[0], label = 'F')
+axs[0].set_title("I")
+
+axs[1].plot(GAvg[1], label = 'G')
+axs[1].plot(EAvg[1], label = 'E')
+axs[1].plot(FAvg[1], label = 'F')
+axs[1].set_title("Q")
+fig.tight_layout()
 fig, ax = plt.subplots()
 
 ax.plot(GAvg[0], GAvg[1], label = 'G')
 ax.plot(EAvg[0], EAvg[1], label = 'E')
 ax.plot(FAvg[0], FAvg[1], label = 'F')
-ax.legend()
+ax.legend(bbox_to_anchor = (1,1))
 ax.set_aspect(1)
 is_filt = {0:"off", 1: 'on'}
 ax.set_title(f"Average of data with filter {is_filt[apply_filter]}")
+
 #%%check the effect of the filter
 sGAvg2 = np.average(signal_arr_filtered[0], axis = 0)
-plt.plot(freqs[ffilt], 10*np.log10(np.abs(fft(sGAvg2)[ffilt])))
+plt.figure()
+plt.plot(freqs[ffilt], 20*np.log10(np.abs(fft(sGAvg2)[ffilt])))
 plt.xlabel('Frequency (MHz)')
-plt.ylabel('Magnitude (dBmV)')
+plt.ylabel('Magnitude (dBm)')
 plt.title("Spectrum after filtering")
 
 #%% This marks the stage where the data used to be saved (without a digital filter), all the rest is linear processing and majority vote
 
 
 #%% histogram the data with weight functions
-GE, GF, EF = [generate_matched_weight_funcs(*data, bc = True) for data in [[G_data, E_data], [G_data, F_data], [E_data, F_data]]]
+GE, GF, EF = [generate_matched_weight_funcs(*data, bc = False) for data in [[G_data, E_data], [G_data, F_data], [E_data, F_data]]]
 alldata = np.append(np.append(G_data, E_data, axis = 1), F_data, axis = 1)
 # fig2, axs2 = plt.subplots(3, 3, figsize = (6,12))
 titles = np.array([['SGE_'+state, 'SGF_'+state, 'SEF_'+state] for state in ['G', 'E', 'F']]).T.flatten()
 titles_all = np.array(['SGE_all', 'SGF_all', 'SEF_all'])
-
-scale = 0.01
+wfs = np.repeat([GE,GF,EF], 3, axis = 0)
+avgs = np.tile([GAvg,EAvg,FAvg], (3, 1, 1))
+scale = 0.05
+nb = 300
 
 h_arr = [
-    weighted_histogram(WF[0], WF[1], data[0], data[1], scale = scale, plot = 0, num_bins = 300) for 
+    weighted_histogram(WF[0], WF[1], data[0], data[1], scale = scale, plot = 0, num_bins = nb) for 
     WF, data in 
     zip(
     np.repeat([GE,GF,EF], 3, axis = 0),
@@ -153,7 +163,7 @@ h_arr = [
     )]
 
 h_arr_all =[
-    weighted_histogram(WF[0], WF[1], data[0], data[1], scale = scale, plot = 0, num_bins = 300) for 
+    weighted_histogram(WF[0], WF[1], data[0], data[1], scale = scale, plot = 0, num_bins = nb) for 
     WF, data in 
     zip(
     [GE,GF,EF],
@@ -173,6 +183,9 @@ for i, h in enumerate(h_arr):
     cax = divider.append_axes('right', size='5%', pad=0.05)
     fig.colorbar(im, cax = cax, orientation = 'vertical')
     ax.set_title(titles[i])
+    A_y0Guess = np.dot(avgs[i][0], wfs[i][0])+np.dot(avgs[i][1], wfs[i][1])
+    A_x0Guess = np.dot(avgs[i][1], wfs[i][0])-np.dot(avgs[i][0], wfs[i][1])
+    ax.arrow(0, 0, A_x0Guess, A_y0Guess, length_includes_head = True, width = scale/20, head_width = scale/20)
 fig.tight_layout()
 #%%fitting
 gaussians = []
@@ -180,6 +193,8 @@ gaussian_hist = []
 wfs = np.repeat([GE,GF,EF], 3, axis = 0)
 avgs = np.tile([GAvg,EAvg,FAvg], (3, 1, 1))
 max_fev = 10000
+fig, axs = plt.subplots(3, 3, figsize = (12,12))
+axs = axs.T.flatten()
 for i, h in enumerate(h_arr): 
     #plot the histograms
     ax = axs[i]
@@ -195,14 +210,22 @@ for i, h in enumerate(h_arr):
     
 
     
-    A_x0Guess = np.dot(avgs[i][0], wfs[i][0])+np.dot(avgs[i][1], wfs[i][1])
-    A_y0Guess = np.dot(avgs[i][1], wfs[i][0])-np.dot(avgs[i][0], wfs[i][1])
-    A_ampGuess = np.average(np.sqrt(np.array(Ipts)**2+np.array(Qpts)**2))
-    A_sxGuess = A_ampGuess/5
-    # A_thetaGuess = np.average(np.angle(A_x0Guess+1j*A_y0Guess))
-    A_thetaGuess = 0
+    A_y0Guess = np.dot(avgs[i][0], wfs[i][0])+np.dot(avgs[i][1], wfs[i][1])
+    A_x0Guess = np.dot(avgs[i][1], wfs[i][0])-np.dot(avgs[i][0], wfs[i][1])
     
-    guessParams = [A_ampGuess, A_y0Guess, A_x0Guess, A_sxGuess]
+    
+    A_ampGuess = np.average(np.sqrt(np.array(Ipts)**2+np.array(Qpts)**2))
+    A_sxGuess = np.sqrt(np.var(Ipts)+np.var(Qpts))/4
+    # A_thetaGuess = np.average(np.angle(A_x0Guess+1j*A_y0Guess))
+    A_thetaGuess = 0 
+    
+    print("\n\nx0 Guess: ", A_x0Guess)
+    print("y0 Guess: ", A_y0Guess)
+    print("sigma Guess: ", A_sxGuess)
+    print("amplitude guess ", A_ampGuess)
+    print("\n\n")
+    
+    guessParams = [A_ampGuess, A_x0Guess, A_y0Guess, A_sxGuess]
     #do a 2D Gaussian Fit to the data
     gaussians.append(fit_2D_Gaussian(titles[i], bins, h_2d, 
                                                     guessParams,
@@ -210,8 +233,10 @@ for i, h in enumerate(h_arr):
                                                     max_fev = max_fev,
                                                     contour_line = 2, debug = 1) 
                                                     )
+    print('popt', gaussians[-1].info_dict['popt'])
     gaussian_hist.append(Gaussian_2D(np.meshgrid(bins[:-1], bins[:-1]), *gaussians[-1].info_dict['popt']))
     
+    print('popt: ', gaussians[-1].print_info())
 
 #%% plot the discriminants
 for i in range(np.shape(gaussian_hist)[0]): 
@@ -220,6 +245,7 @@ for i in range(np.shape(gaussian_hist)[0]):
 gaussian_pairs = [[[gaussians[i], gaussians[j]], 
                    [gaussian_hist[i], gaussian_hist[j]], 
                    [h_arr[i][1], h_arr[j][1]]] for i, j in [(0,1), (3, 5), (7,8)]]
+
 
 
 fig, axs = plt.subplots(2, 3, figsize = (9, 4))
@@ -255,9 +281,11 @@ for i, [fits, gen_hist, data_hist] in enumerate(gaussian_pairs):
     
 fig.tight_layout()
 
+print("")
+
 #%% Majority vote
 #G_data, E_data, F_data = [G_I_corr, G_Q_corr], [E_I_corr, E_Q_corr], [F_I_corr, F_Q_corr]
 states = [G_data, E_data, F_data]
 alldata_I, alldata_Q = [np.append(np.append(states[0][i], states[1][i], axis = 0), states[2][i], axis = 0) for i in [0, 1]]#shape of [N_records, N_time_points]
-fid_G, fid_E, fid_F, numberNull = majorityVote3State(alldata_I, alldata_Q, [GE, GF, EF], vote_maps, bins_universal, plot = 1, num_bins = 300)
+fid_G, fid_E, fid_F, numberNull = majorityVote3State(alldata_I, alldata_Q, [GE, GF, EF], vote_maps, bins_universal, plot = 1, num_bins = nb)
 print("Majority Vote Fidelity: [G,E,F,total,null]: \n", [fid_G, fid_E, fid_F, np.average([fid_G, fid_E, fid_F]), numberNull])
