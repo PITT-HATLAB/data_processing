@@ -188,15 +188,16 @@ def demod_all_records(s_array: np.ndarray, r_array: np.ndarray, period = 20, sig
 
 
 bpf_func = lambda cfreq, BW, order: butter(order, [cfreq-BW/2, cfreq+BW/2], fs = 1e9, output = 'sos', btype = 'bandpass')
+    
 
-def filter_all_records(s_array, r_array, filt, filter_ref = 0): 
+def filter_all_records(s_array, r_array, filt, filter_ref = 0, pad_num = 1000): 
     s_filt_arr = []
     r_filt_arr = []
     
     #demodulate each record in windows of (period) width
     for rec_sig, rec_ref in zip(s_array, r_array): 
-        s_filt = sosfilt(filt, rec_sig)
-        r_filt = sosfilt(filt, rec_ref)
+        s_filt = sosfilt(filt, np.pad(rec_sig, pad_num, mode = 'mean'))[pad_num:-pad_num]
+        r_filt = sosfilt(filt, np.pad(rec_ref, pad_num, mode = 'mean'))[pad_num:-pad_num]
         s_filt_arr.append(s_filt)
         #20220601 bypassed filtering of the reference tone
         if filter_ref: 
@@ -567,25 +568,23 @@ def spectra_from_dir(cwd, ind_var_unit = 'V'):
         fp = writer.file_path
     return fp
 
-def combine_and_demodulate(cwd, name, apply_filter = 0): 
+
+def combine_and_demodulate(cwd, save_fp, name, apply_filter = 0, cf = 50e6, BW = 15e6, order = 5, debug = 0): 
     fps = find_all_ddh5(cwd)
-    
-    save_fp = cwd+'\\combined_demod'
-    
+    print(fps)
     data = dd.DataDict(
-    time = dict(unit='ns'),
-    record_num = dict(unit = 'num'), 
-    
-    I_G = dict(axes=['record_num', 'time'], unit = 'V'), 
-    I_E = dict(axes=['record_num','time'], unit = 'V'), 
-    I_F = dict(axes=['record_num','time'], unit = 'V'), 
-    
-    Q_G = dict(axes=['record_num','time'], unit = 'V'), 
-    Q_E = dict(axes=['record_num','time'], unit = 'V'), 
-    Q_F = dict(axes=['record_num','time'], unit = 'V') 
+        time = dict(unit='ns'),
+        record_num = dict(unit = 'num'), 
+        
+        I_G = dict(axes=['record_num', 'time'], unit = 'V'), 
+        I_E = dict(axes=['record_num','time'], unit = 'V'), 
+        I_F = dict(axes=['record_num','time'], unit = 'V'), 
+        
+        Q_G = dict(axes=['record_num','time'], unit = 'V'), 
+        Q_E = dict(axes=['record_num','time'], unit = 'V'), 
+        Q_F = dict(axes=['record_num','time'], unit = 'V')
     )
     # generate a filter to select a frequency spectrum area of the data
-    cf, BW, order = 50e6, 15e6, 2
     filt = bpf_func(cf, BW, order) #center frequency, width, order of butterworth filter
     w, h = sosfreqz(filt, fs = 1e9)
     fwindow = [0, 200]
@@ -611,7 +610,12 @@ def combine_and_demodulate(cwd, name, apply_filter = 0):
             
             for sdata, rdata in zip(signal_arr, ref_arr): 
                 if apply_filter: 
+                    print("FILTERING APPLIED")
                     sdata_filt, rdata_filt = filter_all_records(sdata, rdata, filt) #bw is 10MHz
+                    if debug:
+                        plt.figure()
+                        plt.plot(np.average(sdata_filt, axis = 0))
+                        plt.show()
                 else: 
                     sdata_filt, rdata_filt = sdata, rdata
                 signal_arr_filtered.append(sdata_filt)
@@ -651,3 +655,16 @@ def combine_and_demodulate(cwd, name, apply_filter = 0):
                     )
         fp = writer.file_path
     return fp
+
+def check_demod_file(fp): 
+    datadict = dds.all_datadicts_from_hdf5(fp)['data']
+    timeNum = np.size(np.unique(datadict['time']['values']))
+    I_G_flat = datadict['I_G']['values']
+    allNum = np.size(I_G_flat)
+    I_G = I_G_flat.reshape((allNum//timeNum, timeNum))
+    plt.plot(np.average(I_G, axis = 0))
+    
+    
+    
+    
+    

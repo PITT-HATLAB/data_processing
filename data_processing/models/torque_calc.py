@@ -7,11 +7,19 @@ Created on Mon Nov  8 11:19:22 2021
 import numpy as np
 import matplotlib.pyplot as plt
 
+#youngs modulus of Brass
 Ybrass = 97e9 #pa
+
+#mechanical efficiency of brass screw (empirical)
 eta_Brass_256 = 0.0047
+
+#lead of the brass screw (distance between adjacent threads)
 lead_Brass_256 = 0.452e-3#m
+
+#cross sectional area of the screw
 A_Brass_256 = 9.08e-6#m^2, from minor diameter
 
+#x-axis
 torque_in_arr = np.linspace(0, 60) #in-oz
 inoz_to_Nm = 1/141.611
 
@@ -50,7 +58,7 @@ ax.hlines([360], 0, 120, label = "Tensile Strength (Brass, MPa)", linestyle = 'd
 ax.legend()
 ax.set_title("4-40 Brass")
 
-#%%Differential thermal strain
+#%%Differential thermal strain image plot
 alpha_Br = -384e-5
 alpha_Mo = -95e-5
 alpha_Al = -414.9e-5
@@ -61,26 +69,31 @@ YBrass = 125e9
 YSS = 193e9
 YAl = 68e9
 
-# YBrass_Cryo = 
-# YSS_Cryo = 
-# YAl_Cryo = 
-
-
 L1_arr = np.linspace(0, 5, 100)*10#mm, 0-5cm
-L2_arr = np.linspace(0.38, 0.42, 100) #mm
+L2_arr = np.linspace(2.4, 2.8, 100) #mm
 sRT_arr = np.linspace(0, 360, 100)*1e6
 
-sigma_cryo = lambda L0, L1, L2, a0, a1, a2, Y0, sRT: -(a2*L2+a1*L1-a0*L0)/(a0*L0)*Y0+sRT
+md = {'brass': {'Y': YBrass, 'alpha': alpha_Br}, 
+      'SS': {'Y': YSS, 'alpha': alpha_SS}, 
+      'Al': {'Y': YAl, 'alpha': alpha_Al}, 
+      'Mo': {'Y': None, 'alpha': alpha_Mo}, 
+      'Cu': {'Y': None, 'alpha': alpha_Cu}
+      }
+
+sigma_cryo = lambda L0, L1, L2, a0, a1, a2, Y0, sRT: -(a2*L2+a1*L1-a0*L0)/(a0*L0)*Y0+sRT #equation from powerpoint slide
+
+screw_mat = 'brass'
+bulk_mat = 'Al'
 
 sCryo = []
 # L1 = 10 #mm
-L1 = 3
+L1 = 25
 for L2 in L2_arr: 
     sCryo_piece = []
     for sRT in sRT_arr: 
         L0 = L1+L2
-        sCryo_piece.append(sigma_cryo(L0, L1, L2, alpha_SS, alpha_Cu, alpha_Mo, YSS, sRT))
-        
+        sCryo_piece.append(sigma_cryo(L0, L1, L2, md[screw_mat]['alpha'], md[bulk_mat]['alpha'], alpha_Mo, md[screw_mat]['Y'], sRT))
+        # sCryo_piece.append(sigma_cryo(L0, L1, L2, alpha_SS, alpha_Cu, alpha_Mo, YSS, sRT))
     sCryo.append(sCryo_piece)
 
 im = plt.pcolormesh(sRT_arr/1e6, L2_arr, np.array(sCryo)/1e6, cmap = 'seismic', vmin = -124, vmax = 124)
@@ -88,7 +101,7 @@ im = plt.pcolormesh(sRT_arr/1e6, L2_arr, np.array(sCryo)/1e6, cmap = 'seismic', 
 plt.title("")
 plt.ylabel("length_of_Mo (mm)")
 plt.xlabel("$\sigma_{RT}$ (MPa)")
-plt.title("Stress (MPa) vs tightening and Mo Length, L0 = ")
+plt.title(f"Stress (MPa) vs tightening and Mo Length, L1 = {L1} mm")
 cb = plt.colorbar()
 
 # plt.figure()
