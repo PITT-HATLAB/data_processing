@@ -664,7 +664,43 @@ def check_demod_file(fp):
     I_G = I_G_flat.reshape((allNum//timeNum, timeNum))
     plt.plot(np.average(I_G, axis = 0))
     
-    
-    
+def check_demod_file_test(fp, rec_num = 80): 
+    datadict = dds.all_datadicts_from_hdf5(fp)['data']
+    timeNum = np.size(np.unique(datadict['time']['values']))
+    I_G_flat = datadict['I_G']['values']
+    I_E_flat = datadict['I_E']['values']
+    allNum = np.size(I_G_flat)
+    I_G = I_G_flat.reshape((allNum//timeNum, timeNum))
+    I_E = I_E_flat.reshape((allNum//timeNum, timeNum))
+    for i in range(allNum//timeNum//2562): 
+        print(i)
+        start = i*2562+0
+        stop = i*2562+rec_num
+        plt.figure()
+        plt.title("G0")
+        plt.plot(np.average(I_G, axis = 0), label = 'total_mean')
+        plt.plot(np.average(I_G[start:stop], axis = 0), label = i)
+        plt.legend(bbox_to_anchor = (1,1))
+        
+        plt.figure()
+        plt.title("E0")
+        plt.plot(np.average(I_E, axis = 0), label = 'total_mean')
+        plt.plot(np.average(I_E[start:stop], axis = 0), label = i)
+        plt.legend(bbox_to_anchor = (1,1))
+        
+        start = (i+1)*2562+0
+        stop = (i+1)*2562-rec_num
+        
+        plt.figure()
+        plt.title("G1")
+        plt.plot(np.average(I_G, axis = 0), label = 'total_mean')
+        plt.plot(np.average(I_G[start:stop], axis = 0), label = i)
+        plt.legend(bbox_to_anchor = (1,1))
+        
+        plt.figure()
+        plt.title("E1")
+        plt.plot(np.average(I_E, axis = 0), label = 'total_mean')
+        plt.plot(np.average(I_E[start:stop], axis = 0), label = i)
+        plt.legend(bbox_to_anchor = (1,1))
     
     
