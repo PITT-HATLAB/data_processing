@@ -90,8 +90,8 @@ fsize = np.size(np.unique(spec_freqs))
 fwindow = [sf-detuning*5, sf+detuning*5]
 [fw0, fw1] = fwindow
 
-plt_power = gen_powers[np.argmin(np.abs(np.unique(gen_powers)-(-0)))]
-gen_filt = gen_powers == plt_power
+plt_power = gen_powers[np.argmin(np.abs(np.unique(gen_powers)))]
+gen_filt = gen_powers == -10
 #end: 
 # plt_freqs = spec_freqs[-fsize:]
 
@@ -100,7 +100,7 @@ plt_freqs = spec_freqs[gen_filt]
 
 ffilt = (plt_freqs>=fw0)*(plt_freqs<fw1)
 # plt.plot(spec_freqs[0: fsize], spec_powers[0: fsize])
-plt_powers =  spec_powers[-fsize:]
+plt_powers =  spec_powers[gen_filt]
 plt.plot(plt_freqs[ffilt],plt_powers[ffilt])
 plt.vlines([pump_dc_freq,
     signal_freq, signal_IMD1_freq, #signal_IMD2_freq, 

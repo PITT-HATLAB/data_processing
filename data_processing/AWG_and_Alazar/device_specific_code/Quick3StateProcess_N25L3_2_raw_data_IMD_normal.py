@@ -50,8 +50,8 @@ f = r'Z:/Data/N25_L3_SP_2/time-domain/pump_downconv_sweep/time-domain/LO_sweeps_
 
 
 #low-power downconversion bias point
-f = r'Z:/Data/N25_L3_SP_2/time-domain/low_pwr_pump_dc/degen_pwr_swp/2022-06-06_0001_1.7V_Sig_Volt_0.032_V_.ddh5'
-# f = r'Z:/Data/N25_L3_SP_2/time-domain/low_pwr_pump_dc/degen_pwr_swp/2022-06-06_0010_1.7V_Sig_Volt_0.708_V_.ddh5'
+# f = r'Z:/Data/N25_L3_SP_2/time-domain/low_pwr_pump_dc/degen_pwr_swp/2022-06-06_0001_1.7V_Sig_Volt_0.032_V_.ddh5'
+f = r'Z:/Data/N25_L3_SP_2/time-domain/low_pwr_pump_dc/degen_pwr_swp/2022-06-06_0010_1.7V_Sig_Volt_0.708_V_.ddh5'
 # f = r'Z:\Data\N25_L3_SP_2\time-domain\pump_downconv_sweep\time-domain\LO_sweeps_with_amp\2022-06-06_0006_1.7V_ref_det_-52000000.0_Hz_.ddh5'
 time, signal_arr, ref_arr = pulseUtils.Process_One_Acquisition_3_state(f)
 #%% see if there are multiple freqs in the data
@@ -151,7 +151,7 @@ titles = np.array([['SGE_'+state, 'SGF_'+state, 'SEF_'+state] for state in ['G',
 titles_all = np.array(['SGE_all', 'SGF_all', 'SEF_all'])
 wfs = np.repeat([GE,GF,EF], 3, axis = 0)
 avgs = np.tile([GAvg,EAvg,FAvg], (3, 1, 1))
-scale = 0.05
+scale = 0.5
 nb = 300
 
 h_arr = [

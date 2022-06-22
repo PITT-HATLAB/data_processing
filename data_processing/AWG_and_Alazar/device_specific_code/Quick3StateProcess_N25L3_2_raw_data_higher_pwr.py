@@ -8,7 +8,7 @@ Purpose: create a neat, almost-executable file that can quickly plot a 3-state p
 or additionally try to fit using majority vote and give classification accuracy
 """
 import data_processing.signal_processing.Pulse_Processing_utils_raw_data as pulseUtils
-from data_processing.signal_processing.Pulse_Processing import demod_period, demod_all_records, phase_correction, filter_all_records, remove_offset, generate_matched_weight_funcs, weighted_histogram, fit_2D_Gaussian, Gaussian_2D, hist_discriminant, majorityVote3State, bpf_func
+from data_processing.signal_processing.Pulse_Processing import demod_period, demod_all_records, phase_correction, filter_all_records, remove_offset, generate_matched_weight_funcs, weighted_histogram, fit_2D_Gaussian, Gaussian_2D, hist_discriminant, majorityVote3State, bpf_func, bpf_func2
 from matplotlib.patches import Ellipse
 import os
 import matplotlib.pyplot as plt
@@ -25,6 +25,25 @@ f = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/multi-rep_s_lin/2022-06
 f = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/raw_data/without_50MHz_bp/usb/power_sweep_+30MHz/2022-05-27_0002_pwr_swp_0dB_att_mod-50_Sig_Volt_0.3_V_.ddh5'
 # f = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/multi-rep_s_lin/2022-06-09_0092_pwr_sweep_Sig_Volt_0.09_V_Rep_9__.ddh5'
 f = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/multi-rep_s_and_i/0.032/combined_demod/2022-06-08_0001_demod_0.032V.ddh5'
+f = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/multi-rep_s_and_i/0.032/2022-06-07_0001_pwr_sweep_Sig_Volt_0.032_V_Rep_0__.ddh5'
+f = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/multi-rep_s_and_i/0.089/2022-06-07_0091_pwr_sweep_Sig_Volt_0.089_V_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\mix_idler_to_dc\2022-06-09_0001_pwr_sweep_Sig_Volt_0.01_V_Rep_0__.ddh5' 
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\mix_idler_to_dc\2022-06-09_0001_pwr_sweep_Sig_Volt_0.01_V_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi-rep_s_lin_2\2022-06-09_0001_pwr_sweep_Sig_Volt_0.01_V_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi-rep_s_lin_2\2022-06-09_0001_pwr_sweep_Sig_Volt_0.01_V_Rep_0__.ddh5'
+f = r'Z:/Data/N25_L3_SP_2/time-domain/18dB_wideband_gain/multi-rep_s_lin_2/0.09/2022-06-09_0081_pwr_sweep_Sig_Volt_0.09_V_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi-rep_s_lin_2_with_filt\2022-06-09_0006_pwr_sweep_Sig_Volt_0.01_V_Rep_5__.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\loopback_with_filt\2022-06-09_0001_loopback_Rep_0__.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\loopback_with_filt\2022-06-09_0007_loopback_higher_SC_power_Rep_0__.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\loopback_with_filt\2022-06-09_0008_loopback_lower_SC_power_Rep_0__.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\loopback_with_filt\2022-06-09_0009_loopback_SC15dBm_Rep_0__.ddh5'
+# f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\loopback_with_filt\2022-06-09_0010_loopback_SC15dBm_20dB_att_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi_rep_s_usb_50MHz_filt_20dB_att\2022-06-09_0001_pwr_sweep_20dB_ext_att_Sig_Volt_0.3_V_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi_rep_s_usb_50MHz_filt_20dB_att_no_ref\2022-06-09_0010_pwr_sweep_20dB_ext_att_Rep_9__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi_rep_s_usb_50MHz_filt_20dB_att_no_ref\2022-06-09_0011_pwr_sweep_20dB_ext_att_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi_rep_s_usb_50MHz_filt_20dB_att_no_ref\2022-06-09_0012_pwr_sweep_20dB_ext_att_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi_rep_s_lsb_50MHz_filt_20dB_att\2022-06-10_0001_pwr_sweep_20dB_ext_att_Rep_0__.ddh5'
+f = r'Z:\Data\N25_L3_SP_2\time-domain\18dB_wideband_gain\multi_rep_s_lsb_50MHz_filt_20dB_att\2022-06-10_0003_pwr_sweep_20dB_ext_att_Rep_0__.ddh5'
 time, signal_arr, ref_arr = pulseUtils.Process_One_Acquisition_3_state(f)
 #%% see if there are multiple freqs in the data
 sGAvg = np.average(signal_arr[0], axis = 0)
@@ -32,31 +51,35 @@ fwindow = [0, 200]
 freqs = fftfreq(4096, 1e-9)/1e6
 ffilt = (freqs<fwindow[1])*(freqs>fwindow[0])
 plt.figure()
-plt.plot(freqs[ffilt], 20*np.log10(np.abs(fft(sGAvg))/np.sqrt(50))[ffilt])
+plt.plot(freqs[ffilt], 10*np.log10(np.abs(fft(sGAvg))/50)[ffilt])
 plt.title("Spectrum before filtering")
 plt.xlabel('Frequency (MHz)')
 plt.ylabel('Magnitude (dBm)')
-plt.ylim(-60, 40)
-plt.vlines(50, -20, 20)
+plt.ylim(-60, 10)
+
 
 #%% generate a filter to select a frequency spectrum area of the data
-cf, BW, order = 50e6, 10e6, 1
+cf, BW, order = 50e6, 30e6, 5
 filt = bpf_func(cf, BW, order) #center frequency, width, order of butterworth filter
+filt2 = bpf_func2(cf, BW, order)
 w, h = sosfreqz(filt, fs = 1e9)
+w1, h1 = sosfreqz(filt2, fs = 1e9)
 ffilt2 = (w/1e6>fwindow[0])*(w/1e6<fwindow[1])
 plt.figure()
 plt.plot(w[ffilt2]/1e6, 10*np.log10(np.abs(h)**2)[ffilt2])
+plt.plot(w1[ffilt2]/1e6, 10*np.log10(np.abs(h1)**2)[ffilt2])
 plt.title(f"Applied Butterworth filter {cf/1e6}MHz, {BW/1e6}MHz wide, order {order}")
 plt.xlabel('Frequency (MHz)')
 plt.ylabel('Magnitude $|H|^2$ (dB')
-plt.ylim(-60, 5)
+plt.ylim(-20, 10)
 plt.figure()
 plt.plot(w[ffilt2]/1e6,np.unwrap(np.angle(h))[ffilt2])
+plt.plot(w1[ffilt2]/1e6,np.unwrap(np.angle(h1))[ffilt2])
 plt.title(f"Applied Butterworth filter {cf/1e6}MHz, {BW/1e6}MHz wide, order {order}")
 plt.xlabel('Frequency (MHz)')
 plt.ylabel('Magnitude $<H$ (dB')
 #%% apply the filter, demodulate, remove offsets, and plot averages
-apply_filter = 0
+apply_filter = 1
 signal_arr_filtered = []
 ref_arr_filtered = []
 state_data_arr = []
@@ -91,17 +114,17 @@ G_data_off, E_data_off, F_data_off = np.array([G_I_corr, G_Q_corr]), np.array([E
 #remove offsets then average
 G_data, E_data, F_data = [remove_offset(*data, window = [0, 50]) for data in [G_data_off, E_data_off, F_data_off]]
 GAvg, EAvg, FAvg = [np.average(data, axis = 1) for data in [G_data, E_data, F_data]]
-
+is_filt = {0:"off", 1: 'on'}
 fig, axs = plt.subplots(2)
 axs[0].plot(GAvg[0], label = 'G')
 axs[0].plot(EAvg[0], label = 'E')
 axs[0].plot(FAvg[0], label = 'F')
-axs[0].set_title("I")
+axs[0].set_title(f"I with filter {is_filt[apply_filter]}")
 
 axs[1].plot(GAvg[1], label = 'G')
 axs[1].plot(EAvg[1], label = 'E')
 axs[1].plot(FAvg[1], label = 'F')
-axs[1].set_title("Q")
+axs[1].set_title(f"Q with filter {is_filt[apply_filter]}")
 fig.tight_layout()
 fig, ax = plt.subplots()
 
@@ -110,7 +133,7 @@ ax.plot(EAvg[0], EAvg[1], label = 'E')
 ax.plot(FAvg[0], FAvg[1], label = 'F')
 ax.legend(bbox_to_anchor = (1,1))
 ax.set_aspect(1)
-is_filt = {0:"off", 1: 'on'}
+
 ax.set_title(f"Average of data with filter {is_filt[apply_filter]}")
 
 #%%check the effect of the filter
@@ -132,7 +155,7 @@ titles = np.array([['SGE_'+state, 'SGF_'+state, 'SEF_'+state] for state in ['G',
 titles_all = np.array(['SGE_all', 'SGF_all', 'SEF_all'])
 wfs = np.repeat([GE,GF,EF], 3, axis = 0)
 avgs = np.tile([GAvg,EAvg,FAvg], (3, 1, 1))
-scale = 0.003
+scale = 0.03
 nb = 300
 
 h_arr = [

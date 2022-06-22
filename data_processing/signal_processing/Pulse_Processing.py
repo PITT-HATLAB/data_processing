@@ -6,7 +6,7 @@ Created on Tue Apr 27 10:17:43 2021
 """
 import numpy as np
 import time
-from scipy.signal import butter, sosfilt, sosfreqz
+from scipy.signal import butter, sosfilt, sosfreqz, cheby1
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.optimize import curve_fit
@@ -187,7 +187,23 @@ def demod_all_records(s_array: np.ndarray, r_array: np.ndarray, period = 20, sig
     return [sI_arr, sQ_arr], [rI_arr, rQ_arr]
 
 
+
+
+
+
+
+
+
 bpf_func = lambda cfreq, BW, order: butter(order, [cfreq-BW/2, cfreq+BW/2], fs = 1e9, output = 'sos', btype = 'bandpass')
+bpf_func2 = lambda cfreq, BW, order: cheby1(order, 3, [cfreq-BW/2, cfreq+BW/2], fs = 1e9, output = 'sos', btype = 'bandpass')
+
+
+
+
+
+
+
+
 
 def filter_all_records(s_array, r_array, filt, filter_ref = 0): 
     s_filt_arr = []
@@ -567,10 +583,10 @@ def spectra_from_dir(cwd, ind_var_unit = 'V'):
         fp = writer.file_path
     return fp
 
-def combine_and_demodulate(cwd, name, apply_filter = 0): 
+def combine_and_demodulate(cwd, cwd_save, name, apply_filter = 0): 
     fps = find_all_ddh5(cwd)
     
-    save_fp = cwd+'\\combined_demod'
+    save_fp = cwd_save
     
     data = dd.DataDict(
     time = dict(unit='ns'),
