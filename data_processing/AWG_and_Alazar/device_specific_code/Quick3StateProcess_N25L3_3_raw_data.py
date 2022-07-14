@@ -37,7 +37,7 @@ f = r'Z:/Data/N25_L3_SP_3/time_domain/bp1/lsb/test/10_final_with_bias_T/2022-06-
 time, signal_arr, ref_arr = pulseUtils.Process_One_Acquisition_3_state(f)
 #%% see if there are multiple freqs in the data
 sGAvg = np.average(signal_arr[0], axis = 0)
-fwindow = [40, 80]
+fwindow = [10, 90]
 freqs = fftfreq(4096, 1e-9)/1e6
 ffilt = (freqs<fwindow[1])*(freqs>fwindow[0])
 plt.figure()
@@ -47,9 +47,15 @@ plt.xlabel('Frequency (MHz)')
 plt.ylabel('Magnitude (dBm)')
 plt.ylim(-60, 10)
 
+plt.figure()
+plt.plot(freqs[ffilt], 10*np.log10(np.abs(fft(sGAvg))/50)[ffilt])
+plt.title("Spectrum before filtering")
+plt.xlabel('Frequency (MHz)')
+plt.ylabel('Magnitude (dBm)')
+plt.ylim(-60, 10)
 
 #%% generate a filter to select a frequency spectrum area of the data
-cf, BW, order = 50e6, 30e6, 5
+cf, BW, order = 50e6, 30e6, 2
 filt = bpf_func(cf, BW, order) #center frequency, width, order of butterworth filter
 filt2 = bpf_func2(cf, BW, order)
 w, h = sosfreqz(filt, fs = 1e9)
@@ -68,6 +74,11 @@ plt.plot(w1[ffilt2]/1e6,np.unwrap(np.angle(h1))[ffilt2])
 plt.title(f"Applied Butterworth filter {cf/1e6}MHz, {BW/1e6}MHz wide, order {order}")
 plt.xlabel('Frequency (MHz)')
 plt.ylabel('Magnitude $<H$ (dB')
+
+plt.figure()
+plt.plot(np.real(h)[ffilt2], np.imag(h)[ffilt2])
+plt.plot(np.real(h1)[ffilt2], np.imag(h1)[ffilt2])
+plt.gca().set_aspect(1)
 #%% apply the filter, demodulate, remove offsets, and plot averages
 apply_filter = 1
 signal_arr_filtered = []
