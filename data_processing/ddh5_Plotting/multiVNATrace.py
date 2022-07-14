@@ -10,6 +10,7 @@ purpose: plot all VNA traces in a directory and all of that directory's subdirec
 from plottr.data.datadict_storage import all_datadicts_from_hdf5
 from data_processing.Helper_Functions import find_all_ddh5
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 import numpy as np
 #get whatever you want to subtract from the traces you're taking
 sb_fp = r'Z:/Data/00_Calibrations/TX_Calibrations/HEMTS/2022-04-18/extra/2022-04-18_0032_C_line_thru_noHEMT/2022-04-18_0032_C_line_thru_noHEMT.ddh5'
@@ -31,6 +32,7 @@ cwd = r'Z:\Data\00_Calibrations\TX_Calibrations\New_Lines_1_2_4_5_20220517'
 cal = 0
 norm = 0
 filepaths = find_all_ddh5(cwd)
+atten_funcs = []
 fig, ax = plt.subplots(figsize = (8,6))
 for filepath in filepaths:
     title_start = filepath.find('base')
@@ -49,7 +51,7 @@ for filepath in filepaths:
         pows = dd.extract('power')['power']['values']
     freqfilt = (freqs<20e9)*(freqs>0.5e9)
     ax.plot(freqs[freqfilt]/1e9, pows[freqfilt], label = title)
-    
+    atten_funcs.append(interp1d(freqs[freqfilt]/1e9, pows[freqfilt]))
 # print(pows[np.isclose(freqs, 6e9, atol = 100e6)])
 # ax.set_ylim(-20, 45)1   
 ax.set_xlabel('VNA frequency (GHz)')
