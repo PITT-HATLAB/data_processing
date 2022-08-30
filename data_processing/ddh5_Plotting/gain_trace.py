@@ -10,21 +10,24 @@ import numpy as np
 
 
 
-filepath = r'Z:/Data/N25_L3_SQ/traces/gain/2022-04-25/2022-04-25_0001_bp1_gain/2022-04-25_0001_bp1_gain.ddh5'
+filepath = r'Z:/Data/SA_3C1_3221/Pulse_data_7GHz/gain_trace/2021-11-17/2021-11-17_0001_7GHz_gp1/2021-11-17_0001_7GHz_gp1.ddh5'
 
 dd = all_datadicts_from_hdf5(filepath)['data']
 pows = dd.extract('power')['power']['values']
 freqs = dd.extract('power')['frequency']['values']
+cf = 6.978e9
+filt = (freqs>cf-20e6)*(freqs<cf+20e6)
+bg = np.average(pows[freqs<6.925e9])
 
 #plot the LO leakage vs power
 fig, ax = plt.subplots(figsize = (8,6))
-ax.plot(freqs/1e9, pows)
+ax.plot(freqs[filt]/1e9, pows[filt]-bg)
 ax.set_xlabel('VNA frequency (GHz)')
 
 ax.set_ylabel('VNA Gain (dB)')
 ax.legend()
 ax.grid()
-ax.set_title(f'0.06mA, {8.65-30-10}dBm Cryo, +277kHZ generator detuning: 6.6MHz BW')
+# ax.set_title(f'0.06mA, {8.65-30-10}dBm Cryo, +277kHZ generator detuning: 6.6MHz BW')
 
 #%%
 filepath = r'Z:/Data/N25_L3_SQ/traces/sat/2022-04-25/2022-04-25_0001_bp1_sat/2022-04-25_0001_bp1_sat.ddh5'

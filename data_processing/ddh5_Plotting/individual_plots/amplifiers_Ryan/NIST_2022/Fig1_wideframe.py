@@ -51,38 +51,44 @@ NVR_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0005_NVR_amp_on.ddh
 NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0006_NVR_amp_off.ddh5', 
               r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0004_NVR_amp_off.ddh5', 
               r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0004_NVR_amp_off.ddh5']
-ncols = 3
-bbox = (1.1, 1.2)
-fbounds_ind = [0, -1]
+# ncols = 3
+# bbox = (1.1, 1.2)
+# fbounds_ind = [0, -1]
 
-#for only the most clean
-gain_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0002_0.16mA.ddh5']
-sat_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0005_sat_amp_on.ddh5']
-sat_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0006_sat_amp_off.ddh5']
-NVR_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0003_NVR_amp_on.ddh5']
-NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0004_NVR_amp_off.ddh5']
-fbounds_ind = [800, 1200]
-#wide 20dB
-gain_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0001_0.16mA.ddh5']
-sat_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0002_sat_amp_on.ddh5']
-sat_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0003_sat_amp_off.ddh5']
-NVR_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0005_NVR_amp_on.ddh5']
-NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0004_NVR_amp_off.ddh5']
+# #for only the most clean
+# gain_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0002_0.16mA.ddh5']
+# sat_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0005_sat_amp_on.ddh5']
+# sat_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0006_sat_amp_off.ddh5']
+# NVR_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0003_NVR_amp_on.ddh5']
+# NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0004_NVR_amp_off.ddh5']
+# fbounds_ind = [800, 1200]
+# #wide 20dB
+# gain_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0001_0.16mA.ddh5']
+# sat_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0002_sat_amp_on.ddh5']
+# sat_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0003_sat_amp_off.ddh5']
+# NVR_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0005_NVR_amp_on.ddh5']
+# NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0004_NVR_amp_off.ddh5']
 
 ncols = 2
-bbox = (0.9, 1.1)
-fbounds_ind = [300, 1700]
+bbox = (0.75, 1.1)
+fbounds_ind = [100, 1900]
 
 
 gainfig, gain_ax = plt.subplots()
 satfig, sat_ax = plt.subplots()
-skip = 10
+skip = 20
+satskip = 100
 gain_colors = ['blue', 'green', 'red']
 noise_colors = ['darkblue', 'darkgreen', 'darkred']
 
-
+satfig, sat_ax = plt.subplots()
 for i, (gain_fp, sat_fp, sat_sb_fp, NVR_fp, NVR_sb_fp) in enumerate(zip(gain_fps, sat_fps, sat_sb_fps, NVR_fps, NVR_sb_fps)):
-    
+    gain_fig, gain_ax = plt.subplots()
+    nvr_fig, nvr_ax = plt.subplots()
+    gain_ax.set_ylim(10, 23)
+    nvr_ax.set_ylim(0, 10)
+    gain_colors = ['blue', 'green', 'red']
+    noise_colors = ['darkblue', 'darkgreen', 'darkred']
     print("\n ", i)
     
     #plot the Gain
@@ -96,6 +102,7 @@ for i, (gain_fp, sat_fp, sat_sb_fp, NVR_fp, NVR_sb_fp) in enumerate(zip(gain_fps
     
     gain_ax.plot(((freqs[ffilt]-np.average(freqs[ffilt]))/1e6)[::skip], pows[ffilt][::skip], 's', label = 'Gain (dB)', color = gain_colors[i])
     gain_ax.plot(((freqs[ffilt]-np.average(freqs[ffilt]))/1e6)[::skip], pows[ffilt][::skip], 's-', color = gain_colors[i])
+    
     #plot the NVR
     sb_fp = NVR_sb_fp
     fp = NVR_fp
@@ -109,16 +116,31 @@ for i, (gain_fp, sat_fp, sat_sb_fp, NVR_fp, NVR_sb_fp) in enumerate(zip(gain_fps
 
     Npows = dd.extract('power')['power']['values']-norm_pows
     ffiltN = (Nfreqs>fbounds[0])*(Nfreqs<fbounds[1])
-    gain_ax.plot((Nfreqs[ffiltN]-np.average(Nfreqs[ffiltN]))[::skip]/1e6, Npows[ffiltN][::skip], 'o', label = "NVR (dB)", color = noise_colors[i])
-    gain_ax.plot((Nfreqs[ffiltN]-np.average(Nfreqs[ffiltN]))[::skip]/1e6, Npows[ffiltN][::skip], 'o-', color = noise_colors[i])
+    nvr_ax.plot((Nfreqs[ffiltN]-np.average(Nfreqs[ffiltN]))[::skip]/1e6, Npows[ffiltN][::skip], 'o', label = "NVR (dB)", color = noise_colors[i])
+    nvr_ax.plot((Nfreqs[ffiltN]-np.average(Nfreqs[ffiltN]))[::skip]/1e6, Npows[ffiltN][::skip], 'o-', color = noise_colors[i])
     
 
     
 
-    
-    gain_ax.set_xlabel('Frequency Detuning (MHz)')
+    # gain_ax.set_title('Gain (dB)')
+    # nvr_ax.set_title('NVR (dB)')
+    gain_ax.set_xticks([-20, 20])
+    nvr_ax.set_xticks([-20,20])
+    nvr_ax.set_yticks([0,2,4,6,8])
+    gain_ax.set_yticks([10,12,14,16,18,20,22])
+    if i == 2: 
+        gain_ax.set_ylabel('Gain (dB)')
+        nvr_ax.set_ylabel('NVR (dB)')
+        gain_ax.set_yticklabels(['', 12, '',16,'',20,''])
+        nvr_ax.set_yticklabels(['',2,'','',8])
+    else: 
+        gain_ax.set_yticklabels(['', '', '','','','',''])
+        nvr_ax.set_yticklabels(['','','','',''])
+    if i == 1: 
+        nvr_ax.set_xlabel('Frequency Detuning (MHz)')
+
     # ax.set_title("Amplifier Performance")
-    gain_ax.legend(handletextpad = -0.5, bbox_to_anchor = bbox, ncol = ncols, columnspacing = 0.1)
+    # gain_ax.legend(handletextpad = -0.5, bbox_to_anchor = bbox, ncol = ncols, columnspacing = 0.1)
     
     #saturation
     #old: 
@@ -137,13 +159,13 @@ for i, (gain_fp, sat_fp, sat_sb_fp, NVR_fp, NVR_sb_fp) in enumerate(zip(gain_fps
     
     #plot the LO leakage vs power
     att = 85
-    sat_ax.plot((freqs-att)[::skip], (pows-norm_pows)[::skip], 's-', color = gain_colors[i])
+    sat_ax.plot((freqs-att)[::satskip], (pows-norm_pows)[::satskip], 's-', color = gain_colors[i])
     sat_ax.set_xlabel('Signal power (dBm)')
-    
     # ax.set_ylabel('Gain (dB)')
     sat_ax.legend()
     sat_ax.hlines([19, 17], np.min(freqs)-att, np.max(freqs)-att, linestyle = '--', color = 'k')
     sat_ax.set_xticks([-120, -110, -100, -90, -80])
+    sat_ax.set_xticklabels([-120, '', '', -90, ''])
     # ax.vlines([-90.5], np.min(pows-norm_pows), np.max(pows-norm_pows), linestyle = '--', color = 'k')
     # ax.grid()
     # ax.set_title('0.06mA, 8.65dBm RT, +277kHZ generator detuning: 6.6MHz BW')

@@ -87,8 +87,13 @@ def process_ref_HFSS_sweep(HFSS_filepath, ref_port_name = 'B', lumped_port_name 
     else: 
         inductance_list = ind_list
         
+    print("Inductance List")
+        
     for inductance in inductance_list:
-        filt = (np.ones(np.size(data['Freq [GHz]'].to_numpy())).astype(bool))
+        if inductance == 1: 
+            filt = (np.ones(np.size(data['Freq [GHz]'].to_numpy())).astype(bool))
+        else: 
+            filt = (data[f'{ind_name} [pH]'].to_numpy() == inductance)
         HFSS_dicts.append(dict(
             SNAIL_inductance = inductance,
             freq = data['Freq [GHz]'].to_numpy()[filt]*1e9,
@@ -133,13 +138,14 @@ def fit_modes(*args, bounds = None, f0Guess_arr = None, Qguess = (1e2, 1e4), win
             f0Guess_arr = np.copy(f0Guess_arr)
             filt = (md['freqrad']>f0Guess_arr[i]-window_size/2)*(md['freqrad']<f0Guess_arr[i]+window_size/2)
             f0Guess = f0Guess_arr[i]
+
         else: 
             filt = np.ones(np.size(md['freqrad'])).astype(bool)
             # print(np.diff(md['phaserad']))
             # plt.plot(md['freq'][:-1]/1e9, np.diff(md['phaserad']))
             f0Guess = md['freq'][np.argmin(savgol_filter(np.gradient(md['phaserad']), 15,3))]*2*np.pi
             filt = (md['freqrad']>f0Guess-window_size/2)*(md['freqrad']<f0Guess+window_size/2)
-            
+        plt.figure()           
         if bounds == None: 
             bounds = ([QextGuess / 10, QintGuess /10, f0Guess-500e6, magBackGuess / 2, 0],
                       [QextGuess * 10, QintGuess * 10, f0Guess+500e6, magBackGuess * 2, np.pi])
@@ -164,13 +170,16 @@ def fit_modes(*args, bounds = None, f0Guess_arr = None, Qguess = (1e2, 1e4), win
     return HFSS_inductances, HFSS_res_freqs, HFSS_kappas
 
 if __name__ == '__main__': 
-    HFSS_filepath = r'C:/Users/Hatlab-RRK/Downloads/snail_test.csv'
-    HFSS_A_dicts = process_ref_HFSS_sweep(HFSS_filepath, ref_port_name = 'snail_lumpport', lumped_port_name = 'snail_lumpport', ind_name = 'Ls', ind_list = [1])
-    A_inductances, A_res_freqs, A_kappas = fit_modes(*HFSS_A_dicts, 
-                                                                  Qguess = (1e3,1e4), 
-                                                                  window_size = 400e6, 
-                                                                  plot = True, 
-                                                                  f0Guess_arr = None
-                                                                )
+    HFSS_filepath = r'G:\My Drive\amplifiers\Design Notebooks\SNAIL_amps\SA_3X\SA_3X_C1_mode_s.csv'
+
+    
+    HFSS_dicts = process_ref_HFSS_sweep(HFSS_filepath, ref_port_name = 'B', lumped_port_name = 'sl', ind_name = 'Ls')
+    guessfreqs = np.linspace(8.5e9, 7e9, len(HFSS_dicts))*2*np.pi
+    A_inductances, A_res_freqs, A_kappas = fit_modes(*HFSS_dicts, 
+                                                      Qguess = (1e2,1e4), 
+                                                      window_size = 1000e6, 
+                                                      plot = True, 
+                                                      f0Guess_arr = None
+                                                    )
     A_inductances = np.array(A_inductances)
     A_kappas = np.array(A_kappas)
