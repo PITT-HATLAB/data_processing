@@ -143,6 +143,9 @@ class fit_Duff_Measurement():
             filt2 = vna_freqs > f0Guess - adapt_win_size*2*np.pi
             filt = filt1*filt2
             vna_freqs = np.copy(vna_freqs[filt])
+            phase_trace = np.copy(phase_trace[filt])
+            pow_trace = np.copy(pow_trace[filt])
+            
             
         if debug: 
             plt.figure(1)
@@ -224,7 +227,8 @@ class fit_Duff_Measurement():
                      fourier_filter = False, 
                      fourier_cutoff = 40, 
                      pconv_tol = 10, 
-                     bounds = None):
+                     bounds = None, 
+                     accept_low_conv = False):
         res_freqs = np.zeros(np.size(np.unique(bias_currents)))
         Qints = np.zeros(np.size(np.unique(bias_currents)))
         Qexts = np.zeros(np.size(np.unique(bias_currents)))
@@ -289,11 +293,15 @@ class fit_Duff_Measurement():
                 if debug: 
                     print(f"Pconv ratio: {pconv_diff_ratio}")
                 j = 0
-                alt_array = np.array([1e6,-1e6,5e6,-5e6, 10e6,-10e6,15e6,-15e6, 20e6, -20e6, 30e6, -30e6, 50e6, -50e6, 100e6, -100e6])*2*np.pi
+                alt_array = np.array([1e6,-1e6,5e6,-5e6, 10e6,-10e6,15e6,-15e6, 20e6, -20e6, 30e6, -30e6, 50e6, -50e6, 100e6, -100e6, 300e6, -300e6, 500e6, -500e6])*2*np.pi
                 while np.any(np.abs(pconv_diff_ratio)>pconv_tol): 
                     if j>np.size(alt_array)-1: 
-                        raise Exception(f"No good fit at this point: (Bias: {current}, Power: {self.latest_power})")
-                    print(f"sudden change in Q detected (pconv_diff_ratio: {pconv_diff_ratio}), trying resonant guess + {alt_array[j]/(2*np.pi)}")
+                        if not accept_low_conv: 
+                            raise Exception(f"No good fit at this point: (Bias: {current}, Power: {self.latest_power})")
+                        else: 
+                            print("accepting low convergence and moving on")
+                            break
+                    print(f"sudden change in Q detected (pconv_diff_ratio: {pconv_diff_ratio}), trying resonant guess + {alt_array[j]/(2*np.pi)/1e6}MHz")
                     #try above
                     if debug: 
                         if j%2 ==0: 
@@ -331,7 +339,6 @@ class fit_Duff_Measurement():
             debug = False, 
             save_data = False, 
             max_gen_power = None, 
-            savedata = False, 
             smooth = False, 
             smooth_win = 11, 
             adaptive_window = False, 
@@ -339,7 +346,8 @@ class fit_Duff_Measurement():
             bounds = None,
             fourier_filter = False, 
             fourier_cutoff = 40, 
-            pconv_tol = 10):
+            pconv_tol = 10, 
+            accept_low_conv = False):
         
         if max_gen_power != None:     
             fitted_gen_powers = np.unique(self.gen_powers) <= max_gen_power
@@ -369,7 +377,8 @@ class fit_Duff_Measurement():
                                                                                                            fourier_filter = fourier_filter, 
                                                                                                            fourier_cutoff = fourier_cutoff, 
                                                                                                            pconv_tol = pconv_tol, 
-                                                                                                           bounds = bounds)
+                                                                                                           bounds = bounds, 
+                                                                                                           accept_low_conv=accept_low_conv)
             if i == 0: 
                 self.low_power_res_fit_func = interp1d(fit_currents, fit_freqs, 'linear')
             if save_data: 

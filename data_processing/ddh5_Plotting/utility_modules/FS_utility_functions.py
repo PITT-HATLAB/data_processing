@@ -104,7 +104,7 @@ class fit_fluxsweep():
             
             base_resonant_frequency_error = np.sqrt(base_pconv[2, 2])/(2*np.pi), 
             base_Qint_error = np.sqrt(base_pconv[1, 1]), 
-            base_Qext_error = np.sqrt(base_pconv[0, 0]), 
+            base_Qext_error = np.sqrt(base_pconv[0, 0]),
             )
     def semiauto_fit(self, bias_currents, vna_freqs, vna_mags, vna_phases, popt, debug = False, savedata = False, smooth = False, smooth_win = 11, adaptive_window = False, adapt_win_size = 300e6, fourier_filter = False, fourier_cutoff = 40, pconv_tol = 2):
         res_freqs = np.zeros(np.size(np.unique(bias_currents)))
@@ -112,18 +112,39 @@ class fit_fluxsweep():
         Qexts = np.zeros(np.size(np.unique(bias_currents)))
         magBacks = np.zeros(np.size(np.unique(bias_currents)))
         
-        init_f0 = popt[2]
+        init_f0 = popt[2]/2/np.pi
         init_Qint = popt[1]
         init_Qext = popt[0]
         init_magBack = popt[3]
+        
         for i, current in enumerate(np.unique(bias_currents)): 
             first_condn = bias_currents == current
-            [first_trace_freqs, first_trace_phase, first_trace_mag] = [vna_freqs[first_condn]*2*np.pi, vna_phases[first_condn], 10**(vna_mags[first_condn]/20)]
+            [first_trace_freqs, first_trace_phase, first_trace_mag] = [vna_freqs[first_condn], vna_phases[first_condn], 10**(vna_mags[first_condn]/20)]
+            
+            if adaptive_window: 
+                if i == 0 or i == 1: 
+                    print("initial f0: ", init_f0)
+                    filt1 = first_trace_freqs<init_f0*2*np.pi+adapt_win_size*2*np.pi/2
+                    filt2 = first_trace_freqs>init_f0*2*np.pi-adapt_win_size*2*np.pi/2
+                    filt= filt1*filt2
+                else: 
+                    print("freq window guess: ", res_freqs[i-1:i])
+                    filt1 = first_trace_freqs<np.average(res_freqs[i-1:i])*2*np.pi+adapt_win_size*2*np.pi/2
+                    filt2 = first_trace_freqs>np.average(res_freqs[i-1:i])*2*np.pi-adapt_win_size*2*np.pi/2
+                    filt= filt1*filt2
+                
+                if debug: 
+                    plt.figure()
+                    plt.title("frequency filter")
+                    plt.plot(np.unique(vna_freqs), filt)
+            else: 
+                filt = np.ones(np.size(first_trace_freqs)).astype(bool)
+                    
             if smooth: 
                 first_trace_phase = savgol_filter(first_trace_phase, smooth_win, 3)
                 first_trace_mag = savgol_filter(first_trace_mag, smooth_win, 3)
                 
-            imag = first_trace_mag * np.sin(first_trace_phase)
+            imag = first_trace_mag* np.sin(first_trace_phase)
             real = first_trace_mag * np.cos(first_trace_phase)
             if fourier_filter == True: 
                 if debug: 
@@ -139,27 +160,28 @@ class fit_fluxsweep():
                     plt.plot(imag)
                     plt.title('after filter')
             if i >= 2: 
-                if adaptive_window: 
-                    filt1 = first_trace_freqs<np.average(res_freqs[i-1:i])*2*np.pi+adapt_win_size*2*np.pi/2
-                    filt2 = first_trace_freqs>np.average(res_freqs[i-1:i])*2*np.pi-adapt_win_size*2*np.pi/2
-                    filt= filt1*filt2
-                else: 
-                    filt = np.ones(np.size(first_trace_freqs)).astype(bool)
                 #start averaging the previous fits for prior information to increase robustness to bad fits
                 f0Guess = np.average(res_freqs[i-1:i])*2*np.pi
                 magBackGuess = np.average(magBacks[i-1:i])
                 (QextGuess,QintGuess) = (np.average(Qexts[i-1:i]),np.average(Qints[i-1:i]))
             else: 
-                f0Guess = init_f0
+                f0Guess = init_f0*2*np.pi
                 magBackGuess = init_magBack
                 (QextGuess, QintGuess) = (init_Qext, init_Qint)
-                filt = np.ones(np.size(first_trace_freqs)).astype(bool)
                 
             bounds=self.default_bounds(QextGuess, QintGuess, f0Guess, magBackGuess)
             if i>2: 
                 prev_pconv = pconv
             #fit(freq, real, imag, mag, phase, Qguess=(2e3, 1e3),real_only = 0, bounds = None)
-            popt, pconv = fit(first_trace_freqs[filt], real[filt], imag[filt], first_trace_mag, first_trace_phase, Qguess = (QextGuess,QintGuess), f0Guess = f0Guess, real_only = 0, bounds = bounds, magBackGuess = magBackGuess)
+            if debug: 
+                plt.figure()
+                plt.title("frequency filter")
+                plt.plot(np.unique(vna_freqs), filt)
+                
+            if debug: 
+                print('before fit: ', '\ninit_fo: ', init_f0, '\nfmin: ', np.min(first_trace_freqs), '\nfmax: ', np.max(first_trace_freqs))
+            popt, pconv = fit(first_trace_freqs[filt], real[filt], imag[filt], first_trace_mag[filt], first_trace_phase[filt], Qguess = (QextGuess,QintGuess), f0Guess = f0Guess, real_only = 0, bounds = bounds, magBackGuess = magBackGuess)
+            
             
             #catch a sudden change in convergence and try again until it's back in range: 
             if i>2: 
