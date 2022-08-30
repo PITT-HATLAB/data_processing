@@ -657,6 +657,85 @@ def combine_and_demodulate(cwd, save_fp, name, apply_filter = 0, cf = 50e6, BW =
         fp = writer.file_path
     return fp
 
+def rotate_IQ(I,Q,th):
+    return I*np.cos(th)+Q*np.sin(th),-I*np.sin(th)+Q*np.cos(th)
+
+def rotate_and_combine_2state(cwd: str, save_fp: str, name: str, debug: bool = False, rotate: bool = True): 
+    '''
+    Parameters
+    ----------
+    cwd : str
+        directory that contains all folders with files and/or files to be combined
+    save_fp : str
+        filepath to save the combined file to
+    name : str
+        name for the combined file
+    rotate: bool
+        flag to enable the IQ rotation of the data so that
+            - the mean of the data is centered on 0,0
+            - the integrated GE difference is aligned to the I axis only
+    debug : bool, optional
+        flag to print debug messages
+
+    Returns
+    -------
+    fp : str
+        location of combined data
+
+    '''
+    fps = find_all_ddh5(cwd)
+    data = dd.DataDict(
+        time = dict(unit='ns'),
+        record_num = dict(unit = 'num'), 
+        
+        I_G = dict(axes=['record_num', 'time'], unit = 'V'), 
+        I_E = dict(axes=['record_num','time'], unit = 'V'), 
+        
+        Q_G = dict(axes=['record_num','time'], unit = 'V'), 
+        Q_E = dict(axes=['record_num','time'], unit = 'V'), 
+    )
+    with dds.DDH5Writer(save_fp, data, name=name) as writer:
+        total_recs = 0
+        for i, fp in enumerate(fps): 
+            time_vals, G_data, E_data = extract_IQ_from_demod_file_2state(fp, debug = debug)
+            GAvg, EAvg = [np.average(data, axis = 1) for data in [G_data, E_data]]
+            if rotate: 
+                th=np.angle((EAvg[0]-GAvg[0])+(EAvg[1]-GAvg[1])*1j)
+                G_data, E_data = [rotate_IQ(data[0],data[1],th) for data in [G_data, E_data]]
+            rec_per_pulse, time_points = np.shape(G_data[0])
+            if debug:
+                print('Time points: ',  np.size(time_vals))
+                print('rec per pulse: ', rec_per_pulse)
+                print('total records: ', total_recs+rec_per_pulse)
+                plt.figure()
+                plt.hist2d(np.sum(np.append(G_data[0], E_data[0], axis = 0), axis = 1), 
+                           np.sum(np.append(G_data[1], E_data[1], axis = 0), axis = 1), 
+                           bins = 101, range = np.array([[-30000, 30000],[-30000, 30000]])*50)
+            writer.add_data(
+                    record_num = np.repeat(np.arange(rec_per_pulse)+total_recs, time_points),
+                    time = np.tile(time_vals, rec_per_pulse),
+                    I_G = G_data[0].flatten(),
+                    Q_G = G_data[1].flatten(),
+                    I_E = E_data[0].flatten(),
+                    Q_E = E_data[1].flatten(),
+                    )
+            total_recs+=rec_per_pulse
+        fp = writer.file_path
+    return fp
+
+def extract_IQ_from_demod_file_2state(fp, debug = False): 
+    datadict = dds.all_datadicts_from_hdf5(fp)['data']
+    timeNum = np.size(np.unique(datadict['time']['values']))
+    time_vals = np.unique(datadict['time']['values'])
+    allNum = np.size(datadict['time']['values'])
+    I_G = datadict['I_G']['values'].reshape((allNum//timeNum, timeNum))
+    Q_G = datadict['Q_G']['values'].reshape((allNum//timeNum, timeNum))
+    I_E = datadict['I_E']['values'].reshape((allNum//timeNum, timeNum))
+    Q_E = datadict['Q_E']['values'].reshape((allNum//timeNum, timeNum))
+    if debug: [print(thing) for thing in [fp, allNum, timeNum, allNum//timeNum]]
+    return time_vals, [I_G, Q_G], [I_E, Q_E]
+
+
 def check_demod_file(fp): 
     datadict = dds.all_datadicts_from_hdf5(fp)['data']
     timeNum = np.size(np.unique(datadict['time']['values']))
