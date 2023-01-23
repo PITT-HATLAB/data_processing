@@ -11,6 +11,9 @@ from plottr.data.datadict_storage import all_datadicts_from_hdf5
 from data_processing.Helper_Functions import find_all_ddh5
 import matplotlib.pyplot as plt
 import numpy as np
+import proplot as pplt
+import proplot.colors
+
 
 plt.style.use('hatlab')
 # Rebuild the matplotlib font cache
@@ -30,27 +33,27 @@ plt.style.use('hatlab')
 #new 26MHz wide: 
 # gain_filepath = r'Z:/Data/N25_L3_SP_2/traces/20dB/2022-05-23_0001_gain_0.16mA.ddh5'
 # noise_filepath = r'Z:/Data/N25_L3_SP_2/traces/20dB/2022-05-23_0002_NVR_amp_on.ddh5' 
-
+data_home_dir = r'C:\Users\Ryan\OneDrive - University of Pittsburgh\paper_data\NISTAMP_2022\amp_gain_profiles\without_qubit'
 #for a bunch of gain curves
-gain_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0001_0.16mA.ddh5', 
-            r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0001_0.16mA.ddh5', 
-            r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0002_0.16mA.ddh5']
+gain_fps = [data_home_dir+r'/18dB_wide/2022-05-24_0001_0.16mA.ddh5', 
+            data_home_dir+r'/20dB_wide_2/2022-05-24_0001_0.16mA.ddh5', 
+            data_home_dir+r'/20dB_narrow/2022-05-24_0002_0.16mA.ddh5']
 
-sat_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0002_sat_amp_on.ddh5', 
-           r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0002_sat_amp_on.ddh5', 
-           r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0005_sat_amp_on.ddh5']
+sat_fps = [data_home_dir+r'/18dB_wide/2022-05-24_0002_sat_amp_on.ddh5', 
+           data_home_dir+r'/20dB_wide_2/2022-05-24_0002_sat_amp_on.ddh5', 
+           data_home_dir+r'/20dB_narrow/2022-05-24_0005_sat_amp_on.ddh5']
 
-sat_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0003_sat_amp_off.ddh5', 
-              r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0003_sat_amp_off.ddh5', 
-              r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0006_sat_amp_off.ddh5']
+sat_sb_fps = [data_home_dir+r'/18dB_wide/2022-05-24_0003_sat_amp_off.ddh5', 
+              data_home_dir+r'/20dB_wide_2/2022-05-24_0003_sat_amp_off.ddh5', 
+              data_home_dir+r'/20dB_narrow/2022-05-24_0006_sat_amp_off.ddh5']
 
-NVR_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0005_NVR_amp_on.ddh5', 
-           r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0005_NVR_amp_on.ddh5', 
-           r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0003_NVR_amp_on.ddh5']
+NVR_fps = [data_home_dir+r'/18dB_wide/2022-05-24_0005_NVR_amp_on.ddh5', 
+           data_home_dir+r'/20dB_wide_2/2022-05-24_0005_NVR_amp_on.ddh5', 
+           data_home_dir+r'/20dB_narrow/2022-05-24_0003_NVR_amp_on.ddh5']
 
-NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0006_NVR_amp_off.ddh5', 
-              r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0004_NVR_amp_off.ddh5', 
-              r'Z:/Data/N25_L3_SP_2/traces/20dB_narrow/2022-05-24_0004_NVR_amp_off.ddh5']
+NVR_sb_fps = [data_home_dir+r'/18dB_wide/2022-05-24_0006_NVR_amp_off.ddh5', 
+              data_home_dir+r'/20dB_wide_2/2022-05-24_0004_NVR_amp_off.ddh5', 
+              data_home_dir+r'/20dB_narrow/2022-05-24_0004_NVR_amp_off.ddh5']
 # ncols = 3
 # bbox = (1.1, 1.2)
 # fbounds_ind = [0, -1]
@@ -69,26 +72,68 @@ NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/18dB_wide/2022-05-24_0006_NVR_amp_off
 # NVR_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0005_NVR_amp_on.ddh5']
 # NVR_sb_fps = [r'Z:/Data/N25_L3_SP_2/traces/20dB_wide_2/2022-05-24_0004_NVR_amp_off.ddh5']
 
-ncols = 2
 bbox = (0.75, 1.1)
 fbounds_ind = [100, 1900]
 
+fig, axs = pplt.subplots(ncols = 2, nrows = 1, figsize = (8,4), sharex = False, sharey = False)
+fig, axs = pplt.subplots([[1,2],[1,2],[3,2]], sharex = False, sharey = False)
 
-gainfig, gain_ax = plt.subplots()
-satfig, sat_ax = plt.subplots()
+for ax in axs: 
+    ax.format(tickminor = False)
+# fig2, ax2 = pplt.subplots()
+gain_ax = axs[0]
+# nvr_ax= gain_ax.panel("bottom")
+nvr_ax = axs[2]
+sat_ax = axs[1]
+# sat_ax = ax2
 skip = 20
 satskip = 100
-gain_colors = ['blue', 'green', 'red']
-noise_colors = ['darkblue', 'darkgreen', 'darkred']
+import proplot as pplt
+import matplotlib as mpl
+from matplotlib.colors import ListedColormap
+'''
+    'Div',
+    'Vlag',
+    'Spectral',
+    'Balance',
+    'Delta',
+    'Curl',
+    'roma',
+    'broc',
+    'cork',
+    'vik',
+    'bam',
+    'lisbon',
+    'tofino',
+    'berlin',
+    'vanimo',
+'''
+'''
 
-satfig, sat_ax = plt.subplots()
+'''
+
+cmap = mpl.cm.get_cmap('Div')
+from_edge = 0.15
+cnum = np.linspace(0+from_edge, 1-from_edge, 3)
+newcolors = cmap(cnum)
+
+greens = mpl.cm.get_cmap('greens')
+greencmap = ListedColormap(greens(cnum))
+# pink = np.array([248/256, 24/256, 148/256, 1])
+# newcolors[:25, :] = pink
+newcmp = ListedColormap(newcolors)
+# newcmp = sns.diverging_palette(250, 30, l=65, center="dark", as_cmap=True)
+from cycler import cycler
+default_prop_cycler = cycler('color', [newcmp(cnum[0]), newcmp(cnum[1]), newcmp(cnum[2])])
+gain_colors = [newcmp(cnum[0]), greencmap(0.5), newcmp(cnum[2])]
+noise_colors = gain_colors
+# 
+# satfig, sat_ax = plt.subplots()
 for i, (gain_fp, sat_fp, sat_sb_fp, NVR_fp, NVR_sb_fp) in enumerate(zip(gain_fps, sat_fps, sat_sb_fps, NVR_fps, NVR_sb_fps)):
-    gain_fig, gain_ax = plt.subplots()
-    nvr_fig, nvr_ax = plt.subplots()
+    # gain_fig, gain_ax = plt.subplots()
+    # nvr_fig, nvr_ax = plt.subplots()
     gain_ax.set_ylim(10, 23)
-    nvr_ax.set_ylim(0, 10)
-    gain_colors = ['blue', 'green', 'red']
-    noise_colors = ['darkblue', 'darkgreen', 'darkred']
+    # nvr_ax.set_ylim(0, 10)
     print("\n ", i)
     
     #plot the Gain
@@ -124,15 +169,17 @@ for i, (gain_fp, sat_fp, sat_sb_fp, NVR_fp, NVR_sb_fp) in enumerate(zip(gain_fps
 
     # gain_ax.set_title('Gain (dB)')
     # nvr_ax.set_title('NVR (dB)')
+    nvr_ax.set_ylim(4,10)
     gain_ax.set_xticks([-20, 20])
+    gain_ax.set_xticklabels(['',''])
     nvr_ax.set_xticks([-20,20])
-    nvr_ax.set_yticks([0,2,4,6,8])
+    nvr_ax.set_yticks([4,8])
     gain_ax.set_yticks([10,12,14,16,18,20,22])
     if i == 2: 
         gain_ax.set_ylabel('Gain (dB)')
         nvr_ax.set_ylabel('NVR (dB)')
         gain_ax.set_yticklabels(['', 12, '',16,'',20,''])
-        nvr_ax.set_yticklabels(['',2,'','',8])
+        nvr_ax.set_yticklabels([4,8])
     else: 
         gain_ax.set_yticklabels(['', '', '','','','',''])
         nvr_ax.set_yticklabels(['','','','',''])
@@ -157,17 +204,18 @@ for i, (gain_fp, sat_fp, sat_sb_fp, NVR_fp, NVR_sb_fp) in enumerate(zip(gain_fps
     pows = dd.extract('power')['power']['values']
     freqs = dd.extract('power')['frequency']['values']
     
-    #plot the LO leakage vs power
     att = 85
     sat_ax.plot((freqs-att)[::satskip], (pows-norm_pows)[::satskip], 's-', color = gain_colors[i])
     sat_ax.set_xlabel('Signal power (dBm)')
     # ax.set_ylabel('Gain (dB)')
-    sat_ax.legend()
-    sat_ax.hlines([19, 17], np.min(freqs)-att, np.max(freqs)-att, linestyle = '--', color = 'k')
+    # sat_ax.legend()
+    sat_ax.hlines([17, 19], np.min(freqs)-att, np.max(freqs)-att, linestyle = '--', color = 'k')
     sat_ax.set_xticks([-120, -110, -100, -90, -80])
     sat_ax.set_xticklabels([-120, '', '', -90, ''])
+    
     # ax.vlines([-90.5], np.min(pows-norm_pows), np.max(pows-norm_pows), linestyle = '--', color = 'k')
     # ax.grid()
     # ax.set_title('0.06mA, 8.65dBm RT, +277kHZ generator detuning: 6.6MHz BW')
-
+sat_ax.grid()
+gain_ax.grid()
 
