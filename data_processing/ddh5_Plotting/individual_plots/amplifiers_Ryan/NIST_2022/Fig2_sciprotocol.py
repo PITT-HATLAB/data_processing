@@ -14,6 +14,8 @@ from matplotlib import cm
 import scipy.optimize as spo
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap
+import warnings
+
 
 cmap = mpl.cm.get_cmap('Div')
 from_edge = 0.1
@@ -103,7 +105,7 @@ def load_hist(dir, name, aligned=False):
     else:
         return num_hists, den_hists, ampArray, x, y
 
-def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False, ax = None):
+def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False, ax = None, plot_samples = False):
 
     # note all of this assumes aligned data
 
@@ -126,6 +128,13 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
         # note this is only evaluated at Im=0
         # assumes histogram is already aligned: Qmbar = 0
         return np.sin(Qm_sigma * Imbar_sigma + theta) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset
+    
+    def xy_eta_f(Qm_sigma, Imbar_sigma, eta, thetaX, thetaY, offset): 
+        #only evaluated at Imbar = 0
+        #assumes the first half of the data is X back-action, last half is y (with only a different theta allowed)
+        return np.append(np.sin(Qm_sigma * Imbar_sigma + thetaX) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset, 
+                         np.sin(Qm_sigma * Imbar_sigma + thetaY) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset
+                         )[:-1]
 
     def x_eta_f_constrained(Qm_sigma, eta, theta, offset):
         return x_eta_f(Qm_sigma, Imbar_sigma_i, eta, theta, offset)
@@ -142,6 +151,20 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
     result = 0
 
     m, n = np.shape(histogram)
+    
+    #plot the other axis too
+    num_hist2 = num_hists[tomo_axis+1, init_state, amp_i, :, :]
+    den_hist2 = den_hists[tomo_axis+1, init_state, amp_i, :, :]
+    
+    histogram2 = num_hist2 / den_hist2
+    
+    histogram2[np.where(den_hist2 < cutoff)] = np.nan
+    
+    m2, n2 = np.shape(num_hist2)
+    
+    result = 0
+    
+    m2, n2 = np.shape(histogram2)
 
     Im_sigma = x / sigma[amp_i]
     Qm_sigma = y / sigma[amp_i]
@@ -151,87 +174,128 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
     if ax is None: 
         fig, ax = pplt.subplots(nrows = 1, ncols = 1, hspace = '0.2em')
 
-    if direction == 0:  # horizontal
+    # if direction == 0:  # horizontal
 
-        valid_idx = np.where(np.isnan(histogram[:, m // 2]) == False)
+    #     valid_idx = np.where(np.isnan(histogram[:, m // 2]) == False)
 
-        sigmas = den_hist[valid_idx, m // 2][0]
+    #     sigmas = den_hist[valid_idx, m // 2][0]
 
-        if constrained:
+    #     if constrained:
 
-            res = spo.curve_fit(z_eta_f_constrained, Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], p0=[0], sigma=sigmas)
+    #         res = spo.curve_fit(z_eta_f_constrained, Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], p0=[0], sigma=sigmas)
 
-            print('Constrained')
-            print('Derived Imbar/sigma: ' + str(Imbar_sigma_i))
-            print('Fit theta: ' + str(res[0][0]))
-            print(' ')
+    #         print('Constrained')
+    #         print('Derived Imbar/sigma: ' + str(Imbar_sigma_i))
+    #         print('Fit theta: ' + str(res[0][0]))
+    #         print(' ')
 
-            if plot:
-                ax.plot(Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], label='data')
-                ax.plot(Im_sigma[valid_idx], z_eta_f(Im_sigma[valid_idx], Imbar_sigma_i, res[0][0]), label='partial fit')
-                ax.legend()
-        else:
-            res = spo.curve_fit(z_eta_f, Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], p0=[1, 0], sigma=sigmas)
+    #         if plot:
+    #             ax.plot(Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], label='data')
+    #             ax.plot(Im_sigma[valid_idx], z_eta_f(Im_sigma[valid_idx], Imbar_sigma_i, res[0][0]), label='partial fit')
+    #             ax.legend()
+    #     else:
+    #         res = spo.curve_fit(z_eta_f, Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], p0=[1, 0], sigma=sigmas)
 
-            print(' ')
+    #         print(' ')
 
-            print('Unconstrained')
-            print('Fit Imbar/sigma: ' + str(res[0][0]))
-            print('Fit theta: ' + str(res[0][1]))
-            print(' ')
+    #         print('Unconstrained')
+    #         print('Fit Imbar/sigma: ' + str(res[0][0]))
+    #         print('Fit theta: ' + str(res[0][1]))
+    #         print(' ')
 
-            if plot:
-                ax.plot(Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], '.', label='Data')
+    #         if plot:
+    #             ax.plot(Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], '.', label='Data')
 
-                ax.plot(Im_sigma[valid_idx], z_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1]), label='Fit')
+    #             ax.plot(Im_sigma[valid_idx], z_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1]), label='Fit')
 
     if direction == 1:  # vertical
 
         valid_idx = np.where(np.isnan(histogram[n // 2, :]) == False)
+        valid_idx2 = np.where(np.isnan(histogram2[n2 // 2, :]) == False)
 
         sigmas = 1/np.sqrt(den_hist[n // 2, valid_idx][0]/np.max(den_hist))
+        sigmas2 = 1/np.sqrt(den_hist2[n2 // 2, valid_idx2][0]/np.max(den_hist2))
 
         if constrained:
+            pass
+            # res = spo.curve_fit(x_eta_f_constrained, Qm_sigma[valid_idx], histogram[n // 2, valid_idx][0], sigma=np.append(sigmas, sigmas2), p0=[0.5, 0, 0])
 
-            res = spo.curve_fit(x_eta_f_constrained, Qm_sigma[valid_idx], histogram[n // 2, valid_idx][0], sigma=sigmas, p0=[0.5, 0, 0])
+            # print('Constrained')
+            # print('Derived Imbar/sigma: ' + str(Imbar_sigma_i))
+            # print('Fit Quantum Efficiency: ' + str(res[0][0]))
+            # print('Fit theta: ' + str(res[0][1]))
+            # print('Fit offset: ' + str(res[0][2]))
+            # print(' ')
 
-            print('Constrained')
-            print('Derived Imbar/sigma: ' + str(Imbar_sigma_i))
-            print('Fit Quantum Efficiency: ' + str(res[0][0]))
-            print('Fit theta: ' + str(res[0][1]))
-            print('Fit offset: ' + str(res[0][2]))
-            print(' ')
+            # if plot:
+            #     ax.plot(Qm_sigma[valid_idx], histogram[n // 2, valid_idx][0], label='data')
 
-            if plot:
-                ax.plot(Qm_sigma[valid_idx], histogram[n // 2, valid_idx][0], label='data')
-
-                ax.plot(Qm_sigma[valid_idx], x_eta_f(Qm_sigma[valid_idx], Imbar_sigma_i, res[0][0], res[0][1], res[0][2]), label='partial fit')
+            #     ax.plot(Qm_sigma[valid_idx], x_eta_f(Qm_sigma[valid_idx], Imbar_sigma_i, res[0][0], res[0][1], res[0][2]), label='partial fit')
         else:
 
 
 
-            print(sigmas)
-
-            res = spo.curve_fit(x_eta_f, Qm_sigma[valid_idx], histogram[n // 2, valid_idx][0], sigma=sigmas, p0=[0.5, 0.5, 0, 0])
+            # print(sigmas)
+            print("\n\nshape of sigmas: ", np.shape(np.append(sigmas, sigmas2)))
+            print("\n\nshape of the Qm's: ", np.shape(Qm_sigma[valid_idx]))
+            print("\n\nshape of the histogram slices: ", np.shape(np.append(histogram[n // 2, valid_idx][0], 
+                                          histogram2[n2 // 2, valid_idx2][0])))
+            res = spo.curve_fit(xy_eta_f, Qm_sigma[valid_idx], 
+                                np.append(histogram[n // 2, valid_idx][0], 
+                                          histogram2[n2 // 2, valid_idx2][0]), 
+                                sigma=np.append(sigmas, sigmas2), p0=[0.5, 0.5, 0, np.pi/2, 0])
 
             print('Unconstrained')
             print('Fit Imbar/sigma: ' + str(res[0][0]))
             print('Fit Quantum Efficiency: ' + str(res[0][1]))
-            print('Fit theta: ' + str(res[0][2]))
-            print('Fit offset: ' + str(res[0][3]))
+            print('Fit thetaX: ' + str(res[0][2]))
+            print('Fit thetaY: ' + str(res[0][3]))
+            print('Fit offset: ' + str(res[0][4]))
             print(' ')
+            print('Theta difference (degrees): ',(res[0][2]-res[0][3])*360/2/np.pi)
+            
+            n_samples_x = den_hist[valid_idx[0], 50]
+            n_samples_y = den_hist2[valid_idx2[0], 50]
+            
+            data_x = histogram[n // 2, valid_idx][0]
+            data_y = histogram2[n // 2, valid_idx2][0]
+            
+            x_uncertainties_low = data_x*(1-1/2/np.sqrt(n_samples_x))
+            x_uncertainties_high = data_x*(1+1/2/np.sqrt(n_samples_x))
+            
+            bardata_x = np.array([x_uncertainties_low, x_uncertainties_high])
+            
+            y_uncertainties_low = data_y*(1-1/2/np.sqrt(n_samples_y))
+            y_uncertainties_high = data_y*(1+1/2/np.sqrt(n_samples_y))
+            
+            bardata_y = np.array([y_uncertainties_low, y_uncertainties_high])
+            
+            print("DEBUG: ", np.shape(Qm_sigma[valid_idx2]))
+            print("DEBUG: ", np.shape(bardata_y))
+
 
             if plot:
-
-                ax.plot(Qm_sigma[valid_idx], histogram[n // 2, valid_idx][0], '.', label='Data', color = gain_colors[0])
-
-                ax.plot(Qm_sigma[valid_idx],
-                         x_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1], res[0][2], res[0][3]), label='fit', color = gain_colors[1])
                 x_ax = Qm_sigma[valid_idx]
+                ax.plot(x_ax, data_x, '.', label='Data (X)', color = gain_colors[1], bardata = bardata_x, barcolor = gain_colors[1])
+
+                ax.plot(x_ax,
+                         x_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1], res[0][2], res[0][4]), label='Fit (X)', color = gain_colors[1])
+                
+                x_ax2 = Qm_sigma[valid_idx2]
+                ax.plot(x_ax2, data_y, '.', label='Data (Y)', color = gain_colors[2], bardata = bardata_y, barcolor = gain_colors[2])
+                
+                ax.plot(x_ax2,
+                         x_eta_f(Qm_sigma[valid_idx2], res[0][0], res[0][1], res[0][3], res[0][4]), label='Fit (Y)', color = gain_colors[2])
+                
+                Im_sigma = x / sigma[amp_i]
+                Qm_sigma = y / sigma[amp_i]
                 # ax.plot(Qm_sigma[valid_idx], den_hist[50][valid_idx])
-                samples_ax = ax.panel('b')
-                samples_ax.bar(x_ax, den_hist[valid_idx[0], 50], color = gain_colors[0])
-                print('\n\n\ntotal_fit_samples: \n\n\n', np.sum(den_hist[valid_idx[0], 50]))
+                if plot_samples: 
+                    samples_ax = ax.panel('b')
+                    samples_ax.bar(x_ax, num_hist[valid_idx[0], 50]/np.max(num_hist), color = gain_colors[0])
+                    print('\n\n\ntotal_fit_samples: \n\n\n',n_samples_x)
+                else: 
+                    samples_ax = None
 
     return res, ax, samples_ax
 
@@ -273,52 +337,58 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
             if amp_i == 0:
                 ax.set_title(axisArray[tomoAxis])
                 
-    cbar = fig.colorbar(plt.get_cmap('seismic'), ticks = [0,1], location = 'r', title = r"$\langle X \rangle, \langle Y \rangle, \langle Z \rangle $ respectively")
+    cbar = fig.colorbar(plt.get_cmap('seismic'), length = 0.25*1.5, ticks = [0,1], location = 'right', title = r"$\langle X \rangle, \langle Y \rangle, \langle Z \rangle $ respectively")
     cbar.ax.set_yticklabels([-1, 1])
     return fig
 
 #%%
-
-fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
-# fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/science_protocol_combined_hists.h5'
-# fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_multiRep/science_protocol_multiRep_hists.h5'
-name = r'science_protocol_combined'
-res = load_hist(fp, name, aligned=True)
-num_hists, den_hists, ampArray, x, y, Imbar, Qmbar, sigma = res
-
-fig = pepsi_plot(*res[:5], cutoff = 0)
-fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.pdf')
-
-tomo_axis = 0
-init_state = 1
-amp_i = 3
-direction = 1
-#linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False)
-fitfig, fitax = pplt.subplots()
-res, lc_fit_ax, samples_ax = linecut_fit(num_hists, 
-                             den_hists, 
-                             x, y, 
-                             Imbar, Qmbar, 
-                             sigma, 
-                             [tomo_axis, init_state, amp_i, direction], 
-                             constrained = False, 
-                             ax = fitax)
-lc_fit_ax.legend(location = 'lc', ncols = 1, frame = 1)
-ticklabelpad = mpl.rcParams['ytick.major.pad']
-
-# samples_ax.annotate(r"$\overline{Q_m}$", xy=(1,0), xytext=(5, 0), ha='left', va='top',
-#             xycoords='axes fraction', textcoords='offset points')
-samples_ax.set_xlabel(r"$\overline{Q_m}$")
-samples_ax.set_ylabel('Samples')
-samples_ax.yaxis.tick_right()
-
-lc_fit_ax.annotate(r"$\langle X \rangle$", xy=(-0.15,0.55), xytext=(-ticklabelpad, 5), ha='left', va='top',
-            xycoords='axes fraction', textcoords='offset points')
-
-# lc_fit_ax.set_ylabel(r"$\langle X \rangle$")
-lc_fit_ax.set_yticks([-1,-0.5, 0, 0.5])
-lc_fit_ax.set_yticklabels([-1,'', 0, 0.5])
-lc_fit_ax.set
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
+    # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/science_protocol_combined_hists.h5'
+    # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_multiRep/science_protocol_multiRep_hists.h5'
+    name = r'science_protocol_combined'
+    res = load_hist(fp, name, aligned=True)
+    num_hists, den_hists, ampArray, x, y, Imbar, Qmbar, sigma = res
+    
+    fig = pepsi_plot(*res[:5], cutoff = 0)
+    fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
+#%%
+    tomo_axis = 0
+    init_state = 1
+    amp_i = 3
+    direction = 1
+    #linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False)
+    fitfig, fitax = pplt.subplots()
+    res, lc_fit_ax, samples_ax = linecut_fit(num_hists, 
+                                 den_hists, 
+                                 x, y, 
+                                 Imbar, Qmbar, 
+                                 sigma, 
+                                 [tomo_axis, init_state, amp_i, direction], 
+                                 constrained = False, 
+                                 ax = fitax, 
+                                 plot_samples = True)
+    lc_fit_ax.legend(location = 'top', ncols = 2, frame = 1, fontsize = 10)
+    ticklabelpad = mpl.rcParams['ytick.major.pad']
+    lc_fit_ax.set_ylim(-1, 0.6)
+    lc_fit_ax.set_xlabel("")
+    
+    # samples_ax.annotate(r"$\overline{Q_m}$", xy=(1,0), xytext=(5, 0), ha='left', va='top',
+    #             xycoords='axes fraction', textcoords='offset points')
+    lc_fit_ax.annotate(r"$\langle X \rangle$"+"\n\n"+r"$\langle Y \rangle$", xy=(-0.175,0.55), xytext=(-ticklabelpad, 5), ha='left', va='top',
+                xycoords='axes fraction', textcoords='offset points')
+    
+    # lc_fit_ax.set_ylabel(r"$\langle X \rangle$")
+    lc_fit_ax.set_yticks([-1,-0.5, 0, 0.5])
+    lc_fit_ax.set_yticklabels([-1,'', 0, 0.5])
+    
+    if samples_ax is not None: 
+        samples_ax.set_xlabel(r"$\overline{Q_m}$")
+        samples_ax.set_ylabel('Samples')
+        samples_ax.yaxis.tick_right()
+    else: 
+        lc_fit_ax.set_xlabel(r"$\overline{Q_m}$")
 
 #%%
 # print(np.shape(file['den_hists']))
