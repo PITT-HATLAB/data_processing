@@ -6,7 +6,7 @@ Created on Mon Nov  8 11:19:22 2021
 """
 import numpy as np
 import matplotlib.pyplot as plt
-
+%matplotlib inline
 #youngs modulus of Brass
 Ybrass = 97e9 #pa
 
@@ -64,44 +64,52 @@ alpha_Mo = -95e-5
 alpha_Al = -414.9e-5
 alpha_SS = -298.6e-5
 alpha_Cu = -326e-5
+alpha_tef = -2127e-5
 
 YBrass = 125e9
 YSS = 193e9
 YAl = 68e9
+YCu = 110e9
+YMo = 329e9
+Ytef = 575e6
 
-L1_arr = np.linspace(0, 5, 100)*10#mm, 0-5cm
-L2_arr = np.linspace(2.4, 2.8, 100) #mm
-sRT_arr = np.linspace(0, 360, 100)*1e6
+
+# L1_arr = np.linspace(0, 5, 155)*10#mm, 0-5cm 
+# L2_arr = np.linspace(5.1, 5.3, 100) #mm #length of washer
+L2_arr = np.linspace(-150, 5.3, 100) #mm #length of washer
+sRT_arr = np.linspace(0, 150, 100)*1e6
 
 md = {'brass': {'Y': YBrass, 'alpha': alpha_Br}, 
       'SS': {'Y': YSS, 'alpha': alpha_SS}, 
       'Al': {'Y': YAl, 'alpha': alpha_Al}, 
-      'Mo': {'Y': None, 'alpha': alpha_Mo}, 
-      'Cu': {'Y': None, 'alpha': alpha_Cu}
+      'Mo': {'Y': YMo, 'alpha': alpha_Mo}, 
+      'Cu': {'Y': YCu, 'alpha': alpha_Cu}, 
+      'Teflon': {'Y': Ytef, 'alpha': alpha_tef}
       }
 
 sigma_cryo = lambda L0, L1, L2, a0, a1, a2, Y0, sRT: -(a2*L2+a1*L1-a0*L0)/(a0*L0)*Y0+sRT #equation from powerpoint slide
 
-screw_mat = 'brass'
-bulk_mat = 'Al'
+screw_mat = 'SS'
+bulk_mat = 'SS'
+washer_mat = 'SS'
 
 sCryo = []
 # L1 = 10 #mm
-L1 = 25
+L1 = 155
 for L2 in L2_arr: 
     sCryo_piece = []
     for sRT in sRT_arr: 
         L0 = L1+L2
-        sCryo_piece.append(sigma_cryo(L0, L1, L2, md[screw_mat]['alpha'], md[bulk_mat]['alpha'], alpha_Mo, md[screw_mat]['Y'], sRT))
+        sCryo_piece.append(sigma_cryo(L0, L1, L2, md[screw_mat]['alpha'], md[bulk_mat]['alpha'], md[washer_mat]['alpha'], md[screw_mat]['Y'], sRT))
         # sCryo_piece.append(sigma_cryo(L0, L1, L2, alpha_SS, alpha_Cu, alpha_Mo, YSS, sRT))
     sCryo.append(sCryo_piece)
 
-im = plt.pcolormesh(sRT_arr/1e6, L2_arr, np.array(sCryo)/1e6, cmap = 'seismic', vmin = -124, vmax = 124)
+im = plt.pcolormesh(L2_arr, sRT_arr/1e6, np.array(sCryo).T/1e6, cmap = 'seismic', vmin = -124, vmax = 124)
 
 plt.title("")
-plt.ylabel("length_of_Mo (mm)")
-plt.xlabel("$\sigma_{RT}$ (MPa)")
-plt.title(f"Stress (MPa) vs tightening and Mo Length, L1 = {L1} mm")
+plt.xlabel(f"length_of_{washer_mat} (mm)")
+plt.ylabel("$\sigma_{RT}$ (MPa)")
+plt.title(f"Stress (MPa) vs tightening and {washer_mat} Length, L1 = {L1} mm")
 cb = plt.colorbar()
 
 # plt.figure()
