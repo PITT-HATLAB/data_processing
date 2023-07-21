@@ -13,9 +13,9 @@ from schemdraw import dsp
 
 with schemdraw.Drawing() as d:
     d.config(fontsize=12)
-    d += dsp.Antenna()
+    d += dsp.Antenna().up()
     d += dsp.Line().right(d.unit/4)
-    d += dsp.Filter(response='bp').fill('thistle').anchor('W').label('RF filter\n#1', 'bottom', ofst=.2)
+    # d += dsp.Filter(response='bp').fill('thistle').anchor('W').label('RF filter\n#1', 'bottom', ofst=.2)
     d += dsp.Line().length(d.unit/4)
     d += dsp.Amp().fill('lightblue').label('LNA')
     d += dsp.Line().length(d.unit/4)
