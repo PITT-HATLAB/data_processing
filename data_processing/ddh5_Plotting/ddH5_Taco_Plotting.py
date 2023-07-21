@@ -23,14 +23,17 @@ plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
 
 device_name = 'N25L3_SQ'
 
-gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-02/2022-05-02_0001_0.0004mA_TACO_gain/2022-05-02_0001_0.0004mA_TACO_gain.ddh5'
-gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0043_0.0004mA_TACO_16dB_gain.ddh5'
-gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0027_0.0004mA_TACO_14dB_gain.ddh5'
+# gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-02/2022-05-02_0001_0.0004mA_TACO_gain/2022-05-02_0001_0.0004mA_TACO_gain.ddh5'
+# gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0043_0.0004mA_TACO_16dB_gain.ddh5'
+# gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0027_0.0004mA_TACO_14dB_gain.ddh5'
+gain_filepath = r"Z:\Data\N25_L3_SQ\tacos\2022-05-03_0039_0.0004mA_TACO_20dB_gain.ddh5"
 # gain_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0011_0.0004mA_TACO_12dBm_gain.ddh5'
-sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-02/2022-05-02_0002_0.0004mA_TACO_sat/2022-05-02_0002_0.0004mA_TACO_sat.ddh5'
-sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0044_0.0004mA_TACO_16dB_sat.ddh5'
+# sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-02/2022-05-02_0002_0.0004mA_TACO_sat/2022-05-02_0002_0.0004mA_TACO_sat.ddh5'
+# sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0044_0.0004mA_TACO_16dB_sat.ddh5'
 sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0038_0.0004mA_TACO_20dB_sat.ddh5'
 # sat_filepath = r'Z:/Data/N25_L3_SQ/tacos/2022-05-03_0012_0.0004mA_TACO_12dBm_sat.ddh5'
+sat_filepath = r"Z:\Data\N25_L3_SQ\tacos\2022-05-03_0042_0.0004mA_TACO_18dB_sat.ddh5"
+gain_filepath = r"Z:\Data\N25_L3_SQ\tacos\2022-05-03_0041_0.0004mA_TACO_18dB_gain.ddh5"
 #get files back out and into arrays
 sat_dicts = all_datadicts_from_hdf5(sat_filepath)
 satDict = sat_dicts['data']
@@ -58,7 +61,7 @@ b1 = (bias_current == b1_val)
 line_att = 77-30
 # *(gen_power<11)*(gen_power>8.5)
 ""
-target = 16
+target = 18
 plt.style.use('hatlab')
 gf1, gp1, g1 = gen_frequency[b1]/1000, gen_power[b1]-line_att, calc_gain[b1]
 fig, ax, cb = make_tacos(b1_val, gf1, gp1, g1, vmin = target - 2, vmax = target+2, target = target)
