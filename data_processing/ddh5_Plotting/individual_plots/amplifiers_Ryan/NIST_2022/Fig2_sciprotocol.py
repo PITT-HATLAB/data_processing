@@ -276,16 +276,16 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
 
             if plot:
                 x_ax = Qm_sigma[valid_idx]
-                ax.plot(x_ax, data_x, '.', label='Data (X)', color = gain_colors[1], bardata = bardata_x, barcolor = gain_colors[1])
+                ax.plot(x_ax, data_x, '.', label=r'Data $\langle X \rangle_c$', color = gain_colors[1], bardata = bardata_x, barcolor = gain_colors[1])
 
                 ax.plot(x_ax,
-                         x_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1], res[0][2], res[0][4]), label='Fit (X)', color = gain_colors[1])
+                         x_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1], res[0][2], res[0][4]), color = gain_colors[1])
                 
                 x_ax2 = Qm_sigma[valid_idx2]
-                ax.plot(x_ax2, data_y, '.', label='Data (Y)', color = gain_colors[2], bardata = bardata_y, barcolor = gain_colors[2])
+                ax.plot(x_ax2, data_y, '.', label=r'Data $\langle Y \rangle_c$', color = gain_colors[2], bardata = bardata_y, barcolor = gain_colors[2])
                 
                 ax.plot(x_ax2,
-                         x_eta_f(Qm_sigma[valid_idx2], res[0][0], res[0][1], res[0][3], res[0][4]), label='Fit (Y)', color = gain_colors[2])
+                         x_eta_f(Qm_sigma[valid_idx2], res[0][0], res[0][1], res[0][3], res[0][4]), color = gain_colors[2])
                 
                 Im_sigma = x / sigma[amp_i]
                 Qm_sigma = y / sigma[amp_i]
@@ -337,7 +337,7 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
             if amp_i == 0:
                 ax.set_title(axisArray[tomoAxis])
                 
-    cbar = fig.colorbar(plt.get_cmap('seismic'), length = 0.25*1.5, ticks = [0,1], location = 'right', title = r"$\langle X \rangle, \langle Y \rangle, \langle Z \rangle $ respectively")
+    cbar = fig.colorbar(plt.get_cmap('seismic'), length = 0.25*1.5, ticks = [0,1], location = 'right', title = r"$\langle X \rangle_c, \langle Y \rangle_c, \langle Z \rangle_c $ respectively")
     cbar.ax.set_yticklabels([-1, 1])
     return fig
 
@@ -353,13 +353,13 @@ with warnings.catch_warnings():
     
     fig = pepsi_plot(*res[:5], cutoff = 0)
     fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
-#%%
     tomo_axis = 0
     init_state = 1
     amp_i = 3
     direction = 1
     #linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False)
-    fitfig, fitax = pplt.subplots()
+    # plt.rcParams()
+    fitfig, fitax = pplt.subplots(figsize = ('3in', '3in'))
     res, lc_fit_ax, samples_ax = linecut_fit(num_hists, 
                                  den_hists, 
                                  x, y, 
@@ -368,28 +368,30 @@ with warnings.catch_warnings():
                                  [tomo_axis, init_state, amp_i, direction], 
                                  constrained = False, 
                                  ax = fitax, 
-                                 plot_samples = True)
-    lc_fit_ax.legend(location = 'top', ncols = 2, frame = 1, fontsize = 10)
+                                 plot_samples = False)
+    
     ticklabelpad = mpl.rcParams['ytick.major.pad']
-    lc_fit_ax.set_ylim(-1, 0.6)
+    lc_fit_ax.set_ylim(-0.6, 0.6)
     lc_fit_ax.set_xlabel("")
     
     # samples_ax.annotate(r"$\overline{Q_m}$", xy=(1,0), xytext=(5, 0), ha='left', va='top',
     #             xycoords='axes fraction', textcoords='offset points')
-    lc_fit_ax.annotate(r"$\langle X \rangle$"+"\n\n"+r"$\langle Y \rangle$", xy=(-0.175,0.55), xytext=(-ticklabelpad, 5), ha='left', va='top',
-                xycoords='axes fraction', textcoords='offset points')
+    # lc_fit_ax.annotate(r"$\langle X \rangle_c$"+"\n\n"+r"$\langle Y \rangle_c$", xy=(-0.175,0.45), xytext=(-ticklabelpad, 5), ha='left', va='top',
+                # xycoords='axes fraction', textcoords='offset points')
     
     # lc_fit_ax.set_ylabel(r"$\langle X \rangle$")
-    lc_fit_ax.set_yticks([-1,-0.5, 0, 0.5])
-    lc_fit_ax.set_yticklabels([-1,'', 0, 0.5])
+    lc_fit_ax.set_yticks([-0.5, 0, 0.5])
+    lc_fit_ax.set_yticklabels([-0.5, 0, 0.5])
+    lc_fit_ax.set_aspect(2)
+    # lc_fit_ax.legend(location = 'top', ncols = 2, frame = 0, markersize = 10)
     
     if samples_ax is not None: 
-        samples_ax.set_xlabel(r"$\overline{Q_m}$")
+        samples_ax.set_xlabel(r"$Q_m}$")
         samples_ax.set_ylabel('Samples')
         samples_ax.yaxis.tick_right()
     else: 
-        lc_fit_ax.set_xlabel(r"$\overline{Q_m}$")
-
+        lc_fit_ax.set_xlabel(r"$Q_m$")
+fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
 #%%
 # print(np.shape(file['den_hists']))
 

@@ -6,7 +6,7 @@ Created on Thu May 13 13:43:45 2021
 """
 import numpy as np 
 import matplotlib.pyplot as plt
-import sympy as sp
+# import sympy as sp
 from data_processing.models.SNAIL_supporting_modules.Participation_and_Alpha_Fitter import slider_fit
 from data_processing.fitting.QFit import fit, plotRes
 from scipy.optimize import fsolve
