@@ -17,6 +17,7 @@ from matplotlib.colors import ListedColormap
 import warnings
 
 
+
 cmap = mpl.cm.get_cmap('Div')
 from_edge = 0.1
 cnum = np.linspace(0+from_edge, 1-from_edge, 3)
@@ -31,7 +32,7 @@ newcmp = ListedColormap(newcolors)
 from cycler import cycler
 default_prop_cycler = cycler('color', [newcmp(cnum[0]), newcmp(cnum[1]), newcmp(cnum[2])])
 gain_colors = [newcmp(cnum[0]), greencmap(0.5), newcmp(cnum[2])]
-plt.style.use('hatlab')
+# plt.style.use('hatlab')
 #supporting stuff courtesy of Boris
 class MplColorHelper:
 
@@ -86,8 +87,11 @@ def load_hist(dir, name, aligned=False):
     num_hists = np.array(hf.get('num_hists'))
     den_hists = np.array(hf.get('den_hists'))
     ampArray = np.array(hf.get('ampArray'))
+    # these are the boundaries, I need the centers
     x = np.array(hf.get('x'))
+    x_ret = x[:-1]+(x[1]-x[0])/2
     y = np.array(hf.get('y'))
+    y_ret = x[:-1] + (x[1] - x[0]) / 2
 
     Imbar = 0
     Qmbar = 0
@@ -101,11 +105,19 @@ def load_hist(dir, name, aligned=False):
     hf.close()
 
     if aligned:
-        return num_hists, den_hists, ampArray, x, y, Imbar, Qmbar, sigma
+        return num_hists, den_hists, ampArray, x_ret, y_ret, Imbar, Qmbar, sigma
     else:
-        return num_hists, den_hists, ampArray, x, y
+        return num_hists, den_hists, ampArray, x_ret, y_ret
 
-def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False, ax = None, plot_samples = False):
+def linecut_fit(num_hists,
+                den_hists,
+                x, y,
+                Imbar, Qmbar,
+                sigma,
+                args, cutoff=1,
+                plot=True, constrained=False,
+                ax = None, plot_samples = False,
+                trim_left = 0, trim_right = -1):
 
     # note all of this assumes aligned data
 
@@ -134,13 +146,18 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
         #assumes the first half of the data is X back-action, last half is y (with only a different theta allowed)
         return np.append(np.sin(Qm_sigma * Imbar_sigma + thetaX) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset, 
                          np.sin(Qm_sigma * Imbar_sigma + thetaY) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset
-                         )[:-1]
+                         )
 
     def x_eta_f_constrained(Qm_sigma, eta, theta, offset):
         return x_eta_f(Qm_sigma, Imbar_sigma_i, eta, theta, offset)
 
     num_hist = num_hists[tomo_axis, init_state, amp_i, :, :]
     den_hist = den_hists[tomo_axis, init_state, amp_i, :, :]
+
+    print('num hist sum', np.sum(num_hist))
+    print('den hist sum', np.sum(den_hist))
+    print('num hist max', np.max(num_hist))
+    print('den hist max', np.max(den_hist))
 
     histogram = num_hist / den_hist
 
@@ -169,52 +186,52 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
     Im_sigma = x / sigma[amp_i]
     Qm_sigma = y / sigma[amp_i]
 
+    print("shape of x, y: ", np.shape(x), np.shape(y))
+
+    #have to make sure the shape of Qm_sigma matches the shape of the histogram n//2
+
+
+
     res = []
     
     if ax is None: 
         fig, ax = pplt.subplots(nrows = 1, ncols = 1, hspace = '0.2em')
 
-    # if direction == 0:  # horizontal
-
-    #     valid_idx = np.where(np.isnan(histogram[:, m // 2]) == False)
-
-    #     sigmas = den_hist[valid_idx, m // 2][0]
-
-    #     if constrained:
-
-    #         res = spo.curve_fit(z_eta_f_constrained, Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], p0=[0], sigma=sigmas)
-
-    #         print('Constrained')
-    #         print('Derived Imbar/sigma: ' + str(Imbar_sigma_i))
-    #         print('Fit theta: ' + str(res[0][0]))
-    #         print(' ')
-
-    #         if plot:
-    #             ax.plot(Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], label='data')
-    #             ax.plot(Im_sigma[valid_idx], z_eta_f(Im_sigma[valid_idx], Imbar_sigma_i, res[0][0]), label='partial fit')
-    #             ax.legend()
-    #     else:
-    #         res = spo.curve_fit(z_eta_f, Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], p0=[1, 0], sigma=sigmas)
-
-    #         print(' ')
-
-    #         print('Unconstrained')
-    #         print('Fit Imbar/sigma: ' + str(res[0][0]))
-    #         print('Fit theta: ' + str(res[0][1]))
-    #         print(' ')
-
-    #         if plot:
-    #             ax.plot(Im_sigma[valid_idx], histogram[valid_idx, m // 2][0], '.', label='Data')
-
-    #             ax.plot(Im_sigma[valid_idx], z_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1]), label='Fit')
-
+    if direction == 0:  # horizontal
+        pass
     if direction == 1:  # vertical
+        # valid_idx = np.where(np.isnan(histogram[n // 2, :]) == False)
+        # valid_idx2 = np.where(np.isnan(histogram2[n2 // 2, :]) == False)
 
-        valid_idx = np.where(np.isnan(histogram[n // 2, :]) == False)
-        valid_idx2 = np.where(np.isnan(histogram2[n2 // 2, :]) == False)
+        # valid_idx = np.ones_like(histogram[n // 2, :]).astype(bool)
+        # valid_idx2 = np.ones_like(histogram2[n2 // 2, :]).astype(bool)
+        valid_idx = np.isnan(histogram[n // 2, :]) == False
+        valid_idx2 = np.isnan(histogram2[n2 // 2, :]) == False
 
-        sigmas = 1/np.sqrt(den_hist[n // 2, valid_idx][0]/np.max(den_hist))
-        sigmas2 = 1/np.sqrt(den_hist2[n2 // 2, valid_idx2][0]/np.max(den_hist2))
+        print("valid idx shape", valid_idx.shape, "sum: ", np.sum(valid_idx))
+        print("valid idx2 shape", valid_idx2.shape, "sum: ", np.sum(valid_idx2))
+
+        '''
+        the fit function requires the validated slices to be the same length, so we have to trim the longer one
+        by constraining it to where the other is also valid
+        '''
+        valid_idx_total = np.logical_and(valid_idx, valid_idx2)
+        print("valid idx total shape", valid_idx_total.shape, 'sum: ', np.sum(valid_idx_total))
+
+        x_slice = histogram[(n) // 2, valid_idx_total]
+        y_slice = histogram2[(n2) // 2, valid_idx_total]
+        num_shots = den_hist[n // 2, valid_idx_total]
+        num_shots2 = den_hist2[n // 2, valid_idx_total]
+        # print('number of shots in each bin', num_shots)
+        plt.figure()
+        plt.plot(num_shots)
+        plt.plot(num_shots2)
+        sigmas = 1 / np.sqrt(den_hist[n // 2, valid_idx_total] / np.max(den_hist[n // 2, valid_idx_total]))
+        sigmas_plot = np.abs(sigmas) / np.sqrt(num_shots)
+        print("sigmas shape: ", sigmas.shape)
+        sigmas2 = 1 / np.sqrt(den_hist2[n2 // 2, valid_idx_total] / np.max(den_hist2[n2 // 2, valid_idx_total]))
+        sigmas2_plot = np.abs(sigmas2) / np.sqrt(num_shots2)
+        print("sigmas2 shape: ", sigmas2.shape)
 
         if constrained:
             pass
@@ -236,37 +253,52 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
 
 
             # print(sigmas)
-            print("\n\nshape of sigmas: ", np.shape(np.append(sigmas, sigmas2)))
-            print("\n\nshape of the Qm's: ", np.shape(Qm_sigma[valid_idx]))
-            print("\n\nshape of the histogram slices: ", np.shape(np.append(histogram[n // 2, valid_idx][0], 
-                                          histogram2[n2 // 2, valid_idx2][0])))
-            res = spo.curve_fit(xy_eta_f, Qm_sigma[valid_idx], 
-                                np.append(histogram[n // 2, valid_idx][0], 
-                                          histogram2[n2 // 2, valid_idx2][0]), 
-                                sigma=np.append(sigmas, sigmas2), p0=[0.5, 0.5, 0, np.pi/2, 0])
+
+            print("shape of sigmas: ", np.shape(sigmas), np.shape(sigmas2))
+            print("shape of sigmas after trimming: ",
+                  np.shape(sigmas[trim_left:trim_right]),
+                  np.shape(sigmas2[trim_left:trim_right]))
+
+            print("shape of the Qm's pre validation: ", np.shape(Qm_sigma))
+            print("shape of the Qm's after val: ", np.shape(Qm_sigma[valid_idx_total]))
+            print("shape of the Qm's after val trimmed: ", np.shape(Qm_sigma[valid_idx_total][trim_left:trim_right]))
+            print("shape of the histogram slices: ", np.shape(np.append(x_slice[trim_left:trim_right],
+                                          y_slice[trim_left:trim_right])))
+            res = spo.curve_fit(xy_eta_f, Qm_sigma[valid_idx_total][trim_left:trim_right],
+                                np.append(x_slice[trim_left:trim_right],
+                                          y_slice[trim_left:trim_right]),
+                                sigma=np.append(sigmas[trim_left:trim_right],
+                                                sigmas2[trim_left:trim_right]), p0=[0.5, 0.5, 0, np.pi/2, 0])
 
             print('Unconstrained')
-            print('Fit Imbar/sigma: ' + str(res[0][0]))
-            print('Fit Quantum Efficiency: ' + str(res[0][1]))
-            print('Fit thetaX: ' + str(res[0][2]))
-            print('Fit thetaY: ' + str(res[0][3]))
-            print('Fit offset: ' + str(res[0][4]))
+            print('Fit Imbar/sigma: ' + str(res[0][0]) + ', +- ' + str(np.sqrt(res[1])[0, 0]))
+            print('Fit Quantum Efficiency: ' + str(res[0][1])+', +- '+ str(np.sqrt(res[1])[1,1]))
+            print('Fit thetaX: ' + str(res[0][2]), ', +- ' + str(np.sqrt(res[1])[2, 2]))
+            print('Fit thetaY: ' + str(res[0][3]), ', +- ' + str(np.sqrt(res[1])[3, 3]))
+            print('Fit offset: ' + str(res[0][4]), ', +- ' + str(np.sqrt(res[1])[4, 4]))
             print(' ')
             print('Theta difference (degrees): ',(res[0][2]-res[0][3])*360/2/np.pi)
             
-            n_samples_x = den_hist[valid_idx[0], 50]
-            n_samples_y = den_hist2[valid_idx2[0], 50]
+            n_samples_x = den_hist[n//2, valid_idx_total][trim_left:trim_right]
+            n_samples_y = den_hist2[n2//2, valid_idx_total][trim_left:trim_right]
             
-            data_x = histogram[n // 2, valid_idx][0]
-            data_y = histogram2[n // 2, valid_idx2][0]
+            data_x = x_slice[trim_left:trim_right]
+            data_y = y_slice[trim_left:trim_right]
             
-            x_uncertainties_low = data_x*(1-1/2/np.sqrt(n_samples_x))
-            x_uncertainties_high = data_x*(1+1/2/np.sqrt(n_samples_x))
-            
+            # x_uncertainties_low = data_x*(1-1/2/np.sqrt(n_samples_x))
+            # x_uncertainties_high = data_x*(1+1/2/np.sqrt(n_samples_x))
+            x_uncertainties_low = data_x - sigmas_plot[trim_left:trim_right]
+            x_uncertainties_high = data_x + sigmas_plot[trim_left:trim_right]
+
             bardata_x = np.array([x_uncertainties_low, x_uncertainties_high])
             
-            y_uncertainties_low = data_y*(1-1/2/np.sqrt(n_samples_y))
-            y_uncertainties_high = data_y*(1+1/2/np.sqrt(n_samples_y))
+            # y_uncertainties_low = data_y*(1-1/2/np.sqrt(n_samples_y))
+            # y_uncertainties_high = data_y*(1+1/2/np.sqrt(n_samples_y))
+            y_uncertainties_low = data_y - sigmas2_plot[trim_left:trim_right]
+            y_uncertainties_high = data_y + sigmas2_plot[trim_left:trim_right]
+
+            print(x_uncertainties_low)
+            print(y_uncertainties_low)
             
             bardata_y = np.array([y_uncertainties_low, y_uncertainties_high])
             
@@ -275,17 +307,20 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
 
 
             if plot:
-                x_ax = Qm_sigma[valid_idx]
+                x_ax = Qm_sigma[valid_idx_total][trim_left:trim_right]
+
                 ax.plot(x_ax, data_x, '.', label=r'$\langle X \rangle_c$', color = gain_colors[1], bardata = bardata_x, barcolor = gain_colors[1])
 
                 ax.plot(x_ax,
-                         x_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1], res[0][2], res[0][4]), color = gain_colors[1])
+                         x_eta_f(x_ax, res[0][0], res[0][1], res[0][2], res[0][4]),
+                        color = gain_colors[1])
                 
-                x_ax2 = Qm_sigma[valid_idx2]
+                x_ax2 = Qm_sigma[valid_idx_total][trim_left:trim_right]
                 ax.plot(x_ax2, data_y, '.', label=r'$\langle Y \rangle_c$', color = gain_colors[2], bardata = bardata_y, barcolor = gain_colors[2])
                 
                 ax.plot(x_ax2,
-                         x_eta_f(Qm_sigma[valid_idx2], res[0][0], res[0][1], res[0][3], res[0][4]), color = gain_colors[2])
+                        x_eta_f(x_ax2, res[0][0], res[0][1], res[0][3], res[0][4]),
+                        color = gain_colors[2])
                 
                 Im_sigma = x / sigma[amp_i]
                 Qm_sigma = y / sigma[amp_i]
@@ -346,14 +381,16 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
-    fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
+    # fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
     # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/science_protocol_combined_hists.h5'
     # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_multiRep/science_protocol_multiRep_hists.h5'
     name = r'science_protocol_combined'
+    # mpl.use('Qt5Agg')
     res = load_hist(fp, name, aligned=True)
     num_hists, den_hists, ampArray, x, y, Imbar, Qmbar, sigma = res
-    
-    fig = pepsi_plot(num_hists, den_hists, ampArray, x/np.average(sigma), y/np.average(sigma), cutoff = 0)
+
+    cutoff = 10
+    fig = pepsi_plot(num_hists, den_hists, ampArray, x/np.average(sigma), y/np.average(sigma), cutoff = cutoff)
     # fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
     tomo_axis = 0
     init_state = 1
@@ -361,18 +398,23 @@ with warnings.catch_warnings():
     direction = 1
     #linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False)
     # plt.rcParams()
-    trim_left = 0
-    trim_right = -1
-    fitfig, fitax = pplt.subplots(figsize = ('3in', '3in'))
-    res, lc_fit_ax, samples_ax = linecut_fit(num_hists[:, :, :, trim_left:trim_right, trim_left:trim_right],
-                                 den_hists[:, :, :, trim_left:trim_right, trim_left:trim_right],
-                                 x[trim_left:trim_right], y[trim_left:trim_right],
+    trim_left = 4
+    trim_right = -4
+    refaspect = 3
+    fitfig, fitax = pplt.subplots(refwidth = '3in', refaspect = refaspect)
+    res, lc_fit_ax, samples_ax = linecut_fit(num_hists,
+
+                                 den_hists,
+                                 x, y,
                                  Imbar, Qmbar, 
-                                 sigma, 
+                                 sigma,
                                  [tomo_axis, init_state, amp_i, direction], 
                                  constrained = False, 
                                  ax = fitax, 
-                                 plot_samples = False)
+                                 plot_samples = False,
+                                 trim_left = trim_left,
+                                 trim_right = trim_right,
+                                 cutoff = cutoff)
     
     ticklabelpad = mpl.rcParams['ytick.major.pad']
     lc_fit_ax.set_ylim(-0.6, 0.6)
@@ -386,7 +428,7 @@ with warnings.catch_warnings():
     # lc_fit_ax.set_ylabel(r"$\langle X \rangle$")
     lc_fit_ax.set_yticks([-0.5, 0, 0.5])
     lc_fit_ax.set_yticklabels([-0.5, 0, 0.5])
-    lc_fit_ax.set_aspect(2)
+    lc_fit_ax.set_aspect(refaspect)
     # lc_fit_ax.legend(location = 'top', ncols = 2, frame = 0, markersize = 10)
     
     if samples_ax is not None: 
@@ -394,8 +436,10 @@ with warnings.catch_warnings():
         samples_ax.set_ylabel('Samples')
         samples_ax.yaxis.tick_right()
     else: 
-        lc_fit_ax.set_xlabel(r"$Q_m$")
-# fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
+        lc_fit_ax.set_xlabel(r"$Q_m/\sigma$")
+
+    plt.show()
+fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
 #%%
 # print(np.shape(file['den_hists']))
 

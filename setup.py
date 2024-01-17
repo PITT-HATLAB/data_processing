@@ -16,4 +16,5 @@ setup(name='Data_Processing',
       author_email='rrk26@pitt.edu',
       license='MIT',
       packages=['data_processing'],
+      requirements = ['proplot'],
       zip_safe=False)
