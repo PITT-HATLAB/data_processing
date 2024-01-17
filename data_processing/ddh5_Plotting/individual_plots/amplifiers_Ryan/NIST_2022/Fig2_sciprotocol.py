@@ -7,7 +7,6 @@ Created on Sun Nov 27 15:36:12 2022
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import proplot as pplt
 import matplotlib.colors
 from matplotlib import cm
@@ -15,8 +14,6 @@ import scipy.optimize as spo
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap
 import warnings
-
-
 
 cmap = mpl.cm.get_cmap('Div')
 from_edge = 0.1
@@ -163,10 +160,6 @@ def linecut_fit(num_hists,
 
     histogram[np.where(den_hist < cutoff)] = np.nan
 
-    m, n = np.shape(num_hist)
-
-    result = 0
-
     m, n = np.shape(histogram)
     
     #plot the other axis too
@@ -189,8 +182,6 @@ def linecut_fit(num_hists,
     print("shape of x, y: ", np.shape(x), np.shape(y))
 
     #have to make sure the shape of Qm_sigma matches the shape of the histogram n//2
-
-
 
     res = []
     
@@ -250,20 +241,16 @@ def linecut_fit(num_hists,
             #     ax.plot(Qm_sigma[valid_idx], x_eta_f(Qm_sigma[valid_idx], Imbar_sigma_i, res[0][0], res[0][1], res[0][2]), label='partial fit')
         else:
 
-
-
             # print(sigmas)
-
-            print("shape of sigmas: ", np.shape(sigmas), np.shape(sigmas2))
-            print("shape of sigmas after trimming: ",
-                  np.shape(sigmas[trim_left:trim_right]),
-                  np.shape(sigmas2[trim_left:trim_right]))
-
-            print("shape of the Qm's pre validation: ", np.shape(Qm_sigma))
-            print("shape of the Qm's after val: ", np.shape(Qm_sigma[valid_idx_total]))
-            print("shape of the Qm's after val trimmed: ", np.shape(Qm_sigma[valid_idx_total][trim_left:trim_right]))
-            print("shape of the histogram slices: ", np.shape(np.append(x_slice[trim_left:trim_right],
-                                          y_slice[trim_left:trim_right])))
+            # print("shape of sigmas: ", np.shape(sigmas), np.shape(sigmas2))
+            # print("shape of sigmas after trimming: ",
+            #       np.shape(sigmas[trim_left:trim_right]),
+            #       np.shape(sigmas2[trim_left:trim_right]))
+            # print("shape of the Qm's pre validation: ", np.shape(Qm_sigma))
+            # print("shape of the Qm's after val: ", np.shape(Qm_sigma[valid_idx_total]))
+            # print("shape of the Qm's after val trimmed: ", np.shape(Qm_sigma[valid_idx_total][trim_left:trim_right]))
+            # print("shape of the histogram slices: ", np.shape(np.append(x_slice[trim_left:trim_right],
+            #                               y_slice[trim_left:trim_right])))
             res = spo.curve_fit(xy_eta_f, Qm_sigma[valid_idx_total][trim_left:trim_right],
                                 np.append(x_slice[trim_left:trim_right],
                                           y_slice[trim_left:trim_right]),
@@ -380,10 +367,16 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
 #%%
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
-    # fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
-    # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/science_protocol_combined_hists.h5'
-    # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_multiRep/science_protocol_multiRep_hists.h5'
+    import os
+    cname = os.environ['COMPUTERNAME']
+    if cname == 'DESKTOP-CFTSB1E':
+        fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
+        save_fit_fp = r'E:Ryan_Files\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg'
+        save_hist_fp = r'E:Ryan_Files\OneDrive - University of Pittsburgh\slides_figures\science_protocol_hist.svg'
+    else:
+        fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
+        save_fit_fp = r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg'
+        save_hist_fp = r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_hist.svg'
     name = r'science_protocol_combined'
     # mpl.use('Qt5Agg')
     res = load_hist(fp, name, aligned=True)
@@ -391,7 +384,7 @@ with warnings.catch_warnings():
 
     cutoff = 10
     fig = pepsi_plot(num_hists, den_hists, ampArray, x/np.average(sigma), y/np.average(sigma), cutoff = cutoff)
-    # fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
+    fig.save(save_hist_fp)
     tomo_axis = 0
     init_state = 1
     amp_i = 3
@@ -439,7 +432,7 @@ with warnings.catch_warnings():
         lc_fit_ax.set_xlabel(r"$Q_m/\sigma$")
 
     plt.show()
-fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
+fitfig.save(save_fit_fp)
 #%%
 # print(np.shape(file['den_hists']))
 
