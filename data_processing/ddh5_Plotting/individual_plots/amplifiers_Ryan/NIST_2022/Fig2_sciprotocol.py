@@ -124,7 +124,7 @@ def linecut_fit(num_hists,
     init_state = args[1]
     amp_i = args[2]
     direction = args[3]
-    
+
     Imbar_sigma_i = np.sqrt((Imbar[amp_i]/sigma[amp_i]) ** 2 + (Qmbar[amp_i]/sigma[amp_i]) ** 2) # since assumed aligned (Imbar/Qmbar refer to unaligned values)
 
     def z_eta_f(Im_sigma, Imbar_sigma, alpha):
@@ -137,11 +137,11 @@ def linecut_fit(num_hists,
         # note this is only evaluated at Im=0
         # assumes histogram is already aligned: Qmbar = 0
         return np.sin(Qm_sigma * Imbar_sigma + theta) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset
-    
-    def xy_eta_f(Qm_sigma, Imbar_sigma, eta, thetaX, thetaY, offset): 
+
+    def xy_eta_f(Qm_sigma, Imbar_sigma, eta, thetaX, thetaY, offset):
         #only evaluated at Imbar = 0
         #assumes the first half of the data is X back-action, last half is y (with only a different theta allowed)
-        return np.append(np.sin(Qm_sigma * Imbar_sigma + thetaX) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset, 
+        return np.append(np.sin(Qm_sigma * Imbar_sigma + thetaX) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset,
                          np.sin(Qm_sigma * Imbar_sigma + thetaY) * np.exp(-Imbar_sigma ** 2 * (1 - eta) / eta) + offset
                          )
 
@@ -165,19 +165,19 @@ def linecut_fit(num_hists,
     result = 0
 
     m, n = np.shape(histogram)
-    
+
     #plot the other axis too
     num_hist2 = num_hists[tomo_axis+1, init_state, amp_i, :, :]
     den_hist2 = den_hists[tomo_axis+1, init_state, amp_i, :, :]
-    
+
     histogram2 = num_hist2 / den_hist2
-    
+
     histogram2[np.where(den_hist2 < cutoff)] = np.nan
-    
+
     m2, n2 = np.shape(num_hist2)
-    
+
     result = 0
-    
+
     m2, n2 = np.shape(histogram2)
 
     Im_sigma = x / sigma[amp_i]
@@ -190,8 +190,8 @@ def linecut_fit(num_hists,
 
 
     res = []
-    
-    if ax is None: 
+
+    if ax is None:
         fig, ax = pplt.subplots(nrows = 1, ncols = 1, hspace = '0.2em')
 
     if direction == 0:  # horizontal
@@ -275,20 +275,20 @@ def linecut_fit(num_hists,
             print('Fit offset: ' + str(res[0][4]), ', +- ' + str(np.sqrt(res[1])[4, 4]))
             print(' ')
             print('Theta difference (degrees): ',(res[0][2]-res[0][3])*360/2/np.pi)
-            
+
             n_samples_x = den_hist[n//2, valid_idx_total][trim_left:trim_right]
             n_samples_y = den_hist2[n2//2, valid_idx_total][trim_left:trim_right]
-            
+
             data_x = x_slice[trim_left:trim_right]
             data_y = y_slice[trim_left:trim_right]
-            
+
             # x_uncertainties_low = data_x*(1-1/2/np.sqrt(n_samples_x))
             # x_uncertainties_high = data_x*(1+1/2/np.sqrt(n_samples_x))
             x_uncertainties_low = data_x - sigmas_plot[trim_left:trim_right]
             x_uncertainties_high = data_x + sigmas_plot[trim_left:trim_right]
 
             bardata_x = np.array([x_uncertainties_low, x_uncertainties_high])
-            
+
             # y_uncertainties_low = data_y*(1-1/2/np.sqrt(n_samples_y))
             # y_uncertainties_high = data_y*(1+1/2/np.sqrt(n_samples_y))
             y_uncertainties_low = data_y - sigmas2_plot[trim_left:trim_right]
@@ -296,9 +296,9 @@ def linecut_fit(num_hists,
 
             print(x_uncertainties_low)
             print(y_uncertainties_low)
-            
+
             bardata_y = np.array([y_uncertainties_low, y_uncertainties_high])
-            
+
             print("DEBUG: ", np.shape(Qm_sigma[valid_idx2]))
             print("DEBUG: ", np.shape(bardata_y))
 
@@ -311,28 +311,28 @@ def linecut_fit(num_hists,
                 ax.plot(x_ax,
                          x_eta_f(x_ax, res[0][0], res[0][1], res[0][2], res[0][4]),
                         color = gain_colors[1])
-                
+
                 x_ax2 = Qm_sigma[valid_idx_total][trim_left:trim_right]
                 ax.plot(x_ax2, data_y, '.', label=r'$\langle Y \rangle_c$', color = gain_colors[2], bardata = bardata_y, barcolor = gain_colors[2])
-                
+
                 ax.plot(x_ax2,
                         x_eta_f(x_ax2, res[0][0], res[0][1], res[0][3], res[0][4]),
                         color = gain_colors[2])
-                
+
                 Im_sigma = x / sigma[amp_i]
                 Qm_sigma = y / sigma[amp_i]
                 # ax.plot(Qm_sigma[valid_idx], den_hist[50][valid_idx])
-                if plot_samples: 
+                if plot_samples:
                     samples_ax = ax.panel('b')
                     samples_ax.bar(x_ax, num_hist[valid_idx[0], 50]/np.max(num_hist), color = gain_colors[0])
                     print('\n\n\ntotal_fit_samples: \n\n\n',n_samples_x)
-                else: 
+                else:
                     samples_ax = None
 
     return res, ax, samples_ax
 
 def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
-    
+
     # gs = pplt.GridSpec(nrows = len(ampArray), ncols = 3, pad = 0, wspace = 0.2, hspace = 0.2, sharex = True, sharey = True)
     # fig = pplt.figure(span=False, refwidth=1, share = False)
     fig, gs = pplt.subplots(nrows = 2, ncols = 3,
@@ -377,7 +377,7 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
             if amp_i == 0:
                 ax.set_title(axisArray[tomoAxis])
                 # ax.set_ylabel("")
-                
+
     # cbar = fig.colorbar(plt.get_cmap('seismic'), length = 0.25*1.5, ticks = [0,1], location = 'right', title = r"$\langle X \rangle_c, \langle Y \rangle_c, \langle Z \rangle_c $ respectively")
     # cbar.ax.set_yticklabels([-1, 1])
     return fig
@@ -385,7 +385,16 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
 #%%
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
+    import os
+    cname = os.environment['COMPUTERNAME']
+    if cname == 'DESKTOP-CFTSB1E':
+        fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
+        save_hist_fp = r'E:/Ryan_Files\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg'
+        save_fit_fp = r'E:/Ryan_Files\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg'
+    else:
+        fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
+        save_hist_fp = r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg'
+        save_fit_fp = r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg'
     # fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
     # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/science_protocol_combined_hists.h5'
     # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_multiRep/science_protocol_multiRep_hists.h5'
@@ -396,7 +405,7 @@ with warnings.catch_warnings():
 
     cutoff = 10
     fig = pepsi_plot(num_hists, den_hists, ampArray, x/np.average(sigma), y/np.average(sigma), cutoff = cutoff)
-    fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
+    fig.save(save_hist_fp)
     tomo_axis = 0
     init_state = 1
     amp_i = 3
@@ -411,30 +420,30 @@ with warnings.catch_warnings():
 
                                  den_hists,
                                  x, y,
-                                 Imbar, Qmbar, 
+                                 Imbar, Qmbar,
                                  sigma,
-                                 [tomo_axis, init_state, amp_i, direction], 
-                                 constrained = False, 
-                                 ax = fitax, 
+                                 [tomo_axis, init_state, amp_i, direction],
+                                 constrained = False,
+                                 ax = fitax,
                                  plot_samples = False,
                                  trim_left = trim_left,
                                  trim_right = trim_right,
                                  cutoff = cutoff)
-    
+
     # ticklabelpad = mpl.rcParams['ytick.major.pad']
     # lc_fit_ax.set_ylim(-0.6, 0.6)
     # lc_fit_ax.set_xlabel("")
-    
+
     # samples_ax.annotate(r"$\overline{Q_m}$", xy=(1,0), xytext=(5, 0), ha='left', va='top',
     #             xycoords='axes fraction', textcoords='offset points')
     # lc_fit_ax.annotate(r"$\langle X \rangle_c$"+"\n\n"+r"$\langle Y \rangle_c$", xy=(-0.175,0.45), xytext=(-ticklabelpad, 5), ha='left', va='top',
                 # xycoords='axes fraction', textcoords='offset points')
-    
+
     # lc_fit_ax.set_ylabel(r"$\langle X \rangle$")
     # lc_fit_ax.set_yticks([-0.5, 0, 0.5])
     # lc_fit_ax.set_yticklabels([-0.5, 0, 0.5])
     # lc_fit_ax.legend(location = 'top', ncols = 2, frame = 0, markersize = 10)
-    
+
     if samples_ax is not None:
         pass
         # samples_ax.set_xlabel(r"$Q_m}$")
