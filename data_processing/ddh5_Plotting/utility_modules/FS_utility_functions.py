@@ -11,7 +11,15 @@ from scipy.signal import savgol_filter
 from scipy.fftpack import dct, idct
 
 class fit_fluxsweep():
-    def __init__(self, Flux_filepath, save_filepath, name, currentName = 'current', phaseName = 'phase', powerName = 'power', freqName = 'frequency', phaseUnit = 'rad'):
+    def __init__(self, Flux_filepath,
+                 save_filepath,
+                 name,
+                 currentName = 'current',
+                 phaseName = 'phase',
+                 powerName = 'power',
+                 freqName = 'frequency',
+                 phaseUnit = 'rad',
+                 create_file = True):
         #setup files
         self.name = name
         self.phaseUnit = phaseUnit
@@ -26,9 +34,11 @@ class fit_fluxsweep():
             base_Qint_error = dict(axes = ['current']),
             base_Qext_error = dict(axes = ['current']),
         )
-        self.datadir = save_filepath
-        self.writer = dds.DDH5Writer(self.datadir, self.datadict, name=self.name)
-        self.writer.__enter__()
+        if create_file:
+            self.datadir = save_filepath
+            self.writer = dds.DDH5Writer(self.datadir, self.datadict, name=self.name)
+            self.writer.__enter__()
+            
         
         #Duffing/FS Data Extraction
         duff_dicts = all_datadicts_from_hdf5(Flux_filepath)

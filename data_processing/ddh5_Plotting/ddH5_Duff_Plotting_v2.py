@@ -66,7 +66,8 @@ class fit_Duff_Measurement():
                   gen_power_name = 'gen_power',
                   vna_freq_name = 'vna_frequency',
                   vna_pow_name = 'vna_power',
-                  vna_phase_name = 'driven_vna_phase'): 
+                  vna_phase_name = 'driven_vna_phase',
+                  phase_unit = 'rad'):
         #Duffing Data Extraction
         duff_dicts = all_datadicts_from_hdf5(Duff_filepath)
         duffDict = duff_dicts['data']
@@ -83,9 +84,16 @@ class fit_Duff_Measurement():
             #get the arrays back out
             
         filt = (uvphDict.data_vals(current_name)<upper)*(uvphDict.data_vals(current_name)>lower)
-        self.undriven_vna_phase = uvphDict.data_vals(vna_phase_name)[filt]
+
         self.undriven_vna_power = uvpoDict.data_vals(vna_pow_name)[filt]
-        self.driven_vna_phase = dvphDict.data_vals(vna_phase_name)[filt]
+        if phase_unit.lower() == 'rad':
+            self.undriven_vna_phase = uvphDict.data_vals(vna_phase_name)[filt]
+            self.driven_vna_phase = dvphDict.data_vals(vna_phase_name)[filt]
+        elif phase_unit.lower() == 'deg':
+            self.undriven_vna_phase = uvphDict.data_vals(vna_phase_name)[filt]/360*2*np.pi
+            self.driven_vna_phase = dvphDict.data_vals(vna_phase_name)[filt]/360*2*np.pi
+        else:
+            raise Exception("enter either 'deg' or 'rad'")
         self.driven_vna_power= dvpoDict.data_vals(vna_pow_name)[filt]
         self.vna_freqs = uvphDict.data_vals(vna_freq_name)[filt]*2*np.pi
         self.currents = uvphDict.data_vals(current_name)[filt]

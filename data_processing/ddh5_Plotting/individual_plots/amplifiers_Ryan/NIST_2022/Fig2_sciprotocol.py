@@ -276,13 +276,13 @@ def linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1,
 
             if plot:
                 x_ax = Qm_sigma[valid_idx]
-                ax.plot(x_ax, data_x, '.', label=r'Data $\langle X \rangle_c$', color = gain_colors[1], bardata = bardata_x, barcolor = gain_colors[1])
+                ax.plot(x_ax, data_x, '.', label=r'$\langle X \rangle_c$', color = gain_colors[1], bardata = bardata_x, barcolor = gain_colors[1])
 
                 ax.plot(x_ax,
                          x_eta_f(Qm_sigma[valid_idx], res[0][0], res[0][1], res[0][2], res[0][4]), color = gain_colors[1])
                 
                 x_ax2 = Qm_sigma[valid_idx2]
-                ax.plot(x_ax2, data_y, '.', label=r'Data $\langle Y \rangle_c$', color = gain_colors[2], bardata = bardata_y, barcolor = gain_colors[2])
+                ax.plot(x_ax2, data_y, '.', label=r'$\langle Y \rangle_c$', color = gain_colors[2], bardata = bardata_y, barcolor = gain_colors[2])
                 
                 ax.plot(x_ax2,
                          x_eta_f(Qm_sigma[valid_idx2], res[0][0], res[0][1], res[0][3], res[0][4]), color = gain_colors[2])
@@ -321,9 +321,10 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
             img = hist2img(num_hist, den_hist, cutoff=cutoff)
 
             im = ax.imshow(img.transpose(), extent=[np.min(x), np.max(x), np.min(y), np.max(y)])
+            # im = ax.pcolormesh(x, y, img, extent=[np.min(x), np.max(x), np.min(y), np.max(y)])
             im_cb = im
-            ax.set_xticks([])
-            ax.set_yticks([])
+            # ax.set_xticks([])
+            # ax.set_yticks([])
 
             if tomoAxis == 0:
                 den_trim = 30
@@ -345,24 +346,27 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/'
+    fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
     # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/science_protocol_combined_hists.h5'
     # fp = r'C:/Users/Ryan/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_multiRep/science_protocol_multiRep_hists.h5'
     name = r'science_protocol_combined'
     res = load_hist(fp, name, aligned=True)
     num_hists, den_hists, ampArray, x, y, Imbar, Qmbar, sigma = res
     
-    fig = pepsi_plot(*res[:5], cutoff = 0)
-    fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
+    fig = pepsi_plot(num_hists, den_hists, ampArray, x/np.average(sigma), y/np.average(sigma), cutoff = 0)
+    # fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
     tomo_axis = 0
     init_state = 1
     amp_i = 3
     direction = 1
     #linecut_fit(num_hists, den_hists, x, y, Imbar, Qmbar, sigma, args, cutoff=1, plot=True, constrained=False)
     # plt.rcParams()
+    trim_left = 0
+    trim_right = -1
     fitfig, fitax = pplt.subplots(figsize = ('3in', '3in'))
-    res, lc_fit_ax, samples_ax = linecut_fit(num_hists, 
-                                 den_hists, 
-                                 x, y, 
+    res, lc_fit_ax, samples_ax = linecut_fit(num_hists[:, :, :, trim_left:trim_right, trim_left:trim_right],
+                                 den_hists[:, :, :, trim_left:trim_right, trim_left:trim_right],
+                                 x[trim_left:trim_right], y[trim_left:trim_right],
                                  Imbar, Qmbar, 
                                  sigma, 
                                  [tomo_axis, init_state, amp_i, direction], 
@@ -391,7 +395,7 @@ with warnings.catch_warnings():
         samples_ax.yaxis.tick_right()
     else: 
         lc_fit_ax.set_xlabel(r"$Q_m$")
-fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
+# fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
 #%%
 # print(np.shape(file['den_hists']))
 
