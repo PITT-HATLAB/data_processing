@@ -7,18 +7,15 @@ Created on Sun Nov 27 15:36:12 2022
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-import proplot as pplt
 import matplotlib.colors
 from matplotlib import cm
 import scipy.optimize as spo
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap
 import warnings
+import proplot as pplt
 
-
-
-cmap = mpl.cm.get_cmap('Div')
+cmap = cm.get_cmap('Div')
 from_edge = 0.1
 cnum = np.linspace(0+from_edge, 1-from_edge, 3)
 newcolors = cmap(cnum)
@@ -336,9 +333,16 @@ def linecut_fit(num_hists,
 
 def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
     
-    gs = pplt.GridSpec(nrows = len(ampArray), ncols = 3, pad = 0, wspace = 0.2, hspace = 0.2)
-    fig = pplt.figure(span=False, refwidth=1, share = False)
-
+    # gs = pplt.GridSpec(nrows = len(ampArray), ncols = 3, pad = 0, wspace = 0.2, hspace = 0.2, sharex = True, sharey = True)
+    # fig = pplt.figure(span=False, refwidth=1, share = False)
+    fig, gs = pplt.subplots(nrows = 2, ncols = 3,
+                            axwidth = "1in",
+                            xtickdir = 'in', ytickdir = 'in',
+                            wspace = 0.3, hspace = 0.3,
+                            xlocator = 8, ylocator = 8,
+                            tickminor = False)
+    # gs.format()
+    # print("sciprot_axs_shape ", np.shape(axs))
     axisArray = ['X', 'Y', 'Z']
 
     tomoAxisArray = [0, 1, 2]
@@ -346,12 +350,16 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
     sum_den_hists = np.sum(den_hists, axis=0)
 
     for tomoAxis in tomoAxisArray:
-        for amp_i in range(0, len(ampArray)):
+        for amp_i in range(0, 2):
             # ax0 = fig.subplot(gs[amp_i, 0])
-            ax = fig.subplot(gs[amp_i, tomoAxis])
+            ax = gs[amp_i, tomoAxis]
             #axs[amp_i, tomoAxis + 1]
-            num_hist = num_hists[tomoAxis, initState, amp_i, :, :]
-            den_hist = den_hists[tomoAxis, initState, amp_i, :, :]
+            if amp_i == 0:
+                num_hist = num_hists[tomoAxis, initState, 0, :, :]
+                den_hist = den_hists[tomoAxis, initState, 0, :, :]
+            else:
+                num_hist = num_hists[tomoAxis, initState, 3, :, :]
+                den_hist = den_hists[tomoAxis, initState, 3, :, :]
 
             img = hist2img(num_hist, den_hist, cutoff=cutoff)
 
@@ -362,19 +370,16 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
             # ax.set_yticks([])
 
             if tomoAxis == 0:
-                den_trim = 30
-                sum_den_hist = sum_den_hists[initState, amp_i, :, :]
-
-                # ax0.pcolormesh(sum_den_hist.T[den_trim:-den_trim,den_trim:-den_trim], cmap='magma')
-                print(np.shape(sum_den_hist))
-                ax.set_ylabel(str(np.round(ampArray[amp_i]*1000, 0))+' mV')
+                pass
+                # ax.format(ylabel = str(np.round(ampArray[amp_i]*1000, 0))+' mV')
             # ax0.set_xticks([])
             # ax0.set_yticks([])
             if amp_i == 0:
                 ax.set_title(axisArray[tomoAxis])
+                # ax.set_ylabel("")
                 
-    cbar = fig.colorbar(plt.get_cmap('seismic'), length = 0.25*1.5, ticks = [0,1], location = 'right', title = r"$\langle X \rangle_c, \langle Y \rangle_c, \langle Z \rangle_c $ respectively")
-    cbar.ax.set_yticklabels([-1, 1])
+    # cbar = fig.colorbar(plt.get_cmap('seismic'), length = 0.25*1.5, ticks = [0,1], location = 'right', title = r"$\langle X \rangle_c, \langle Y \rangle_c, \langle Z \rangle_c $ respectively")
+    # cbar.ax.set_yticklabels([-1, 1])
     return fig
 
 #%%
@@ -391,7 +396,7 @@ with warnings.catch_warnings():
 
     cutoff = 10
     fig = pepsi_plot(num_hists, den_hists, ampArray, x/np.average(sigma), y/np.average(sigma), cutoff = cutoff)
-    # fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
+    fig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg')
     tomo_axis = 0
     init_state = 1
     amp_i = 3
@@ -416,9 +421,9 @@ with warnings.catch_warnings():
                                  trim_right = trim_right,
                                  cutoff = cutoff)
     
-    ticklabelpad = mpl.rcParams['ytick.major.pad']
-    lc_fit_ax.set_ylim(-0.6, 0.6)
-    lc_fit_ax.set_xlabel("")
+    # ticklabelpad = mpl.rcParams['ytick.major.pad']
+    # lc_fit_ax.set_ylim(-0.6, 0.6)
+    # lc_fit_ax.set_xlabel("")
     
     # samples_ax.annotate(r"$\overline{Q_m}$", xy=(1,0), xytext=(5, 0), ha='left', va='top',
     #             xycoords='axes fraction', textcoords='offset points')
@@ -426,17 +431,18 @@ with warnings.catch_warnings():
                 # xycoords='axes fraction', textcoords='offset points')
     
     # lc_fit_ax.set_ylabel(r"$\langle X \rangle$")
-    lc_fit_ax.set_yticks([-0.5, 0, 0.5])
-    lc_fit_ax.set_yticklabels([-0.5, 0, 0.5])
-    lc_fit_ax.set_aspect(refaspect)
+    # lc_fit_ax.set_yticks([-0.5, 0, 0.5])
+    # lc_fit_ax.set_yticklabels([-0.5, 0, 0.5])
     # lc_fit_ax.legend(location = 'top', ncols = 2, frame = 0, markersize = 10)
     
-    if samples_ax is not None: 
-        samples_ax.set_xlabel(r"$Q_m}$")
-        samples_ax.set_ylabel('Samples')
-        samples_ax.yaxis.tick_right()
-    else: 
-        lc_fit_ax.set_xlabel(r"$Q_m/\sigma$")
+    if samples_ax is not None:
+        pass
+        # samples_ax.set_xlabel(r"$Q_m}$")
+        # samples_ax.set_ylabel('Samples')
+        # samples_ax.yaxis.tick_right()
+    else:
+        pass
+        # lc_fit_ax.set_xlabel(r"$Q_m/\sigma$")
 
     plt.show()
 fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
