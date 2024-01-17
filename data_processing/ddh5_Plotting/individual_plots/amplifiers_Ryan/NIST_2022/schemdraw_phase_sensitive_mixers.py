@@ -21,7 +21,8 @@ with schemdraw.Drawing() as d:
     d += dsp.Line().length(d.unit/4)
     d += dsp.Filter(response='bp').anchor('W').fill('thistle').label('RF filter\n#2', 'bottom', ofst=.2)
     d += dsp.Line().length(d.unit/3)
-    d += (mix := dsp.Mixer().fill('navajowhite').label('Mixer'))
+    mix = dsp.Mixer().fill('navajowhite').label('Mixer')
+    d += mix
     d += dsp.Line().at(mix.S).down(d.unit/3)
     d += dsp.Oscillator().right().anchor('N').fill('navajowhite').label('Local\nOscillator', 'right', ofst=.2)
     d += dsp.Line().at(mix.E).right(d.unit/3)
