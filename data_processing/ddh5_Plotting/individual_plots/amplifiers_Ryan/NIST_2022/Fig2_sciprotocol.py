@@ -336,7 +336,7 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
     # gs = pplt.GridSpec(nrows = len(ampArray), ncols = 3, pad = 0, wspace = 0.2, hspace = 0.2, sharex = True, sharey = True)
     # fig = pplt.figure(span=False, refwidth=1, share = False)
     fig, gs = pplt.subplots(nrows = 2, ncols = 3,
-                            axwidth = "1in",
+                            axwidth = "0.75in",
                             xtickdir = 'in', ytickdir = 'in',
                             wspace = 0.3, hspace = 0.3,
                             xlocator = 8, ylocator = 8,
@@ -386,7 +386,7 @@ def pepsi_plot(num_hists, den_hists, ampArray, x, y, initState=1, cutoff=100):
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     import os
-    cname = os.environment['COMPUTERNAME']
+    cname = os.environ['COMPUTERNAME']
     if cname == 'DESKTOP-CFTSB1E':
         fp = r"E:/Ryan_Files/OneDrive - University of Pittsburgh/paper_data/NISTAMP_2022/science_protocol_multi_rep/science_protocol_lower_pwrs_more_recs/"
         save_hist_fp = r'E:/Ryan_Files\OneDrive - University of Pittsburgh\slides_figures\science_protocol.svg'
@@ -454,7 +454,7 @@ with warnings.catch_warnings():
         # lc_fit_ax.set_xlabel(r"$Q_m/\sigma$")
 
     plt.show()
-fitfig.save(r'C:\Users\Ryan\OneDrive - University of Pittsburgh\slides_figures\science_protocol_fit.svg')
+fitfig.save(save_fit_fp)
 #%%
 # print(np.shape(file['den_hists']))
 
